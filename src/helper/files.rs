@@ -48,6 +48,17 @@ fn re_match_fastq(path: &Path) -> bool {
     )
 }
 
+// "sample1_R1.fastq",
+//         "sample1_R2.fastq",
+//         "sample1_singleton.fastq",
+//         "sample2_1.fastq.gz",
+//         "sample2_2.fastq.gz",
+//         "control3_read1.fastq.bz2",
+//         "control3_read2.fastq.bz2",
+//         "control3_singleton.fastq",
+//         "sample3_R1.fastq.xz",
+//         "sample3_R2.fastq.xz",
+
 #[cfg(test)]
 mod tests {
     use super::*;
