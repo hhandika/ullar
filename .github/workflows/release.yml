@@ -1,0 +1,142 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  linux:
+    name: Linux x86_64 GNU
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --release
+
+      - name: Compress release
+        run: tar czvf ullar.tar.gz -C target/release ullar
+
+      - name: Upload release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ullar.tar.gz
+          asset_name: ullar-Linux-x86_64.tar.gz
+          tag: ${{ github.ref }}
+
+  linux_musl:
+    name: Linux x86_64 Static
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-musl
+
+      - name: Build
+        uses: dtolnay/rust-toolchain@stable
+      - run: |
+          sudo apt install musl-tools
+          cargo build --release --target x86_64-unknown-linux-musl
+
+      - name: Compress release
+        run: tar czvf ullar.tar.gz -C target/x86_64-unknown-linux-musl/release ullar
+
+      - name: Upload release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ullar.tar.gz
+          asset_name: ullar-Linux-musl-x86_64.tar.gz
+          tag: ${{ github.ref }}
+
+  macos:
+    name: macOS x86_64
+    runs-on: macos-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --release
+
+      - name: Compress release
+        run: tar czvf ullar.tar.gz -C target/release ullar
+
+      - name: Upload release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ullar.tar.gz
+          asset_name: ullar-macOS-x86_64.tar.gz
+          tag: ${{ github.ref }}
+
+  macos_arm:
+    name: macOS arm64
+    runs-on: macos-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          target: aarch64-apple-darwin
+
+      - name: Build
+        uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --release --target aarch64-apple-darwin
+
+      - name: Compress release
+        run: tar czvf ullar.tar.gz -C target/aarch64-apple-darwin/release ullar
+
+      - name: Upload release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ullar.tar.gz
+          asset_name: ullar-macOS-arm64.tar.gz
+          tag: ${{ github.ref }}
+
+  windows:
+    name: Windows x86_64
+    runs-on: windows-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Build
+        uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --release
+
+      - name: Compress release
+        run: powershell Compress-Archive target/release/ullar.exe ullar.zip
+
+      - name: Upload release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ullar.zip
+          asset_name: ullar-Windows-x86_64.zip
+          tag: ${{ github.ref }}
