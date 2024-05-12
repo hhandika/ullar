@@ -12,6 +12,10 @@ categories = ["command-line-utilities", "science"]
 
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
+lazy_static = "1.4.0"
+log = "0.4.21"
+log4rs = "1.2.0"
+regex = "1.10.4"
 segul = "0.21.1"
 
 [target.'cfg(unix)'.dependencies]

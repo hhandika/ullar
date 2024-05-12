@@ -7,17 +7,29 @@ pub(crate) struct UllarCli {
     #[command(subcommand)]
     /// Internal subcommands
     pub(crate) sub_cmd: SubCommand,
+    #[arg(
+        long,
+        default_value = "logs",
+        help = "Select a directory for the log file."
+    )]
+    pub(crate) log_dir: String,
+    #[arg(
+        long,
+        default_value = "ullar",
+        help = "Select a prefix for the log file."
+    )]
+    pub(crate) log_prefix: String,
 }
 
 #[derive(Subcommand)]
 pub(crate) enum SubCommand {
     /// New subcommand to init a new project
-    #[command(name = "init", about = "Initialize a new project")]
-    Init(NewArgs),
+    #[command(name = "new", about = "Initialize a new project")]
+    New(NewArgs),
 }
 
 #[derive(Args)]
-pub(crate) struct NewArgs {
+pub struct NewArgs {
     /// Name of the project
     #[arg(
         short,
@@ -25,7 +37,7 @@ pub(crate) struct NewArgs {
         default_value = "raw_reads",
         help = "Select a directory for the raw read location."
     )]
-    pub(crate) dir: String,
+    pub dir: String,
     /// Output directory for the config file
     #[arg(
         short,
@@ -33,12 +45,12 @@ pub(crate) struct NewArgs {
         default_value = "configs",
         help = "Select a directory for the config file."
     )]
-    pub(crate) output: String,
+    pub output: String,
     /// Split separator for sample names
     /// Default used '_'
     /// Example: sample1_R1.fastq.gz -> sample1
     #[arg(short, long, help = "Split separator for sample names")]
-    pub(crate) separator: Option<String>,
+    pub separator: Option<String>,
     /// Word length for sample names
     /// Default used 3: genus_species_museumNumber
     #[arg(
@@ -47,7 +59,7 @@ pub(crate) struct NewArgs {
         default_value_t = 3,
         help = "Word length for sample names"
     )]
-    pub(crate) length: usize,
+    pub length: usize,
     /// Specify regex to match raw read file names
     /// Default used internal regex to match fastq and fastq.gz files
     #[arg(
@@ -55,7 +67,7 @@ pub(crate) struct NewArgs {
         require_equals = true,
         help = "Specify regex to match raw read file names"
     )]
-    pub(crate) re_file: Option<String>,
+    pub re_file: Option<String>,
     /// Specify regex to match sample names
     /// Default used split by _ and - to match sample names
     #[arg(
@@ -63,5 +75,5 @@ pub(crate) struct NewArgs {
         require_equals = true,
         help = "Specify regex to match sample names"
     )]
-    pub(crate) re_sample: Option<String>,
+    pub re_sample: Option<String>,
 }
