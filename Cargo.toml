@@ -2,6 +2,13 @@
 name = "ullar"
 version = "0.1.0"
 edition = "2021"
+authors = ["Heru Handika <herubiolog@gmail.com>"]
+license = "MIT"
+description = "A high-performance, accessible phylogenomic pipeline"
+readme = "README.md"
+homepage = "https://github.com/hhandika/ullar"
+keywords = ["cli", "utility", "pipeline", "genomics", "phylogenomics"]
+categories = ["command-line-utilities", "science"]
 
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
