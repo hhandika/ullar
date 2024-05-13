@@ -8,7 +8,11 @@ use comfy_table::Table;
 
 use crate::{
     cli::args,
-    helper::{files::FileFinder, hasher::Hasher, utils},
+    helper::{
+        files::FileFinder,
+        hasher::{FileMetadata, Hasher},
+        utils,
+    },
     types::SupportedFormats,
 };
 
@@ -43,32 +47,40 @@ impl<'a> Sha256Executor<'a> {
         let files = self.find_files()?;
         spinner.set_message("Hashing files...");
         let hashes = Hasher::new(&files).sha256()?;
-        spinner.set_message("Generating output...");
+        spinner.finish_with_message(format!("{} Finished hashing files\n", "✔".green()));
         if self.is_stdout {
-            let mut table = Table::new();
-            table.set_header(vec!["File", "Size (Mb)", "SHA256"]);
-            for hash in &hashes {
-                table.add_row(vec![
-                    hash.path
-                        .file_name()
-                        .expect("Failed to get file name")
-                        .to_string_lossy()
-                        .to_string(),
-                    format!("{:.2}", hash.to_megabytes()),
-                    hash.sha256.to_string(),
-                ]);
-            }
-            println!("{table}");
+            self.write_stdout(&hashes);
         } else {
-            let output = self.create_output_path();
-            let mut writer = csv::Writer::from_path(&output)?;
-            for hash in hashes {
-                writer.serialize(hash)?;
-            }
-            writer.flush()?;
-            spinner.finish_with_message(format!("{} Finished hashing files\n", "✔".green()));
-            log::info!("SHA256 hashes written to: {}", output.display());
+            self.write_csv(&hashes)?;
         }
+        Ok(())
+    }
+
+    fn write_stdout(&self, hashes: &[FileMetadata]) {
+        let mut table = Table::new();
+        table.set_header(vec!["File", "Size (Mb)", "SHA256"]);
+        for hash in hashes {
+            table.add_row(vec![
+                hash.path
+                    .file_name()
+                    .expect("Failed to get file name")
+                    .to_string_lossy()
+                    .to_string(),
+                format!("{:.2}", hash.to_megabytes()),
+                hash.sha256.to_string(),
+            ]);
+        }
+        println!("{table}");
+    }
+
+    fn write_csv(&self, hashes: &[FileMetadata]) -> Result<(), Box<dyn std::error::Error>> {
+        let output = self.create_output_path();
+        let mut writer = csv::Writer::from_path(&output)?;
+        for hash in hashes {
+            writer.serialize(hash)?;
+        }
+        writer.flush()?;
+        log::info!("SHA256 hashes written to: {}", output.display());
         Ok(())
     }
 
