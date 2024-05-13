@@ -1,10 +1,15 @@
 //! Automatic file finder for all supported file types
 
 use std::{
+    collections::HashMap,
     fs,
-    io::Error,
+    io::{Error, Read},
     path::{Path, PathBuf},
+    sync::mpsc::channel,
 };
+
+use rayon::prelude::*;
+use sha2::{Digest, Sha256};
 
 use super::types::RawReadFormat;
 
@@ -33,6 +38,46 @@ impl<'a> ReadFinder<'a> {
         Ok(files)
     }
 }
+
+/// Hash a file using SHA256
+pub struct FileHasher<'a> {
+    /// Path to the file to hash
+    pub files: &'a [PathBuf],
+}
+
+impl<'a> FileHasher<'a> {
+    /// Initialize a new FileHasher instance
+    pub fn new(files: &'a [PathBuf]) -> Self {
+        Self { files }
+    }
+    /// Hash all files in the list in parallel
+    /// Returns a HashMap of file paths and their corresponding SHA256 hash
+    pub fn sha256(&self) -> Result<HashMap<PathBuf, String>, Error> {
+        let (tx, rx) = channel();
+
+        self.files.par_iter().for_each_with(tx, |tx, file| {
+            let hash = self.hash(file).expect("Failed to hash file");
+            tx.send((file.clone(), hash)).expect("Failed to send hash");
+        });
+        let file_hashes = rx.iter().collect::<HashMap<PathBuf, String>>();
+        Ok(file_hashes)
+    }
+
+    pub fn hash(&self, file_path: &Path) -> Result<String, Error> {
+        let file = fs::File::open(file_path)?;
+        let reader = std::io::BufReader::new(file);
+        let mut hasher = Sha256::new();
+
+        for byte in reader.bytes() {
+            hasher.update(&[byte?]);
+        }
+        let value = hasher.finalize();
+
+        Ok(format!("{:x}", value))
+    }
+}
+
+/// Create SHA256 hash of a file
 
 // Match fastq and fastq.gz files
 // It does all matching for now.

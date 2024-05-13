@@ -4,7 +4,10 @@ use std::{error::Error, path::PathBuf};
 
 use crate::{
     cli::args::NewArgs,
-    helper::{files::ReadFinder, types::RawReadFormat},
+    helper::{
+        files::{FileHasher, ReadFinder},
+        types::RawReadFormat,
+    },
 };
 
 #[allow(dead_code)]
@@ -33,8 +36,9 @@ impl<'a> NewExecutor<'a> {
         let file_format = RawReadFormat::Auto;
         let finder = ReadFinder::new(&self.dir, &file_format);
         let files = finder.find_files()?;
-        for file in files {
-            println!("{}", file.display());
+        let hashes = FileHasher::new(&files).sha256()?;
+        for (file, hash) in hashes {
+            println!("{}: {}", file.display(), hash);
         }
         Ok(())
     }
