@@ -45,7 +45,7 @@ impl<'a> Sha256Executor<'a> {
         let spinner = utils::create_spinner();
         spinner.set_message("Finding files...");
         let files = self.find_files()?;
-        spinner.set_message("Hashing files...");
+        spinner.set_message(format!("Generating SHA256 from {} files...", files.len()));
         let hashes = Hasher::new(&files).sha256()?;
         spinner.finish_with_message(format!("{} Finished hashing files\n", "✔".green()));
         if self.is_stdout {
