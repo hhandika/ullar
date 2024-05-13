@@ -2,4 +2,5 @@
 pub mod files;
 pub mod hasher;
 pub mod logs;
+pub mod regex;
 pub mod utils;

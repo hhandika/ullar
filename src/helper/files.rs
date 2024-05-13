@@ -6,9 +6,15 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use once_cell::sync::Lazy;
+use regex::Regex;
 use walkdir::WalkDir;
 
-use crate::types::SupportedFormats;
+use crate::{
+    helper::regex::{FASTA_REGEX, FASTQ_REGEX, NEXUS_REGEX, PHYLIP_REGEX, PLAIN_TEXT_REGEX},
+    re_match,
+    types::SupportedFormats,
+};
 
 /// Find all raw read files in the specified directory
 pub struct FileFinder<'a> {
@@ -49,24 +55,14 @@ impl<'a> FileFinder<'a> {
     }
 
     fn is_matching_file(&self, path: &Path) -> bool {
-        re_match(path, self.format)
+        match self.format {
+            SupportedFormats::Fastq => re_match!(FASTQ_REGEX, path),
+            SupportedFormats::Fasta => re_match!(FASTA_REGEX, path),
+            SupportedFormats::Nexus => re_match!(NEXUS_REGEX, path),
+            SupportedFormats::Phylip => re_match!(PHYLIP_REGEX, path),
+            SupportedFormats::PlainText => re_match!(PLAIN_TEXT_REGEX, path),
+        }
     }
-}
-
-/// Create SHA256 hash of a file
-
-// Match fastq and fastq.gz files
-// It does all matching for now.
-// Later, we will separate the matching for read 1, 2 and single end reads
-fn re_match(path: &Path, format: &SupportedFormats) -> bool {
-    let pattern = format.to_regex();
-    let re = regex::Regex::new(pattern).expect("Failed to compile regex");
-    let file_name = path.file_name().expect("Failed to get file name");
-    re.is_match(
-        file_name
-            .to_str()
-            .expect("Failed to convert file name to string"),
-    )
 }
 
 #[cfg(test)]
@@ -77,7 +73,8 @@ mod tests {
     fn test_re_match_fastq() {
         let path = Path::new("test.fastq");
         let format = SupportedFormats::Fastq;
-        assert_eq!(re_match(path, &format), true);
+        let finder = FileFinder::new(path, &format);
+        assert_eq!(finder.is_matching_file(path), true);
     }
 
     #[test]
@@ -97,7 +94,8 @@ mod tests {
         for path in paths {
             let path = Path::new(path);
             let format = SupportedFormats::Fastq;
-            assert_eq!(re_match(path, &format), true);
+            let finder = FileFinder::new(path, &format);
+            assert_eq!(finder.is_matching_file(path), true);
         }
     }
 
@@ -113,7 +111,8 @@ mod tests {
         for path in paths {
             let path = Path::new(path);
             let format = SupportedFormats::Fasta;
-            assert_eq!(re_match(path, &format), true);
+            let finder = FileFinder::new(path, &format);
+            assert_eq!(finder.is_matching_file(path), true);
         }
     }
 
