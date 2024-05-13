@@ -1,6 +1,8 @@
-# ullar
+# ULLAR
 
-ULLAR is an Ultrafast, scaLable, Accessible, and Reproducible pipeline for phylogenomics. Why do need another pipeline for phylogenomics? Our main reasons:
+![ci](https://github.com/hhandika/ullar/workflows/tests/badge.svg)
+
+ULLAR, named after _ular_ that means snakes in Indonesian/Malay, is an Ultrafast, scaLable, Accessible, and Reproducible pipeline for phylogenomics. Why do need another pipeline for phylogenomics? Our main reasons:
 
 ## Performance and Scalability
 
