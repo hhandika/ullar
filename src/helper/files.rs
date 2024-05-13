@@ -6,31 +6,50 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::types::RawReadFormat;
+use walkdir::WalkDir;
+
+use crate::types::SupportedFormats;
 
 /// Find all raw read files in the specified directory
-pub struct ReadFinder<'a> {
+pub struct FileFinder<'a> {
     /// Directory to search for raw read files
     pub dir: &'a Path,
     /// File format to search for
-    pub format: &'a RawReadFormat,
+    pub format: &'a SupportedFormats,
 }
 
-impl<'a> ReadFinder<'a> {
+impl<'a> FileFinder<'a> {
     /// Initialize a new ReadFinder instance
-    pub fn new(dir: &'a Path, format: &'a RawReadFormat) -> Self {
-        ReadFinder { dir, format }
+    pub fn new(dir: &'a Path, format: &'a SupportedFormats) -> Self {
+        FileFinder { dir, format }
     }
-    /// Create a new ReadFinder instance
+    /// Find all files in the directory
     pub fn find_files(&self) -> Result<Vec<PathBuf>, Error> {
         let files = fs::read_dir(self.dir)?
             .map(|entry| entry.map(|e| e.path()))
             .filter_map(|e| e.ok())
             .filter(|e| e.is_file())
-            .filter(|e| re_match_fastq(e))
-            .collect::<Vec<_>>();
+            .filter(|e| self.is_matching_file(e))
+            .collect::<Vec<PathBuf>>();
 
         Ok(files)
+    }
+
+    /// Find all files in a directory and its subdirectories
+    pub fn find_files_recursive(&self) -> Result<Vec<PathBuf>, Error> {
+        let files = WalkDir::new(self.dir)
+            .into_iter()
+            .filter_map(|e| e.ok())
+            .map(|e| e.path().to_path_buf())
+            .filter(|e| e.is_file())
+            .filter(|e| self.is_matching_file(e))
+            .collect::<Vec<PathBuf>>();
+
+        Ok(files)
+    }
+
+    fn is_matching_file(&self, path: &Path) -> bool {
+        re_match(path, self.format)
     }
 }
 
@@ -39,8 +58,8 @@ impl<'a> ReadFinder<'a> {
 // Match fastq and fastq.gz files
 // It does all matching for now.
 // Later, we will separate the matching for read 1, 2 and single end reads
-fn re_match_fastq(path: &Path) -> bool {
-    let pattern = r"(?i)(.fq|.fastq)(?:.*)";
+fn re_match(path: &Path, format: &SupportedFormats) -> bool {
+    let pattern = format.to_regex();
     let re = regex::Regex::new(pattern).expect("Failed to compile regex");
     let file_name = path.file_name().expect("Failed to get file name");
     re.is_match(
@@ -57,7 +76,8 @@ mod tests {
     #[test]
     fn test_re_match_fastq() {
         let path = Path::new("test.fastq");
-        assert_eq!(re_match_fastq(path), true);
+        let format = SupportedFormats::Fastq;
+        assert_eq!(re_match(path, &format), true);
     }
 
     #[test]
@@ -76,15 +96,32 @@ mod tests {
         ];
         for path in paths {
             let path = Path::new(path);
-            assert_eq!(re_match_fastq(path), true);
+            let format = SupportedFormats::Fastq;
+            assert_eq!(re_match(path, &format), true);
+        }
+    }
+
+    #[test]
+    fn test_re_match_all_fasta() {
+        let paths: Vec<&str> = vec![
+            "sample1.fasta",
+            "sample2.fa",
+            "sample3.fna",
+            "sample4.fsa",
+            "sample5.fas",
+        ];
+        for path in paths {
+            let path = Path::new(path);
+            let format = SupportedFormats::Fasta;
+            assert_eq!(re_match(path, &format), true);
         }
     }
 
     #[test]
     fn test_read_finder() {
         let dir = Path::new("tests/reads");
-        let format = RawReadFormat::Auto;
-        let finder = ReadFinder::new(dir, &format);
+        let format = SupportedFormats::Fastq;
+        let finder = FileFinder::new(dir, &format);
         let files = finder.find_files().expect("Failed to find files");
         assert_eq!(files.len(), 4);
     }

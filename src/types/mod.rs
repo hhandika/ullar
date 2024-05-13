@@ -64,6 +64,64 @@ impl FromStr for Task {
     }
 }
 
+/// Supported file formats
+/// Match file formats for generic file search
+#[derive(Debug, PartialEq, Clone, Copy, Eq)]
+pub enum SupportedFormats {
+    /// Fastq file format for raw reads
+    Fastq,
+    /// Fasta file format for contigs
+    /// reference sequences, and alignments
+    Fasta,
+    /// Nexus file format for alignments
+    Nexus,
+    /// Phylip file format for alignments
+    Phylip,
+    /// Any other plain text file format
+    /// e.g. for phylogenetic trees
+    PlainText,
+}
+
+impl SupportedFormats {
+    /// Match file format to regex
+    pub fn to_regex(&self) -> &'static str {
+        match self {
+            SupportedFormats::Fastq => r"(?i)(.fq|.fastq)(?:.*)",
+            SupportedFormats::Fasta => r"(?i)(.fa|.fasta|.fna|.fsa|.fas)(?:.*)",
+            SupportedFormats::Nexus => r"(\.nexus|\.nex|\.nxs)$",
+            SupportedFormats::Phylip => r"(\.phylip|\.phy|\.ph)$",
+            SupportedFormats::PlainText => r"(\.txt|\.text|\.log)$",
+        }
+    }
+}
+
+impl Display for SupportedFormats {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SupportedFormats::Fastq => write!(f, "fastq"),
+            SupportedFormats::Fasta => write!(f, "fasta"),
+            SupportedFormats::Nexus => write!(f, "nexus"),
+            SupportedFormats::Phylip => write!(f, "phylip"),
+            SupportedFormats::PlainText => write!(f, "text"),
+        }
+    }
+}
+
+impl FromStr for SupportedFormats {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "fastq" => Ok(SupportedFormats::Fastq),
+            "fasta" => Ok(SupportedFormats::Fasta),
+            "nexus" => Ok(SupportedFormats::Nexus),
+            "phylip" => Ok(SupportedFormats::Phylip),
+            "text" => Ok(SupportedFormats::PlainText),
+            _ => Err(format!("Unknown file format: {}", s)),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Clone, Copy, Eq)]
 pub enum RawReadFormat {
     /// Infer file format from file extension

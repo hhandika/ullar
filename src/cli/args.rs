@@ -1,4 +1,8 @@
-use clap::{crate_authors, crate_description, crate_name, crate_version, Args, Parser, Subcommand};
+use std::path::PathBuf;
+
+use clap::{
+    builder, crate_authors, crate_description, crate_name, crate_version, Args, Parser, Subcommand,
+};
 
 #[derive(Parser)]
 #[command(name = crate_name!(), version = crate_version!(), about = crate_description!(), author = crate_authors!())]
@@ -27,8 +31,8 @@ pub(crate) enum SubCommand {
     #[command(name = "new", about = "Initialize a new project")]
     New(NewArgs),
     /// Subcommand for utility functions
-    #[command(subcommand, name = "util", about = "Utility functions")]
-    Util(UtilSubCommand),
+    #[command(subcommand, name = "utils", about = "Utility functions")]
+    Utils(UtilSubCommand),
 }
 
 #[derive(Subcommand)]
@@ -47,7 +51,7 @@ pub struct NewArgs {
         default_value = "raw_reads",
         help = "Select a directory for the raw read location."
     )]
-    pub dir: String,
+    pub dir: PathBuf,
     /// Output directory for the config file
     #[arg(
         short,
@@ -55,7 +59,7 @@ pub struct NewArgs {
         default_value = "configs",
         help = "Select a directory for the config file."
     )]
-    pub output: String,
+    pub output: PathBuf,
     /// Split separator for sample names
     /// Default used '_'
     /// Example: sample1_R1.fastq.gz -> sample1
@@ -86,6 +90,9 @@ pub struct NewArgs {
         help = "Specify regex to match sample names"
     )]
     pub re_sample: Option<String>,
+    /// Search recursively for files
+    #[arg(long, help = "Search recursively for files")]
+    pub recursive: bool,
 }
 
 #[derive(Args)]
@@ -93,11 +100,25 @@ pub struct Sha256Args {
     /// Path to the file to hash
     /// Supports multiple files
     #[arg(short, long, help = "Input file(s) to hash")]
-    pub input: String,
+    pub dir: PathBuf,
+    /// Match file formats for generic file search
+    /// Support fastq, fasta, nexus, phylip, and plain text
+    #[arg(
+        short, 
+        long , 
+        help = "Specify input format",
+        value_parser = builder::PossibleValuesParser::new([
+            "fastq", "fasta", "nexus", "phylip", "text"
+        ])
+    )]
+    pub format: String,
     /// Output file for the hash
-    #[arg(short, long, help = "Output file for the hash")]
-    pub output: String,
+    #[arg(short, long, default_value = "sha256", help = "Output file for the hash")]
+    pub output: PathBuf,
     /// Use stdout for the output
     #[arg(long, help = "Use stdout for the output")]
     pub stdout: bool,
+    /// Find files recursively
+    #[arg(long, help = "Find files recursively")]
+    pub recursive: bool,
 }
