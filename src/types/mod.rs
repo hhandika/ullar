@@ -70,7 +70,7 @@ pub enum RawReadFormat {
     Auto,
     /// Fastq file format
     Fastq,
-    /// Compresed fastq file format
+    /// Compressed fastq file format
     FastqGz,
 }
 

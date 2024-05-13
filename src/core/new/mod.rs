@@ -3,7 +3,8 @@ use std::{error::Error, path::PathBuf};
 
 use crate::{
     cli::args::NewArgs,
-    helper::{files::ReadFinder, hasher::Hasher, types::RawReadFormat},
+    helper::{files::ReadFinder, hasher::Hasher},
+    types::RawReadFormat,
 };
 
 #[allow(dead_code)]
