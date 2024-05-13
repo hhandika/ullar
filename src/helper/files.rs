@@ -50,17 +50,6 @@ fn re_match_fastq(path: &Path) -> bool {
     )
 }
 
-// "sample1_R1.fastq",
-//         "sample1_R2.fastq",
-//         "sample1_singleton.fastq",
-//         "sample2_1.fastq.gz",
-//         "sample2_2.fastq.gz",
-//         "control3_read1.fastq.bz2",
-//         "control3_read2.fastq.bz2",
-//         "control3_singleton.fastq",
-//         "sample3_R1.fastq.xz",
-//         "sample3_R2.fastq.xz",
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -69,6 +58,26 @@ mod tests {
     fn test_re_match_fastq() {
         let path = Path::new("test.fastq");
         assert_eq!(re_match_fastq(path), true);
+    }
+
+    #[test]
+    fn test_re_match_all_fastq() {
+        let paths: Vec<&str> = vec![
+            "sample1_R1.fastq",
+            "sample1_R2.fastq",
+            "sample1_singleton.fastq",
+            "sample2_1.fastq.gz",
+            "sample2_2.fastq.gz",
+            "control3_read1.fastq.bz2",
+            "control3_read2.fastq.bz2",
+            "control3_singleton.fastq",
+            "sample3_R1.fastq.xz",
+            "sample3_R2.fastq.xz",
+        ];
+        for path in paths {
+            let path = Path::new(path);
+            assert_eq!(re_match_fastq(path), true);
+        }
     }
 
     #[test]
