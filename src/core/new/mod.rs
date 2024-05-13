@@ -1,4 +1,6 @@
 //! Init project
+mod reads;
+
 use std::{error::Error, path::Path};
 
 use comfy_table::Table;

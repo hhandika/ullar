@@ -82,19 +82,6 @@ pub enum SupportedFormats {
     PlainText,
 }
 
-impl SupportedFormats {
-    /// Match file format to regex
-    pub fn to_regex(&self) -> &'static str {
-        match self {
-            SupportedFormats::Fastq => r"(?i)(.fq|.fastq)(?:.*)",
-            SupportedFormats::Fasta => r"(?i)(.fa|.fasta|.fna|.fsa|.fas)(?:.*)",
-            SupportedFormats::Nexus => r"(\.nexus|\.nex|\.nxs)$",
-            SupportedFormats::Phylip => r"(\.phylip|\.phy|\.ph)$",
-            SupportedFormats::PlainText => r"(\.txt|\.text|\.log)$",
-        }
-    }
-}
-
 impl Display for SupportedFormats {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
