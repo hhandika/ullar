@@ -1,7 +1,7 @@
 mod cli;
+mod core;
 mod helper;
-mod new;
-mod utils;
+mod types;
 
 fn main() {
     cli::cli::parse_commands();

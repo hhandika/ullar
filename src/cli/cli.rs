@@ -4,7 +4,7 @@ use segul::helper::utils;
 use std::time::Instant;
 
 use super::args::{SubCommand, UllarCli};
-use crate::{helper, new::NewExecutor};
+use crate::{core::new::NewExecutor, helper};
 
 pub fn parse_commands() {
     let time = Instant::now();
