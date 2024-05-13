@@ -1,7 +1,7 @@
 //! Automatic file finder for all supported file types
 
 use std::{
-    collections::HashMap,
+    collections::BTreeMap,
     fs,
     io::{Error, Read},
     path::{Path, PathBuf},
@@ -52,14 +52,14 @@ impl<'a> FileHasher<'a> {
     }
     /// Hash all files in the list in parallel
     /// Returns a HashMap of file paths and their corresponding SHA256 hash
-    pub fn sha256(&self) -> Result<HashMap<PathBuf, String>, Error> {
+    pub fn sha256(&self) -> Result<BTreeMap<PathBuf, String>, Error> {
         let (tx, rx) = channel();
 
         self.files.par_iter().for_each_with(tx, |tx, file| {
             let hash = self.hash(file).expect("Failed to hash file");
             tx.send((file.clone(), hash)).expect("Failed to send hash");
         });
-        let file_hashes = rx.iter().collect::<HashMap<PathBuf, String>>();
+        let file_hashes = rx.iter().collect::<BTreeMap<PathBuf, String>>();
         Ok(file_hashes)
     }
 

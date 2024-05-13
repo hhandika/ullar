@@ -16,6 +16,9 @@ pub fn parse_commands() {
             let parser = NewExecutor::new(&new_args);
             parser.execute().expect("Failed to execute new command");
         }
+        SubCommand::Util(_) => {
+            log::warn!("Utility functions are not implemented yet");
+        }
     }
     let elapsed = time.elapsed();
     println!();

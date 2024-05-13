@@ -26,6 +26,16 @@ pub(crate) enum SubCommand {
     /// New subcommand to init a new project
     #[command(name = "new", about = "Initialize a new project")]
     New(NewArgs),
+    /// Subcommand for utility functions
+    #[command(subcommand, name = "util", about = "Utility functions")]
+    Util(UtilSubCommand),
+}
+
+#[derive(Subcommand)]
+pub(crate) enum UtilSubCommand {
+    /// Subcommand to hash files
+    #[command(name = "sha256", about = "Hash files")]
+    Sha256SubCommand(Sha256Args),
 }
 
 #[derive(Args)]
@@ -76,4 +86,18 @@ pub struct NewArgs {
         help = "Specify regex to match sample names"
     )]
     pub re_sample: Option<String>,
+}
+
+#[derive(Args)]
+pub struct Sha256Args {
+    /// Path to the file to hash
+    /// Supports multiple files
+    #[arg(short, long, help = "Input file(s) to hash")]
+    pub input: String,
+    /// Output file for the hash
+    #[arg(short, long, help = "Output file for the hash")]
+    pub output: String,
+    /// Use stdout for the output
+    #[arg(long, help = "Use stdout for the output")]
+    pub stdout: bool,
 }
