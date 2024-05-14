@@ -6,7 +6,7 @@ authors = ["Heru Handika <herubiolog@gmail.com>"]
 license = "MIT"
 description = "A high-performance, accessible phylogenomic pipeline"
 readme = "README.md"
-homepage = "https://github.com/hhandika/ullar"
+repository = "https://github.com/hhandika/ullar"
 keywords = ["cli", "utility", "pipeline", "genomics", "phylogenomics"]
 categories = ["command-line-utilities", "science"]
 
