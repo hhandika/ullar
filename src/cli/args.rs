@@ -11,11 +11,16 @@ pub struct UllarCli {
     #[command(subcommand)]
     /// Internal subcommands
     pub(crate) sub_cmd: SubCommand,
+    /// Log directory for the log file
     #[arg(
         long,
         default_value = "logs",
         help = "Select a directory for the log file."
     )]
+    /// Set using interactive mode
+    #[arg(long, help = "Set using interactive mode")]
+    pub(crate) interactive: bool,
+    /// Prefix for the log file
     pub(crate) log_dir: String,
     #[arg(
         long,
