@@ -1,4 +1,4 @@
-//! Misselaneous utility functions
+//! Miscellaneous utility functions
 use indicatif::ProgressBar;
 
 #[cfg(not(tarpaulin_include))]
