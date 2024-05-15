@@ -9,6 +9,7 @@ pub const PHYLIP_REGEX: &str = r"(\.phylip|\.phy|\.ph)$";
 pub const PLAIN_TEXT_REGEX: &str = r"(\.txt|\.text|\.log)$";
 
 /// Lazy static regex matcher
+///
 /// Matches a file name with a given pattern
 /// Returns true if the file name matches the pattern
 #[macro_export]

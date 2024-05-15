@@ -7,7 +7,7 @@ use clap::{
 #[derive(Parser)]
 #[command(name = crate_name!(), version = crate_version!(), about = crate_description!(), author = crate_authors!())]
 /// Main command line arguments
-pub(crate) struct UllarCli {
+pub struct UllarCli {
     #[command(subcommand)]
     /// Internal subcommands
     pub(crate) sub_cmd: SubCommand,

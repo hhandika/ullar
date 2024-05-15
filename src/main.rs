@@ -1,9 +1,4 @@
-use cli::cli::Cli;
-
-mod cli;
-mod core;
-mod helper;
-mod types;
+use ullar::cli::cli::Cli;
 
 fn main() {
     Cli::new().parse();
