@@ -23,7 +23,8 @@ impl<'a> Hasher<'a> {
         Self { files }
     }
     /// Hash all files in the list in parallel
-    /// Returns a HashMap of file paths and their corresponding SHA256 hash
+    /// Returns a vector of FileMetadata instances
+    /// containing the file path, size, and SHA256 hash
     pub fn sha256(&self) -> Result<Vec<FileMetadata>, Error> {
         let (tx, rx) = channel();
 
@@ -37,6 +38,8 @@ impl<'a> Hasher<'a> {
         Ok(file_hashes)
     }
 
+    /// Generate SHA256 hash of a file
+    /// Returns the hash as a string
     pub fn generate_sha256(&self, file_path: &Path) -> Result<String, Error> {
         let file = fs::File::open(file_path)?;
         let reader = std::io::BufReader::new(file);
@@ -75,6 +78,7 @@ impl FileMetadata {
         Self { path, size, sha256 }
     }
 
+    /// Convert file size to megabytes
     pub fn to_megabytes(&self) -> f64 {
         self.size as f64 / 1024.0 / 1024.0
     }
