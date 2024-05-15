@@ -1,12 +1,9 @@
 //! Miscellaneous utility functions
-use indicatif::ProgressBar;
+use indicatif::{ProgressBar, ProgressStyle};
+use std::time::Duration;
 
 #[cfg(not(tarpaulin_include))]
 pub fn create_spinner() -> ProgressBar {
-    use std::time::Duration;
-
-    use indicatif::{ProgressBar, ProgressStyle};
-
     let spin = ProgressBar::new_spinner();
     let duration: Duration = Duration::from_millis(150);
     spin.enable_steady_tick(duration);
