@@ -35,6 +35,18 @@ pub enum SampleNameFormat {
     Custom(String),
 }
 
+impl std::str::FromStr for SampleNameFormat {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "simple" => Ok(Self::Simple),
+            "descriptive" => Ok(Self::Descriptive),
+            _ => Ok(Self::Custom(s.to_string())),
+        }
+    }
+}
+
 pub struct ReadAssignment<'a> {
     pub files: &'a [PathBuf],
     pub name_format: &'a SampleNameFormat,
@@ -51,10 +63,8 @@ impl<'a> ReadAssignment<'a> {
     }
 
     pub fn assign_reads(&mut self) {
-        let pattern = self.get_pattern();
-
         for file in self.files {
-            let sample_name = self.get_sample_name(file, pattern);
+            let sample_name = self.get_sample_name(file);
             self.file_map
                 .entry(sample_name)
                 .or_insert_with(Vec::new)
@@ -62,15 +72,11 @@ impl<'a> ReadAssignment<'a> {
         }
     }
 
-    fn get_pattern(&self) -> &'a str {
-        match self.name_format {
-            SampleNameFormat::Simple => SIMPLE_NAME_REGEX,
-            SampleNameFormat::Descriptive => DESCRIPTIVE_NAME_REGEX,
-            SampleNameFormat::Custom(pattern) => pattern,
-        }
+    pub fn file_map(&self) -> &HashMap<String, Vec<PathBuf>> {
+        &self.file_map
     }
 
-    fn get_sample_name(&self, file: &PathBuf, pattern: &str) -> String {
+    fn get_sample_name(&self, file: &PathBuf) -> String {
         let capture = match self.name_format {
             SampleNameFormat::Simple => re_capture_lazy!(SIMPLE_NAME_REGEX, file),
             SampleNameFormat::Descriptive => re_capture_lazy!(DESCRIPTIVE_NAME_REGEX, file),
@@ -80,7 +86,7 @@ impl<'a> ReadAssignment<'a> {
         match capture {
             Some(capture_text) => {
                 let mut capture = capture_text.to_string();
-                if self.name_format == &SampleNameFormat::Simple {
+                if self.name_format == &SampleNameFormat::Descriptive {
                     self.pop_last_character(&mut capture);
                 }
                 capture

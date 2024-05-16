@@ -11,15 +11,15 @@ pub struct UllarCli {
     #[command(subcommand)]
     /// Internal subcommands
     pub(crate) sub_cmd: SubCommand,
+    /// Set using interactive mode
+    #[arg(long, help = "Set using interactive mode")]
+    pub(crate) interactive: bool,
     /// Log directory for the log file
     #[arg(
         long,
         default_value = "logs",
         help = "Select a directory for the log file."
     )]
-    /// Set using interactive mode
-    #[arg(long, help = "Set using interactive mode")]
-    pub(crate) interactive: bool,
     /// Prefix for the log file
     pub(crate) log_dir: String,
     #[arg(
@@ -70,6 +70,17 @@ pub struct NewArgs {
     /// Example: sample1_R1.fastq.gz -> sample1
     #[arg(short, long, help = "Split separator for sample names")]
     pub separator: Option<String>,
+    /// Sample name format
+    /// Default used simple name format
+    /// where only the first word is captured
+    /// Example: sample1_R1.fastq.gz -> sample1
+    #[arg(
+        long,
+        default_value = "simple",
+        help = "Sample name format",
+        value_parser = builder::PossibleValuesParser::new(["simple", "descriptive"])
+    )]
+    pub sample_name: String,
     /// Word length for sample names
     /// Default used 3: genus_species_museumNumber
     #[arg(
@@ -84,11 +95,11 @@ pub struct NewArgs {
     #[arg(
         long,
         require_equals = true,
-        help = "Specify regex to match raw read file names"
+        help = "Specify file extension to match raw read files. Support regex."
     )]
-    pub re_file: Option<String>,
+    pub extension: Option<String>,
     /// Specify regex to match sample names
-    /// Default used split by _ and - to match sample names
+    /// Default used internal regex based on name format.
     #[arg(
         long,
         require_equals = true,

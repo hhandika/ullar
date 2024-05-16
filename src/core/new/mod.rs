@@ -5,11 +5,9 @@ use std::{error::Error, path::Path};
 
 use comfy_table::Table;
 
-use crate::{
-    cli::args::NewArgs,
-    helper::{files::FileFinder, hasher::Hasher},
-    types::SupportedFormats,
-};
+use crate::{cli::args::NewArgs, helper::files::FileFinder, types::SupportedFormats};
+
+use self::reads::{ReadAssignment, SampleNameFormat};
 
 #[allow(dead_code)]
 pub struct NewExecutor<'a> {
@@ -20,6 +18,7 @@ pub struct NewExecutor<'a> {
     re_file: Option<&'a str>,
     re_sample: Option<&'a str>,
     is_recursive: bool,
+    sample_name_format: SampleNameFormat,
 }
 
 impl<'a> NewExecutor<'a> {
@@ -29,35 +28,34 @@ impl<'a> NewExecutor<'a> {
             output: args.output.as_path(),
             separator: args.separator.as_deref(),
             length: args.length,
-            re_file: args.re_file.as_deref(),
+            re_file: args.extension.as_deref(),
             re_sample: args.re_sample.as_deref(),
             is_recursive: args.recursive,
+            sample_name_format: args
+                .sample_name
+                .parse::<SampleNameFormat>()
+                .unwrap_or(SampleNameFormat::Simple),
         }
     }
 
     pub fn execute(&self) -> Result<(), Box<dyn Error>> {
         let file_format = SupportedFormats::Fastq;
-        let finder = FileFinder::new(&self.dir, &file_format);
-        let files = if self.is_recursive {
-            finder.find_files_recursive()?
-        } else {
-            finder.find_files()?
-        };
-        let hashes = Hasher::new(&files).sha256()?;
+        let files = FileFinder::new(self.dir, &file_format)
+            .find_files()
+            .expect("Failed to find files");
+
+        let mut assigner = ReadAssignment::new(&files, &self.sample_name_format);
+        assigner.assign_reads();
+
         let mut table = Table::new();
-        table.set_header(vec!["File", "Size (Mb)", "SHA256"]);
-        for hash in hashes {
-            table.add_row(vec![
-                hash.path
-                    .file_name()
-                    .expect("Failed to get file name")
-                    .to_string_lossy()
-                    .to_string(),
-                format!("{:.2}", hash.to_megabytes()),
-                hash.sha256,
-            ]);
+        table.set_header(vec!["Sample Name", "Reads"]);
+
+        for (sample_name, reads) in assigner.file_map() {
+            table.add_row(vec![sample_name, &format!("{:?}", reads)]);
         }
-        println!("{table}");
+
+        println!("{}", table);
+
         Ok(())
     }
 }
