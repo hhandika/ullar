@@ -39,7 +39,13 @@ pub const SIMPLE_NAME_REGEX: &str = r"(^[a-zA-Z0-9]+)";
 /// - genus_species
 /// - genus_species_locality
 /// - genus_species_locality_museumNo12345
-pub const DESCRIPTIVE_NAME_REGEX: &str = r"^(\w+)(_|-)([a-zA-Z0-9]+)(?:_|-)"; // Modified regex
+pub const DESCRIPTIVE_NAME_REGEX: &str = r"^(\w+)(_|-)([a-zA-Z0-9]+)(?:_|-)";
+
+/// Match Read 1 from file name
+pub const READ1_REGEX: &str = r"^(.+?)(_|-)(?i)(R1|1|read1|read_1|read-1)(?:.*)$";
+
+/// Match Read 2 from file name
+pub const READ2_REGEX: &str = r"^(.+?)(_|-)(?i)(R2|2|read2|read_2|read-2)(?:.*)$";
 
 /// Lazy static regex matcher
 ///
@@ -122,7 +128,7 @@ mod tests {
         ];
         for path in paths {
             let path = Path::new(path);
-            assert_eq!(re_match!(FASTQ_REGEX, path), true);
+            assert!(re_match!(FASTQ_REGEX, path));
         }
     }
 
@@ -169,5 +175,22 @@ mod tests {
             sample_name.pop();
             assert_eq!(sample_name, sample_names[i]);
         });
+    }
+
+    #[test]
+    fn match_read1() {
+        let paths: Vec<&str> = vec![
+            "sample1_R1.fastq",
+            "sample2_1.fastq.gz",
+            "control3_read1.fastq.bz2",
+            "species_genus_1.fastq",
+            "species_genus_1.fastq.gz",
+            "species_genus_museumNo20123_R1_002.fastq.xz",
+        ];
+
+        for path in paths {
+            let file = Path::new(path);
+            assert!(re_match!(READ1_REGEX, file));
+        }
     }
 }
