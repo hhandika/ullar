@@ -1,13 +1,10 @@
-//! Init project
-mod reads;
-
+//! Implementation of the `new` subcommand.
 use std::{error::Error, path::Path};
 
 use comfy_table::Table;
 
+use crate::helper::reads::{ReadAssignment, SampleNameFormat};
 use crate::{cli::args::NewArgs, helper::files::FileFinder, types::SupportedFormats};
-
-use self::reads::{ReadAssignment, SampleNameFormat};
 
 #[allow(dead_code)]
 pub struct NewExecutor<'a> {
@@ -44,14 +41,18 @@ impl<'a> NewExecutor<'a> {
             .find_files()
             .expect("Failed to find files");
 
-        let mut assigner = ReadAssignment::new(&files, &self.sample_name_format);
-        assigner.assign_reads();
+        let reads = ReadAssignment::new(&files, &self.sample_name_format).assign();
 
         let mut table = Table::new();
-        table.set_header(vec!["Sample Name", "Reads"]);
+        table.set_header(vec!["Sample Name", "Read1", "Read2", "Singletons"]);
 
-        for (sample_name, reads) in assigner.file_map() {
-            table.add_row(vec![sample_name, &format!("{:?}", reads)]);
+        for (sample_name, reads) in reads {
+            table.add_row(vec![
+                sample_name,
+                reads.read_1.to_string(),
+                reads.read_2.unwrap_or_default(),
+                reads.singletons.unwrap_or_default(),
+            ]);
         }
 
         println!("{}", table);
