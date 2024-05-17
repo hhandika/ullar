@@ -40,7 +40,7 @@ impl<'a> Sha256Executor<'a> {
     }
 
     pub fn execute(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let spinner = utils::create_spinner();
+        let spinner = utils::init_spinner();
         spinner.set_message("Finding files...");
         let files = self.find_files()?;
         spinner.set_message(format!("Generating SHA256 from {} files...", files.len()));

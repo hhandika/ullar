@@ -1,13 +1,14 @@
 //! Match file path to FASTQ reads
 
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::HashMap,
     path::{Path, PathBuf},
 };
 
 use once_cell::sync::Lazy;
+use rayon::prelude::*;
 use regex::Regex;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     helper::regex::{DESCRIPTIVE_NAME_REGEX, READ1_REGEX, READ2_REGEX, SIMPLE_NAME_REGEX},
@@ -61,9 +62,10 @@ impl<'a> ReadAssignment<'a> {
         Self { files, name_format }
     }
 
-    pub fn assign(&self) -> BTreeMap<String, FastqReads> {
+    pub fn assign(&self) -> Vec<FastqReads> {
         let file_map = self.read();
-        let reads = self.match_reads(file_map);
+        let mut reads = self.match_reads(file_map);
+        reads.par_sort_by(|a, b| a.sample_name.cmp(&b.sample_name));
         reads
     }
 
@@ -79,15 +81,15 @@ impl<'a> ReadAssignment<'a> {
         file_map
     }
 
-    fn match_reads(&self, file_map: HashMap<String, Vec<PathBuf>>) -> BTreeMap<String, FastqReads> {
+    fn match_reads(&self, file_map: HashMap<String, Vec<PathBuf>>) -> Vec<FastqReads> {
         file_map
             .into_iter()
             .map(|(k, v)| {
                 let mut reads = FastqReads::new();
-                reads.match_all(&v);
-                (k, reads)
+                reads.match_all(k, &v);
+                reads
             })
-            .collect::<BTreeMap<String, FastqReads>>()
+            .collect::<Vec<FastqReads>>()
     }
 
     fn get_sample_name(&self, file: &PathBuf) -> String {
@@ -122,9 +124,10 @@ impl<'a> ReadAssignment<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Eq, Serialize)]
+#[derive(Debug, PartialEq, Clone, Eq, Serialize, Deserialize)]
 pub struct FastqReads {
     pub parent_path: PathBuf,
+    pub sample_name: String,
     pub read_1: String,
     pub read_2: Option<String>,
     pub singletons: Option<String>,
@@ -135,14 +138,16 @@ impl FastqReads {
     pub fn new() -> Self {
         Self {
             parent_path: PathBuf::new(),
+            sample_name: String::new(),
             read_1: String::new(),
             read_2: None,
             singletons: None,
         }
     }
 
-    pub fn match_all(&mut self, reads: &[PathBuf]) {
+    pub fn match_all(&mut self, sample_name: String, reads: &[PathBuf]) {
         self.check_reads(reads.len());
+        self.sample_name = sample_name;
         reads.iter().for_each(|r| {
             self.parent_path = r.parent().unwrap_or(Path::new(".")).to_path_buf();
             self.match_read(r);
