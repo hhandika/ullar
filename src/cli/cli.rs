@@ -3,11 +3,11 @@ use segul::helper::utils;
 
 use std::time::Instant;
 
-use super::args::{SubCommand, UllarCli, UtilSubCommand};
+use super::args::{ScannerSubcommand, SubCommand, UllarCli, UtilSubCommand};
 use crate::{
     core::{
         new::NewExecutor,
-        utils::{scan::ScanExecutor, sha256::Sha256Executor},
+        utils::{scan::ReadScanner, sha256::Sha256Executor},
     },
     helper,
 };
@@ -48,9 +48,17 @@ impl Cli {
                 let parser = Sha256Executor::new(&sha256_args);
                 parser.execute().expect("Failed to execute sha256 command");
             }
-            UtilSubCommand::ScanSubCommand(scan_args) => {
-                let parser = ScanExecutor::new(&scan_args);
-                parser.execute().expect("Failed to execute scan command");
+            UtilSubCommand::ScanSubCommand(scan_subcommand) => {
+                self.parse_read_scan(scan_subcommand)
+            }
+        }
+    }
+
+    fn parse_read_scan(&self, scan_args: &ScannerSubcommand) {
+        match scan_args {
+            ScannerSubcommand::ReadSubCommand(read_args) => {
+                let parser = ReadScanner::new(&read_args);
+                parser.scan().expect("Failed to execute read scan command");
             }
         }
     }
