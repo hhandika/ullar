@@ -1,18 +1,15 @@
 //! A scan command executor
-use std::{
-    collections::BTreeMap,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use colored::Colorize;
 use comfy_table::Table;
-use segul::helper::utils;
 
 use crate::{
     cli::args::ReadScanArgs,
     helper::{
         files::{FileFinder, CSV_EXT},
         reads::{FastqReads, ReadAssignment, SampleNameFormat},
+        utils,
     },
     types::SupportedFormats,
 };
@@ -40,7 +37,7 @@ impl<'a> ReadScanner<'a> {
     }
 
     pub fn scan(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let spinner = utils::set_spinner();
+        let spinner = utils::init_spinner();
         spinner.set_message("Scanning FASTQ reads...");
         let format = SupportedFormats::Fastq;
         let files = self.find_files(&format);
@@ -57,12 +54,12 @@ impl<'a> ReadScanner<'a> {
         Ok(())
     }
 
-    fn write_stdout(&self, records: &BTreeMap<String, FastqReads>) {
+    fn write_stdout(&self, records: &[FastqReads]) {
         let mut table = Table::new();
         table.set_header(vec!["Sample Name", "Read1", "Read2", "Singletons"]);
-        for (sample_name, reads) in records {
+        for reads in records {
             table.add_row(vec![
-                sample_name,
+                &reads.sample_name,
                 &reads.read_1,
                 reads.read_2.as_ref().unwrap_or(&"".to_string()),
                 &reads.singletons.as_ref().unwrap_or(&"".to_string()),
@@ -71,15 +68,17 @@ impl<'a> ReadScanner<'a> {
         println!("{table}");
     }
 
-    fn write_csv(
-        &self,
-        records: &BTreeMap<String, FastqReads>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    fn write_csv(&self, records: &[FastqReads]) -> Result<(), Box<dyn std::error::Error>> {
         let output_path = self.output.with_extension(CSV_EXT);
         let mut writer = csv::Writer::from_path(&output_path)?;
         writer.write_record(&["sample_name", "read1", "read2", "singletons"])?;
-        for (sample_name, reads) in records {
-            writer.serialize((sample_name, &reads.read_1, &reads.read_2, &reads.singletons))?;
+        for reads in records {
+            writer.serialize((
+                &reads.sample_name,
+                &reads.read_1,
+                &reads.read_2,
+                &reads.singletons,
+            ))?;
         }
         writer.flush()?;
         log::info!("FASTQ reads written to: {}", output_path.display());
