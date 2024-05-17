@@ -45,6 +45,9 @@ pub(crate) enum UtilSubCommand {
     /// Subcommand to hash files
     #[command(name = "sha256", about = "Hash files")]
     Sha256SubCommand(Sha256Args),
+    /// Scan directory for files
+    #[command(name = "scan", about = "Scan directory for files")]
+    ScanSubCommand(ScanArgs),
 }
 
 #[derive(Args)]
@@ -137,4 +140,40 @@ pub struct Sha256Args {
     /// Find files recursively
     #[arg(long, help = "Find files recursively")]
     pub recursive: bool,
+}
+
+#[derive(Args)]
+pub struct ScanArgs {
+    /// Path to the directory to scan
+    #[arg(short, long, help = "Input directory to scan")]
+    pub dir: PathBuf,
+    /// Match file formats for generic file search
+    /// Support fastq, fasta, nexus, phylip, and plain text
+    #[arg( 
+        long , 
+        default_value = "read",
+        help = "Specify data type for the scan",
+        value_parser = builder::PossibleValuesParser::new([
+            "read", "contig", "alignment", "tree"
+        ])
+    )]
+    pub datatype: String,
+    /// Output file for the scan
+    #[arg(short, long, default_value = "scan", help = "Output file for the scan")]
+    pub output: PathBuf,
+    /// Use stdout for the output
+    #[arg(long, help = "Use stdout for the output")]
+    pub stdout: bool,
+    /// Find files recursively
+    #[arg(long, help = "Find files recursively")]
+    pub recursive: bool,
+    /// Sample name format for matching reads
+    /// Default used simple name format
+    #[arg(
+        long,
+        default_value = "simple",
+        help = "Sample name format",
+        value_parser = builder::PossibleValuesParser::new(["simple", "descriptive"])
+    )]
+    pub sample_name: String,
 }

@@ -5,7 +5,10 @@ use std::time::Instant;
 
 use super::args::{SubCommand, UllarCli, UtilSubCommand};
 use crate::{
-    core::{new::NewExecutor, utils::sha256::Sha256Executor},
+    core::{
+        new::NewExecutor,
+        utils::{scan::ScanExecutor, sha256::Sha256Executor},
+    },
     helper,
 };
 
@@ -44,6 +47,10 @@ impl Cli {
             UtilSubCommand::Sha256SubCommand(sha256_args) => {
                 let parser = Sha256Executor::new(&sha256_args);
                 parser.execute().expect("Failed to execute sha256 command");
+            }
+            UtilSubCommand::ScanSubCommand(scan_args) => {
+                let parser = ScanExecutor::new(&scan_args);
+                parser.execute().expect("Failed to execute scan command");
             }
         }
     }

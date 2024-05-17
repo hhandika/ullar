@@ -29,8 +29,19 @@ impl<'a> FileFinder<'a> {
     pub fn new(dir: &'a Path, format: &'a SupportedFormats) -> Self {
         FileFinder { dir, format }
     }
-    /// Find all files in the directory
-    pub fn find_files(&self) -> Result<Vec<PathBuf>, Error> {
+
+    /// Find files in the directory
+    /// If is_recursive is true, find files in the directory and its subdirectories
+    /// Otherwise, find files in the directory only
+    pub fn find(&self, is_recursive: bool) -> Result<Vec<PathBuf>, Error> {
+        if is_recursive {
+            self.find_files_recursive()
+        } else {
+            self.find_files()
+        }
+    }
+
+    fn find_files(&self) -> Result<Vec<PathBuf>, Error> {
         let files = fs::read_dir(self.dir)?
             .map(|entry| entry.map(|e| e.path()))
             .filter_map(|e| e.ok())
@@ -41,8 +52,7 @@ impl<'a> FileFinder<'a> {
         Ok(files)
     }
 
-    /// Find all files in a directory and its subdirectories
-    pub fn find_files_recursive(&self) -> Result<Vec<PathBuf>, Error> {
+    fn find_files_recursive(&self) -> Result<Vec<PathBuf>, Error> {
         let files = WalkDir::new(self.dir)
             .into_iter()
             .filter_map(|e| e.ok())
