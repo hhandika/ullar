@@ -8,6 +8,7 @@ use std::{
 
 use once_cell::sync::Lazy;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
 use crate::{
@@ -74,6 +75,39 @@ impl<'a> FileFinder<'a> {
             SupportedFormats::Phylip => re_match!(PHYLIP_REGEX, path),
             SupportedFormats::PlainText => re_match!(PLAIN_TEXT_REGEX, path),
         }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct FileMetadata {
+    pub file_name: String,
+    pub parent_dir: PathBuf,
+    pub file_size: u64,
+    pub file_type: String,
+    pub sha256: String,
+}
+
+impl FileMetadata {
+    pub fn new() -> Self {
+        Self {
+            file_name: String::new(),
+            parent_dir: PathBuf::new(),
+            file_size: 0,
+            file_type: String::new(),
+            sha256: String::new(),
+        }
+    }
+
+    pub fn get(&mut self, path: &Path) {
+        let file = fs::metadata(path).expect("Failed to get file metadata");
+        self.file_name = path
+            .file_name()
+            .expect("Failed to get file name")
+            .to_str()
+            .expect("Failed to convert file name to string")
+            .to_string();
+        self.parent_dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
+        self.file_size = file.len();
     }
 }
 

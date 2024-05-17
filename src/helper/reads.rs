@@ -128,8 +128,11 @@ impl<'a> ReadAssignment<'a> {
 pub struct FastqReads {
     pub parent_path: PathBuf,
     pub sample_name: String,
-    pub read_1: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub read_1: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub read_2: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub singletons: Option<String>,
 }
 
@@ -139,7 +142,7 @@ impl FastqReads {
         Self {
             parent_path: PathBuf::new(),
             sample_name: String::new(),
-            read_1: String::new(),
+            read_1: None,
             read_2: None,
             singletons: None,
         }
@@ -161,7 +164,7 @@ impl FastqReads {
             .to_str()
             .expect("Failed to convert file name to string");
         if re_match!(READ1_REGEX, file_path) {
-            self.read_1 = file_name.to_string();
+            self.read_1 = Some(file_name.to_string());
         } else if re_match!(READ2_REGEX, file_path) {
             self.read_2 = Some(file_name.to_string());
         } else {
