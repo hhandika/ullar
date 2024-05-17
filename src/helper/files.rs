@@ -16,6 +16,8 @@ use crate::{
     types::SupportedFormats,
 };
 
+pub const CSV_EXT: &str = "csv";
+
 /// Find all raw read files in the specified directory
 pub struct FileFinder<'a> {
     /// Directory to search for raw read files

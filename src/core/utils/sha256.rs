@@ -9,14 +9,12 @@ use comfy_table::Table;
 use crate::{
     cli::args,
     helper::{
-        files::FileFinder,
+        files::{FileFinder, CSV_EXT},
         hasher::{FileSha256, Hasher},
         utils,
     },
     types::SupportedFormats,
 };
-
-const CSV_EXT: &str = "csv";
 
 /// Execute sha256 generation command
 pub struct Sha256Executor<'a> {

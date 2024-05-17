@@ -7,6 +7,7 @@ use std::{
 
 use once_cell::sync::Lazy;
 use regex::Regex;
+use serde::Serialize;
 
 use crate::{
     helper::regex::{DESCRIPTIVE_NAME_REGEX, READ1_REGEX, READ2_REGEX, SIMPLE_NAME_REGEX},
@@ -121,7 +122,7 @@ impl<'a> ReadAssignment<'a> {
     }
 }
 
-#[allow(dead_code)]
+#[derive(Debug, PartialEq, Clone, Eq, Serialize)]
 pub struct FastqReads {
     pub parent_path: PathBuf,
     pub read_1: String,
