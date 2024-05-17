@@ -10,7 +10,7 @@ use crate::{
     cli::args,
     helper::{
         files::FileFinder,
-        hasher::{FileMetadata, Hasher},
+        hasher::{FileSha256, Hasher},
         utils,
     },
     types::SupportedFormats,
@@ -56,7 +56,7 @@ impl<'a> Sha256Executor<'a> {
         Ok(())
     }
 
-    fn write_stdout(&self, hashes: &[FileMetadata]) {
+    fn write_stdout(&self, hashes: &[FileSha256]) {
         let mut table = Table::new();
         table.set_header(vec!["File", "Size (Mb)", "SHA256"]);
         for hash in hashes {
@@ -73,7 +73,7 @@ impl<'a> Sha256Executor<'a> {
         println!("{table}");
     }
 
-    fn write_csv(&self, hashes: &[FileMetadata]) -> Result<(), Box<dyn std::error::Error>> {
+    fn write_csv(&self, hashes: &[FileSha256]) -> Result<(), Box<dyn std::error::Error>> {
         let output = self.create_output_path();
         let mut writer = csv::Writer::from_path(&output)?;
         for hash in hashes {
@@ -85,12 +85,7 @@ impl<'a> Sha256Executor<'a> {
     }
 
     fn find_files(&self) -> Result<Vec<PathBuf>, Error> {
-        let finder = FileFinder::new(&self.dir, &self.format);
-        let files = if self.is_recursive {
-            finder.find_files_recursive()?
-        } else {
-            finder.find_files()?
-        };
+        let files = FileFinder::new(&self.dir, &self.format).find(self.is_recursive)?;
         Ok(files)
     }
 

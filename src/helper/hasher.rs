@@ -25,7 +25,7 @@ impl<'a> Hasher<'a> {
     /// Hash all files in the list in parallel
     /// Returns a vector of FileMetadata instances
     /// containing the file path, size, and SHA256 hash
-    pub fn sha256(&self) -> Result<Vec<FileMetadata>, Error> {
+    pub fn sha256(&self) -> Result<Vec<FileSha256>, Error> {
         let (tx, rx) = channel();
 
         self.files.par_iter().for_each_with(tx, |tx, file| {
@@ -34,7 +34,7 @@ impl<'a> Hasher<'a> {
                 .expect("Failed to hash file");
             tx.send(meta).expect("Failed to send hash");
         });
-        let file_hashes = rx.iter().collect::<Vec<FileMetadata>>();
+        let file_hashes = rx.iter().collect::<Vec<FileSha256>>();
         Ok(file_hashes)
     }
 
@@ -52,10 +52,10 @@ impl<'a> Hasher<'a> {
         Ok(format!("{:x}", value))
     }
 
-    fn generate_meta_sha256(&self, file_path: &Path) -> Result<FileMetadata, Error> {
+    fn generate_meta_sha256(&self, file_path: &Path) -> Result<FileSha256, Error> {
         let size = file_path.metadata()?.len();
         let sha256 = self.generate_sha256(file_path)?;
-        let meta = FileMetadata::new(file_path.to_path_buf(), size, sha256);
+        let meta = FileSha256::new(file_path.to_path_buf(), size, sha256);
         Ok(meta)
     }
 }
@@ -63,7 +63,7 @@ impl<'a> Hasher<'a> {
 /// File metadata
 /// Includes file path, size, and SHA256 hash
 #[derive(Serialize)]
-pub struct FileMetadata {
+pub struct FileSha256 {
     /// Path to the file
     pub path: PathBuf,
     /// Size of the file in bytes
@@ -72,7 +72,7 @@ pub struct FileMetadata {
     pub sha256: String,
 }
 
-impl FileMetadata {
+impl FileSha256 {
     /// Initialize a new FileMeta instance
     pub fn new(path: PathBuf, size: u64, sha256: String) -> Self {
         Self { path, size, sha256 }

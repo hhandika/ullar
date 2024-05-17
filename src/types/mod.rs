@@ -64,6 +64,45 @@ impl FromStr for Task {
     }
 }
 
+/// Supported data types
+/// Match data types for task execution
+#[derive(Debug, PartialEq, Clone, Copy, Eq)]
+pub enum SupportedDataTypes {
+    /// Raw reads data type
+    RawReads,
+    /// Contigs data type
+    Contigs,
+    /// Aligned loci data type
+    Alignment,
+    /// Phylogenetic tree data type
+    Tree,
+}
+
+impl Display for SupportedDataTypes {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SupportedDataTypes::RawReads => write!(f, "read"),
+            SupportedDataTypes::Contigs => write!(f, "contig"),
+            SupportedDataTypes::Alignment => write!(f, "alignment"),
+            SupportedDataTypes::Tree => write!(f, "tree"),
+        }
+    }
+}
+
+impl FromStr for SupportedDataTypes {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "read" => Ok(SupportedDataTypes::RawReads),
+            "contig" => Ok(SupportedDataTypes::Contigs),
+            "alignment" => Ok(SupportedDataTypes::Alignment),
+            "tree" => Ok(SupportedDataTypes::Tree),
+            _ => Err(format!("Unknown data type: {}", s)),
+        }
+    }
+}
+
 /// Supported file formats
 /// Match file formats for generic file search
 #[derive(Debug, PartialEq, Clone, Copy, Eq)]
