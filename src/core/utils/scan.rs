@@ -9,32 +9,27 @@ use comfy_table::Table;
 use segul::helper::utils;
 
 use crate::{
-    cli::args::ScanArgs,
+    cli::args::ReadScanArgs,
     helper::{
         files::{FileFinder, CSV_EXT},
         reads::{FastqReads, ReadAssignment, SampleNameFormat},
     },
-    types::{SupportedDataTypes, SupportedFormats},
+    types::SupportedFormats,
 };
 
-pub struct ScanExecutor<'a> {
+pub struct ReadScanner<'a> {
     dir: &'a Path,
     output: &'a Path,
-    datatype: SupportedDataTypes,
     is_stdout: bool,
     is_recursive: bool,
     sample_name_format: SampleNameFormat,
 }
 
-impl<'a> ScanExecutor<'a> {
-    pub fn new(args: &'a ScanArgs) -> Self {
+impl<'a> ReadScanner<'a> {
+    pub fn new(args: &'a ReadScanArgs) -> Self {
         Self {
             dir: args.dir.as_path(),
             output: args.output.as_path(),
-            datatype: args
-                .datatype
-                .parse::<SupportedDataTypes>()
-                .expect("Failed to parse format"),
             is_stdout: args.stdout,
             is_recursive: args.recursive,
             sample_name_format: args
@@ -44,31 +39,7 @@ impl<'a> ScanExecutor<'a> {
         }
     }
 
-    pub fn execute(&self) -> Result<(), Box<dyn std::error::Error>> {
-        if SupportedDataTypes::Alignment == self.datatype {
-            let format: Vec<SupportedFormats> =
-                vec![SupportedFormats::Nexus, SupportedFormats::Phylip];
-            let mut files = Vec::new();
-            for f in format {
-                files.append(&mut self.find_files(&f));
-            }
-        } else {
-            self.scan_files();
-        };
-
-        Ok(())
-    }
-
-    fn scan_files(&self) {
-        match self.datatype {
-            SupportedDataTypes::RawReads => self.scan_reads(),
-            SupportedDataTypes::Contigs => unimplemented!(),
-            SupportedDataTypes::Tree => unimplemented!(),
-            _ => unreachable!("Unsupported data type"),
-        }
-    }
-
-    fn scan_reads(&self) {
+    pub fn scan(&self) -> Result<(), Box<dyn std::error::Error>> {
         let spinner = utils::set_spinner();
         spinner.set_message("Scanning FASTQ reads...");
         let format = SupportedFormats::Fastq;
@@ -82,6 +53,8 @@ impl<'a> ScanExecutor<'a> {
         } else {
             self.write_csv(&records).expect("Failed to write CSV");
         }
+
+        Ok(())
     }
 
     fn write_stdout(&self, records: &BTreeMap<String, FastqReads>) {

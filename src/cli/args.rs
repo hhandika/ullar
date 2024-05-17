@@ -46,8 +46,15 @@ pub(crate) enum UtilSubCommand {
     #[command(name = "sha256", about = "Hash files")]
     Sha256SubCommand(Sha256Args),
     /// Scan directory for files
-    #[command(name = "scan", about = "Scan directory for files")]
-    ScanSubCommand(ScanArgs),
+    #[command(subcommand, name = "scan", about = "Scan directory for files")]
+    ScanSubCommand(ScannerSubcommand),
+}
+
+#[derive(Subcommand)]
+pub(crate) enum ScannerSubcommand {
+    /// Subcommand to scan reads
+    #[command(name = "read", about = "Scan reads")]
+    ReadSubCommand(ReadScanArgs),
 }
 
 #[derive(Args)]
@@ -143,23 +150,13 @@ pub struct Sha256Args {
 }
 
 #[derive(Args)]
-pub struct ScanArgs {
+pub struct ReadScanArgs {
     /// Path to the directory to scan
     #[arg(short, long, help = "Input directory to scan")]
     pub dir: PathBuf,
     /// Match file formats for generic file search
     /// Support fastq, fasta, nexus, phylip, and plain text
-    #[arg( 
-        long , 
-        default_value = "read",
-        help = "Specify data type for the scan",
-        value_parser = builder::PossibleValuesParser::new([
-            "read", "contig", "alignment", "tree"
-        ])
-    )]
-    pub datatype: String,
-    /// Output file for the scan
-    #[arg(short, long, default_value = "scan", help = "Output file for the scan")]
+    #[arg(short, long, default_value = "scan", help = "Specify output path")]
     pub output: PathBuf,
     /// Use stdout for the output
     #[arg(long, help = "Use stdout for the output")]
