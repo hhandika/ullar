@@ -60,9 +60,9 @@ impl<'a> ReadScanner<'a> {
         for reads in records {
             table.add_row(vec![
                 &reads.sample_name,
-                &reads.read_1,
-                reads.read_2.as_ref().unwrap_or(&"".to_string()),
-                &reads.singletons.as_ref().unwrap_or(&"".to_string()),
+                reads.read_1.as_ref().unwrap_or(&"-".to_string()),
+                reads.read_2.as_ref().unwrap_or(&"-".to_string()),
+                reads.singletons.as_ref().unwrap_or(&"-".to_string()),
             ]);
         }
         println!("{table}");
