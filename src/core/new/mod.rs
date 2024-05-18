@@ -49,10 +49,10 @@ impl<'a> NewExecutor<'a> {
             records.len(),
             files.len(),
         ));
-        self.to_yaml(&records, files.len())?;
+        let output_path = self.to_yaml(&records, files.len())?;
         spin.finish_with_message(format!("{} Finished creating a config file", "✔".green(),));
 
-        log::info!("Output: {}", self.output.display());
+        log::info!("Output: {}", output_path.display());
         Ok(())
     }
 
@@ -60,7 +60,11 @@ impl<'a> NewExecutor<'a> {
         ReadAssignment::new(&files, &self.sample_name_format).assign()
     }
 
-    fn to_yaml(&self, records: &[FastqReads], file_counts: usize) -> Result<(), Box<dyn Error>> {
+    fn to_yaml(
+        &self,
+        records: &[FastqReads],
+        file_counts: usize,
+    ) -> Result<PathBuf, Box<dyn Error>> {
         let input_yaml = serde_yaml::to_string(&records)?;
         let config = NewConfig::new(
             self.dir,
@@ -71,12 +75,8 @@ impl<'a> NewExecutor<'a> {
             file_counts,
             &input_yaml,
         );
-        let yaml = serde_yaml::to_string(&config)?;
-        fs::create_dir_all(&self.output)?;
-        let output = self.output.join("config.yaml");
-        let writer = std::fs::File::create(output)?;
-        serde_yaml::to_writer(&writer, &yaml)?;
-        Ok(())
+        let output_path = config.write_yaml(self.output)?;
+        Ok(output_path)
     }
 }
 
@@ -88,7 +88,7 @@ struct NewConfig<'a> {
     sample_name_format: &'a str,
     sample_counts: usize,
     file_counts: usize,
-    input: &'a str,
+    data: &'a str,
 }
 
 impl<'a> NewConfig<'a> {
@@ -99,7 +99,7 @@ impl<'a> NewConfig<'a> {
         sample_name_format: &'a str,
         sample_counts: usize,
         file_counts: usize,
-        input: &'a str,
+        data: &'a str,
     ) -> Self {
         Self {
             input_dir,
@@ -108,7 +108,15 @@ impl<'a> NewConfig<'a> {
             sample_name_format,
             sample_counts,
             file_counts,
-            input,
+            data,
         }
+    }
+
+    pub fn write_yaml(&self, output_dir: &Path) -> Result<PathBuf, Box<dyn Error>> {
+        fs::create_dir_all(output_dir)?;
+        let output = self.output.join("config.yaml");
+        let writer = std::fs::File::create(&output)?;
+        serde_yaml::to_writer(&writer, self)?;
+        Ok(output)
     }
 }
