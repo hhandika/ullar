@@ -124,23 +124,33 @@ impl<'a> ReadAssignment<'a> {
     }
 }
 
+/// FastqReads struct to hold read files
+/// and its metadata.
 #[derive(Debug, PartialEq, Clone, Eq, Serialize, Deserialize)]
 pub struct FastqReads {
-    pub parent_path: PathBuf,
     pub sample_name: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Read 1 metadata
+    /// Enforce the use of Option to allow
+    /// for the absence of read 1 file.
+    /// If read 1 is absent, the value is None.
     pub read_1: Option<String>,
+    /// Read 2 metadata
+    /// Ignore read 2 if it is absent.
+    /// It won't be printed in the output.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub read_2: Option<String>,
+    /// Singletons metadata
+    /// Ignore singletons if it is absent.
+    /// The same as read 2, it won't be printed in the output.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub singletons: Option<String>,
 }
 
 #[allow(dead_code)]
 impl FastqReads {
+    /// Create a new FastqReads instances
     pub fn new() -> Self {
         Self {
-            parent_path: PathBuf::new(),
             sample_name: String::new(),
             read_1: None,
             read_2: None,
@@ -148,11 +158,11 @@ impl FastqReads {
         }
     }
 
+    /// Match all reads to the FastqReads struct
     pub fn match_all(&mut self, sample_name: String, reads: &[PathBuf]) {
         self.check_reads(reads.len());
         self.sample_name = sample_name;
         reads.iter().for_each(|r| {
-            self.parent_path = r.parent().unwrap_or(Path::new(".")).to_path_buf();
             self.match_read(r);
         });
     }
