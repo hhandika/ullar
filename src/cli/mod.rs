@@ -31,7 +31,7 @@ impl Cli {
         }
     }
 
-    pub fn parse(&self) {
+    pub fn parse(&mut self) {
         let time = Instant::now();
         let logger = helper::logs::init_logger(
             self.command.log_dir.as_ref(),
@@ -39,7 +39,7 @@ impl Cli {
         );
         match &self.command.sub_cmd {
             SubCommand::New(new_args) => {
-                let parser = NewExecutor::new(new_args);
+                let mut parser = NewExecutor::new(new_args);
                 parser.execute().expect("Failed to execute new command");
             }
             SubCommand::Utils(util_args) => self.parse_utils(util_args),

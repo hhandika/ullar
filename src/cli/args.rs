@@ -79,7 +79,7 @@ pub struct NewArgs {
     /// Default used '_'
     /// Example: sample1_R1.fastq.gz -> sample1
     #[arg(short, long, help = "Split separator for sample names")]
-    pub separator: Option<String>,
+    pub separator: Option<char>,
     /// Sample name format
     /// Default used simple name format
     /// where only the first word is captured

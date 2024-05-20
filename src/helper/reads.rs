@@ -2,6 +2,7 @@
 
 use std::{
     collections::HashMap,
+    fmt::{self, Display, Formatter},
     path::{Path, PathBuf},
 };
 
@@ -50,6 +51,16 @@ impl std::str::FromStr for SampleNameFormat {
             "simple" => Ok(Self::Simple),
             "descriptive" => Ok(Self::Descriptive),
             _ => Ok(Self::Custom(s.to_string())),
+        }
+    }
+}
+
+impl Display for SampleNameFormat {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            Self::Simple => write!(f, "simple"),
+            Self::Descriptive => write!(f, "descriptive"),
+            Self::Custom(pattern) => write!(f, "{}", pattern),
         }
     }
 }
