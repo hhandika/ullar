@@ -85,7 +85,7 @@ pub struct FileMetadata {
     pub file_name: String,
     pub parent_dir: PathBuf,
     pub file_size: u64,
-    pub file_type: String,
+    pub mime_type: String,
     pub sha256: String,
 }
 
@@ -95,7 +95,7 @@ impl FileMetadata {
             file_name: String::new(),
             parent_dir: PathBuf::new(),
             file_size: 0,
-            file_type: String::new(),
+            mime_type: String::new(),
             sha256: String::new(),
         }
     }
@@ -110,7 +110,16 @@ impl FileMetadata {
             .to_string();
         self.parent_dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
         self.file_size = file.len();
+        self.mime_type = self.get_mime_type(path);
         self.sha256 = generate_sha256(path).expect("Failed to generate SHA256 hash");
+    }
+
+    fn get_mime_type(&self, path: &Path) -> String {
+        let mime = infer::get_from_path(path).expect("Failed to get MIME type");
+        match mime {
+            Some(mime) => mime.mime_type().to_string(),
+            None => String::from("unknown"),
+        }
     }
 }
 
