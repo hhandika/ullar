@@ -1,4 +1,4 @@
-use ullar::cli::cli::Cli;
+use ullar::cli::Cli;
 
 fn main() {
     Cli::new().parse();

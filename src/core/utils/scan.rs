@@ -81,7 +81,7 @@ impl<'a> ReadScanner<'a> {
     fn write_csv(&self, records: &[FastqReads]) -> Result<(), Box<dyn std::error::Error>> {
         let output_path = self.output.with_extension(CSV_EXT);
         let mut writer = csv::Writer::from_path(&output_path)?;
-        writer.write_record(&["sample_name", "read1", "read2", "singletons"])?;
+        writer.write_record(["sample_name", "read1", "read2", "singletons"])?;
         for reads in records {
             writer.serialize((
                 &reads.sample_name,

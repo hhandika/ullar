@@ -83,7 +83,7 @@ impl<'a> Sha256Executor<'a> {
     }
 
     fn find_files(&self) -> Result<Vec<PathBuf>, Error> {
-        let files = FileFinder::new(&self.dir, &self.format).find(self.is_recursive)?;
+        let files = FileFinder::new(self.dir, &self.format).find(self.is_recursive)?;
         Ok(files)
     }
 
