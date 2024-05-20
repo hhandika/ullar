@@ -1,10 +1,12 @@
 //! Implementation of the `new` subcommand.
-use std::fs;
+pub mod configs;
+
 use std::path::PathBuf;
 use std::{error::Error, path::Path};
 
 use colored::Colorize;
 
+use self::configs::NewConfig;
 use crate::cli::args::NewArgs;
 use crate::helper::files::FileFinder;
 use crate::helper::reads::{FastqReads, ReadAssignment, SampleNameFormat};
@@ -49,7 +51,7 @@ impl<'a> NewExecutor<'a> {
             records.len(),
             files.len(),
         ));
-        let output_path = self.to_yaml(&records, files.len())?;
+        let output_path = self.write_config(&records, files.len())?;
         spin.finish_with_message(format!("{} Finished creating a config file", "✔".green(),));
 
         log::info!("Output: {}", output_path.display());
@@ -60,12 +62,12 @@ impl<'a> NewExecutor<'a> {
         ReadAssignment::new(&files, &self.sample_name_format).assign()
     }
 
-    fn to_yaml(
+    fn write_config(
         &self,
         records: &[FastqReads],
         file_counts: usize,
     ) -> Result<PathBuf, Box<dyn Error>> {
-        let input_yaml = serde_yaml::to_string(&records)?;
+        let data = serde_yaml::to_string(&records)?;
         let config = NewConfig::new(
             self.dir,
             self.output,
@@ -73,50 +75,9 @@ impl<'a> NewExecutor<'a> {
             self.re_sample.unwrap_or(""),
             records.len(),
             file_counts,
-            &input_yaml,
+            &data,
         );
         let output_path = config.write_yaml(self.output)?;
         Ok(output_path)
-    }
-}
-
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
-struct NewConfig<'a> {
-    input_dir: &'a Path,
-    output: &'a Path,
-    file_matching_strategy: &'a str,
-    sample_name_format: &'a str,
-    sample_counts: usize,
-    file_counts: usize,
-    data: &'a str,
-}
-
-impl<'a> NewConfig<'a> {
-    pub fn new(
-        input_dir: &'a Path,
-        output: &'a Path,
-        file_matching_strategy: &'a str,
-        sample_name_format: &'a str,
-        sample_counts: usize,
-        file_counts: usize,
-        data: &'a str,
-    ) -> Self {
-        Self {
-            input_dir,
-            output,
-            file_matching_strategy,
-            sample_name_format,
-            sample_counts,
-            file_counts,
-            data,
-        }
-    }
-
-    pub fn write_yaml(&self, output_dir: &Path) -> Result<PathBuf, Box<dyn Error>> {
-        fs::create_dir_all(output_dir)?;
-        let output = self.output.join("config.yaml");
-        let writer = std::fs::File::create(&output)?;
-        serde_yaml::to_writer(&writer, self)?;
-        Ok(output)
     }
 }

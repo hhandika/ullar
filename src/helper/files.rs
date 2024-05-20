@@ -17,6 +17,8 @@ use crate::{
     types::SupportedFormats,
 };
 
+use super::hasher::generate_sha256;
+
 pub const CSV_EXT: &str = "csv";
 
 /// Find all raw read files in the specified directory
@@ -78,7 +80,7 @@ impl<'a> FileFinder<'a> {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Default)]
 pub struct FileMetadata {
     pub file_name: String,
     pub parent_dir: PathBuf,
@@ -108,6 +110,7 @@ impl FileMetadata {
             .to_string();
         self.parent_dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
         self.file_size = file.len();
+        self.sha256 = generate_sha256(path).expect("Failed to generate SHA256 hash");
     }
 }
 

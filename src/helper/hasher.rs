@@ -38,26 +38,26 @@ impl<'a> Hasher<'a> {
         Ok(file_hashes)
     }
 
-    /// Generate SHA256 hash of a file
-    /// Returns the hash as a string
-    pub fn generate_sha256(&self, file_path: &Path) -> Result<String, Error> {
-        let file = fs::File::open(file_path)?;
-        let reader = std::io::BufReader::new(file);
-        let mut hasher = Sha256::new();
-
-        for byte in reader.bytes() {
-            hasher.update(&[byte?]);
-        }
-        let value = hasher.finalize();
-        Ok(format!("{:x}", value))
-    }
-
     fn generate_meta_sha256(&self, file_path: &Path) -> Result<FileSha256, Error> {
         let size = file_path.metadata()?.len();
-        let sha256 = self.generate_sha256(file_path)?;
+        let sha256 = generate_sha256(file_path)?;
         let meta = FileSha256::new(file_path.to_path_buf(), size, sha256);
         Ok(meta)
     }
+}
+
+/// Generate SHA256 hash of a file
+/// Returns the hash as a string
+pub fn generate_sha256(file_path: &Path) -> Result<String, Error> {
+    let file = fs::File::open(file_path)?;
+    let reader = std::io::BufReader::new(file);
+    let mut hasher = Sha256::new();
+
+    for byte in reader.bytes() {
+        hasher.update(&[byte?]);
+    }
+    let value = hasher.finalize();
+    Ok(format!("{:x}", value))
 }
 
 /// File metadata
