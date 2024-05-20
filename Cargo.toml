@@ -27,6 +27,7 @@ segul = "0.21.1"
 serde = "1.0.201"
 serde_yaml = "0.9.34"
 sha2 = "0.10.8"
+size = "0.4.1"
 walkdir = "2.5.0"
 
 [target.'cfg(unix)'.dependencies]

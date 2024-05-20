@@ -9,6 +9,7 @@ use std::{
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use size::Size;
 use walkdir::WalkDir;
 
 use crate::{
@@ -84,7 +85,7 @@ impl<'a> FileFinder<'a> {
 pub struct FileMetadata {
     pub file_name: String,
     pub parent_dir: PathBuf,
-    pub file_size: u64,
+    pub file_size: String,
     pub mime_type: String,
     pub sha256: String,
 }
@@ -94,7 +95,7 @@ impl FileMetadata {
         Self {
             file_name: String::new(),
             parent_dir: PathBuf::new(),
-            file_size: 0,
+            file_size: String::new(),
             mime_type: String::new(),
             sha256: String::new(),
         }
@@ -109,7 +110,7 @@ impl FileMetadata {
             .expect("Failed to convert file name to string")
             .to_string();
         self.parent_dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
-        self.file_size = file.len();
+        self.file_size = Size::from_bytes(file.len()).to_string();
         self.mime_type = self.get_mime_type(path);
         self.sha256 = generate_sha256(path).expect("Failed to generate SHA256 hash");
     }
