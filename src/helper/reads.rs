@@ -72,6 +72,7 @@ impl<'a> ReadAssignment<'a> {
     }
 
     fn read(&self) -> HashMap<String, Vec<PathBuf>> {
+        let file_map: HashMap<String, Vec<PathBuf>> = HashMap::new();
         let (tx, rx) = std::sync::mpsc::channel();
 
         self.files.par_iter().for_each_with(tx, |tx, file| {
@@ -81,9 +82,10 @@ impl<'a> ReadAssignment<'a> {
                 .expect("Failed to send file path");
         });
 
-        rx.iter()
-            .map(|(sample_name, file)| (sample_name, vec![file]))
-            .collect::<HashMap<String, Vec<PathBuf>>>()
+        rx.iter().fold(file_map, |mut acc, (k, v)| {
+            acc.entry(k).or_insert_with(Vec::new).push(v);
+            acc
+        })
     }
 
     fn match_reads(&self, file_map: HashMap<String, Vec<PathBuf>>) -> Vec<FastqReads> {
