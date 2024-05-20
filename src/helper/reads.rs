@@ -15,6 +15,8 @@ use crate::{
     re_capture, re_capture_dynamic, re_capture_lazy, re_match,
 };
 
+use super::files::FileMetadata;
+
 #[derive(Debug, PartialEq, Clone, Eq)]
 pub enum SampleNameFormat {
     /// Capture sample name as a single word
@@ -133,17 +135,17 @@ pub struct FastqReads {
     /// Enforce the use of Option to allow
     /// for the absence of read 1 file.
     /// If read 1 is absent, the value is None.
-    pub read_1: Option<String>,
+    pub read_1: Option<FileMetadata>,
     /// Read 2 metadata
     /// Ignore read 2 if it is absent.
     /// It won't be printed in the output.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub read_2: Option<String>,
+    pub read_2: Option<FileMetadata>,
     /// Singletons metadata
     /// Ignore singletons if it is absent.
     /// The same as read 2, it won't be printed in the output.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub singletons: Option<String>,
+    pub singletons: Option<FileMetadata>,
 }
 
 #[allow(dead_code)]
@@ -168,18 +170,19 @@ impl FastqReads {
     }
 
     fn match_read(&mut self, file_path: &Path) {
-        let file_name = file_path
-            .file_name()
-            .expect("Failed to get file name")
-            .to_str()
-            .expect("Failed to convert file name to string");
         if re_match!(READ1_REGEX, file_path) {
-            self.read_1 = Some(file_name.to_string());
+            self.read_1 = Some(self.metadata(file_path));
         } else if re_match!(READ2_REGEX, file_path) {
-            self.read_2 = Some(file_name.to_string());
+            self.read_2 = Some(self.metadata(file_path));
         } else {
-            self.singletons = Some(file_name.to_string());
+            self.singletons = Some(self.metadata(file_path));
         }
+    }
+
+    fn metadata(&self, file_path: &Path) -> FileMetadata {
+        let mut metadata = FileMetadata::new();
+        metadata.get(file_path);
+        metadata
     }
 
     fn check_reads(&self, len: usize) {

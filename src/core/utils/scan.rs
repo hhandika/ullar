@@ -57,12 +57,22 @@ impl<'a> ReadScanner<'a> {
     fn write_stdout(&self, records: &[FastqReads]) {
         let mut table = Table::new();
         table.set_header(vec!["Sample Name", "Read1", "Read2", "Singletons"]);
+
         for reads in records {
             table.add_row(vec![
                 &reads.sample_name,
-                reads.read_1.as_ref().unwrap_or(&"-".to_string()),
-                reads.read_2.as_ref().unwrap_or(&"-".to_string()),
-                reads.singletons.as_ref().unwrap_or(&"-".to_string()),
+                &reads
+                    .read_1
+                    .as_ref()
+                    .map_or(String::new(), |r| r.file_name.to_string()),
+                &reads
+                    .read_2
+                    .as_ref()
+                    .map_or(String::new(), |r| r.file_name.to_string()),
+                &reads
+                    .singletons
+                    .as_ref()
+                    .map_or(String::new(), |r| r.file_name.to_string()),
             ]);
         }
         println!("{table}");
