@@ -44,7 +44,7 @@ impl<'a> NewExecutor<'a> {
         let spin = utils::init_spinner();
         spin.set_message("Finding files...");
         let format = SupportedFormats::Fastq;
-        let files = FileFinder::new(&self.dir, &format).find(self.is_recursive)?;
+        let files = FileFinder::new(self.dir, &format).find(self.is_recursive)?;
         let records = self.assign_reads(&files);
         spin.set_message(format!(
             "Found {} samples of {} files",
@@ -59,7 +59,7 @@ impl<'a> NewExecutor<'a> {
     }
 
     fn assign_reads(&self, files: &[PathBuf]) -> Vec<FastqReads> {
-        ReadAssignment::new(&files, &self.sample_name_format).assign()
+        ReadAssignment::new(files, &self.sample_name_format).assign()
     }
 
     fn write_config(

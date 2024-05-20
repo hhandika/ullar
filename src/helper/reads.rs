@@ -97,7 +97,7 @@ impl<'a> ReadAssignment<'a> {
             .collect::<Vec<FastqReads>>()
     }
 
-    fn get_sample_name(&self, file: &PathBuf) -> String {
+    fn get_sample_name(&self, file: &Path) -> String {
         let capture = match self.name_format {
             SampleNameFormat::Simple => re_capture_lazy!(SIMPLE_NAME_REGEX, file),
             SampleNameFormat::Descriptive => re_capture_lazy!(DESCRIPTIVE_NAME_REGEX, file),
@@ -131,7 +131,7 @@ impl<'a> ReadAssignment<'a> {
 
 /// FastqReads struct to hold read files
 /// and its metadata.
-#[derive(Debug, PartialEq, Clone, Eq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Eq, Serialize, Deserialize, Default)]
 pub struct FastqReads {
     pub sample_name: String,
     /// Read 1 metadata
@@ -151,7 +151,6 @@ pub struct FastqReads {
     pub singletons: Option<FileMetadata>,
 }
 
-#[allow(dead_code)]
 impl FastqReads {
     /// Create a new FastqReads instances
     pub fn new() -> Self {

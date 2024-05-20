@@ -54,7 +54,7 @@ pub fn generate_sha256(file_path: &Path) -> Result<String, Error> {
     let mut hasher = Sha256::new();
 
     for byte in reader.bytes() {
-        hasher.update(&[byte?]);
+        hasher.update([byte?]);
     }
     let value = hasher.finalize();
     Ok(format!("{:x}", value))
