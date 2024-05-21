@@ -5,7 +5,7 @@ use std::{error::Error, path::Path};
 
 use colored::Colorize;
 
-use self::configs::{NewConfig, ReadMatching};
+use self::configs::{RawReadConfig, ReadMatching};
 use crate::cli::args::NewArgs;
 use crate::helper::files::FileFinder;
 use crate::helper::reads::{FastqReads, ReadAssignment, SampleNameFormat};
@@ -77,7 +77,7 @@ impl<'a> NewExecutor<'a> {
         let data = serde_yaml::to_string(&records)?;
         let strategy: ReadMatching = self.get_read_matching_strategy();
         let extension = self.file_extension();
-        let config = NewConfig::new(
+        let config = RawReadConfig::new(
             self.dir,
             &extension,
             records.len(),

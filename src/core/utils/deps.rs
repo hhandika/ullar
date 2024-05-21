@@ -4,8 +4,9 @@ use std::process::Command;
 
 use colored::Colorize;
 
+use crate::core::qc::fastp::FASTP_EXE;
+
 const SPADES_EXE: &str = "spades.py";
-const FASTP_EXE: &str = "fastp";
 const IQTREE2_EXE: &str = "iqtree2";
 const IQTREE_EXE: &str = "iqtree";
 
@@ -147,7 +148,7 @@ impl SpadesMetadata {
 }
 
 pub struct FastpMetadata {
-    metadata: Option<DepMetadata>,
+    pub metadata: Option<DepMetadata>,
 }
 
 impl FastpMetadata {
