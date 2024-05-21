@@ -18,7 +18,7 @@ use crate::{
     types::SupportedFormats,
 };
 
-use super::hasher::generate_sha256;
+use super::checksum::ChecksumType;
 
 pub const CSV_EXT: &str = "csv";
 
@@ -112,7 +112,10 @@ impl FileMetadata {
         self.parent_dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
         self.file_size = Size::from_bytes(file.len()).to_string();
         self.mime_type = self.get_mime_type(path);
-        self.sha256 = generate_sha256(path).expect("Failed to generate SHA256 hash");
+        let checksum = ChecksumType::Sha256;
+        self.sha256 = checksum
+            .generate(path)
+            .expect("Failed to generate SHA256 hash");
     }
 
     fn get_mime_type(&self, path: &Path) -> String {

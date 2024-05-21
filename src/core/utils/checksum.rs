@@ -1,20 +1,63 @@
 //! Generate and print a SHA-256 hash of files
 
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::mpsc::channel,
+};
 
 use clap::Error;
 use colored::Colorize;
 use comfy_table::Table;
+use rayon::prelude::*;
 
 use crate::{
     cli::args,
     helper::{
+        checksum::{ChecksumType, FileSha256},
         files::{FileFinder, CSV_EXT},
-        hasher::{FileSha256, Hasher},
         utils,
     },
     types::SupportedFormats,
 };
+
+/// Hash a file using SHA256
+/// Supports hashing multiple files and
+/// is parallel by default
+pub struct Checksum<'a> {
+    /// Path to the file to hash
+    pub files: &'a [PathBuf],
+}
+
+impl<'a> Checksum<'a> {
+    /// Initialize a new FileHasher instance
+    pub fn new(files: &'a [PathBuf]) -> Self {
+        Self { files }
+    }
+
+    /// Hash all files in the list in parallel
+    /// Returns a vector of FileMetadata instances
+    /// containing the file path, size, and SHA256 hash
+    pub fn sha256(&self) -> Result<Vec<FileSha256>, Error> {
+        let (tx, rx) = channel();
+
+        self.files.par_iter().for_each_with(tx, |tx, file| {
+            let meta = self
+                .generate_meta_sha256(file)
+                .expect("Failed to hash file");
+            tx.send(meta).expect("Failed to send hash");
+        });
+        let file_hashes = rx.iter().collect::<Vec<FileSha256>>();
+        Ok(file_hashes)
+    }
+
+    fn generate_meta_sha256(&self, file_path: &Path) -> Result<FileSha256, Error> {
+        let size = file_path.metadata()?.len();
+        let checksum = ChecksumType::Sha256;
+        let sha256 = checksum.sha256(file_path)?;
+        let meta = FileSha256::new(file_path.to_path_buf(), size, sha256);
+        Ok(meta)
+    }
+}
 
 /// Execute sha256 generation command
 pub struct Sha256Executor<'a> {
@@ -44,7 +87,7 @@ impl<'a> Sha256Executor<'a> {
         spinner.set_message("Finding files...");
         let files = self.find_files()?;
         spinner.set_message(format!("Generating SHA256 from {} files...", files.len()));
-        let hashes = Hasher::new(&files).sha256()?;
+        let hashes = Checksum::new(&files).sha256()?;
         spinner.finish_with_message(format!("{} Finished hashing files\n", "✔".green()));
         if self.is_stdout {
             self.write_stdout(&hashes);
