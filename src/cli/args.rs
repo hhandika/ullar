@@ -42,8 +42,11 @@ pub(crate) enum SubCommand {
 
 #[derive(Subcommand)]
 pub(crate) enum UtilSubCommand {
+    /// Check and manage dependencies
+    #[command(name = "deps", about = "Check and manage dependencies")]
+    CheckDepsSubCommand,
     /// Subcommand to hash files
-    #[command(name = "sha256", about = "Hash files")]
+    #[command(name = "checksum", about = "Hash files")]
     Sha256SubCommand(Sha256Args),
     /// Scan directory for files
     #[command(subcommand, name = "scan", about = "Scan directory for files")]
