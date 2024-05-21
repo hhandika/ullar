@@ -10,7 +10,7 @@ use self::args::{ScannerSubcommand, SubCommand, UllarCli, UtilSubCommand};
 use crate::{
     core::{
         new::NewExecutor,
-        utils::{deps::DependencyCheck, scan::ReadScanner, sha256::Sha256Executor},
+        utils::{checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner},
     },
     helper,
 };
@@ -52,14 +52,14 @@ impl Cli {
 
     fn parse_utils(&self, util_args: &UtilSubCommand) {
         match util_args {
-            UtilSubCommand::Sha256SubCommand(sha256_args) => {
+            UtilSubCommand::ChecksumSubcommand(sha256_args) => {
                 let parser = Sha256Executor::new(sha256_args);
                 parser.execute().expect("Failed to execute sha256 command");
             }
-            UtilSubCommand::ScanSubCommand(scan_subcommand) => {
+            UtilSubCommand::ScanSubcommand(scan_subcommand) => {
                 self.parse_read_scan(scan_subcommand)
             }
-            UtilSubCommand::CheckDepsSubCommand => {
+            UtilSubCommand::CheckDepsSubcommand => {
                 let mut deps = DependencyCheck::new();
                 deps.check();
             }
