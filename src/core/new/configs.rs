@@ -12,7 +12,7 @@ pub enum FileMatchingStrategy {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct NewConfig<'a> {
+pub struct RawReadConfig<'a> {
     input_dir: &'a Path,
     file_extension: &'a str,
     sample_counts: usize,
@@ -21,7 +21,7 @@ pub struct NewConfig<'a> {
     data: &'a str,
 }
 
-impl<'a> NewConfig<'a> {
+impl<'a> RawReadConfig<'a> {
     pub fn new(
         input_dir: &'a Path,
         file_extension: &'a str,
