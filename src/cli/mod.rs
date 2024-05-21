@@ -10,7 +10,7 @@ use self::args::{ScannerSubcommand, SubCommand, UllarCli, UtilSubCommand};
 use crate::{
     core::{
         new::NewExecutor,
-        utils::{scan::ReadScanner, sha256::Sha256Executor},
+        utils::{deps::DependencyCheck, scan::ReadScanner, sha256::Sha256Executor},
     },
     helper,
 };
@@ -58,6 +58,10 @@ impl Cli {
             }
             UtilSubCommand::ScanSubCommand(scan_subcommand) => {
                 self.parse_read_scan(scan_subcommand)
+            }
+            UtilSubCommand::CheckDepsSubCommand => {
+                let mut deps = DependencyCheck::new();
+                deps.check();
             }
         }
     }
