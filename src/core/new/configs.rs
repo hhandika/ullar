@@ -4,6 +4,8 @@ use std::{error::Error, path::Path};
 
 use serde::{Deserialize, Serialize};
 
+const DEFAULT_CONFIG_FILE: &str = "raw_read.yaml";
+
 pub enum FileMatchingStrategy {
     Regex,
     CharacterSplit,
@@ -40,7 +42,7 @@ impl<'a> NewConfig<'a> {
 
     pub fn write_yaml(&self, output_dir: &Path) -> Result<PathBuf, Box<dyn Error>> {
         fs::create_dir_all(output_dir)?;
-        let output = output_dir.join("qc.yaml");
+        let output = output_dir.join(DEFAULT_CONFIG_FILE);
         let writer = std::fs::File::create(&output)?;
         serde_yaml::to_writer(&writer, self)?;
         Ok(output)
