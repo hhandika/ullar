@@ -81,11 +81,11 @@ impl<'a> FastpRunner<'a> {
     }
 }
 
-pub(crate) struct FastpReport<'a> {
-    output_dir: &'a Path,
-    html: PathBuf,
-    json: PathBuf,
-    log: PathBuf,
+pub struct FastpReport<'a> {
+    pub output_dir: &'a Path,
+    pub html: PathBuf,
+    pub json: PathBuf,
+    pub log: PathBuf,
 }
 
 impl<'a> FastpReport<'a> {

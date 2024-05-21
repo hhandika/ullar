@@ -3,10 +3,6 @@ pub mod fastp;
 
 use std::path::Path;
 
-use crate::core::qc::fastp::FastpRunner;
-
-use super::new::configs::RawReadConfig;
-
 pub struct ReadCleaner<'a> {
     /// Path to the raw read configuration file
     pub config_path: &'a Path,
