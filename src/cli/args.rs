@@ -4,7 +4,9 @@ use clap::{
     builder, crate_authors, crate_description, crate_name, crate_version, Args, Parser, Subcommand,
 };
 
-use crate::core::new::configs::DEFAULT_RAW_READ_FILENAME;
+use crate::core::new::configs::{DEFAULT_RAW_READ_PREFIX, DEFAULT_CONFIG_DIR};
+use crate::core::qc::DEFAULT_CLEAN_READ_OUTPUT_DIR;
+
 
 #[derive(Parser)]
 #[command(name = crate_name!(), version = crate_version!(), about = crate_description!(), author = crate_authors!())]
@@ -85,7 +87,7 @@ pub struct CleanArgs {
     #[arg(
         short,
         long,
-        default_value = "cleaned_reads",
+        default_value = DEFAULT_CLEAN_READ_OUTPUT_DIR,
         help = "Output directory to store the cleaned reads"
     )]
     pub output: PathBuf,
@@ -96,6 +98,9 @@ pub struct CleanArgs {
         help = "Optional parameters for the cleaning process"
     )]
     pub optional_params: Option<String>,
+    /// Check config for errors
+    #[arg(long, help = "Continue processing samples without checking the config file")]
+    pub skip_config_check: bool,
 }
 
 #[derive(Args)]
@@ -112,7 +117,7 @@ pub struct NewArgs {
     #[arg(
         short,
         long,
-        default_value = DEFAULT_RAW_READ_FILENAME,
+        default_value = DEFAULT_CONFIG_DIR,
         help = "Select a directory for the config file."
     )]
     pub output: PathBuf,
@@ -160,6 +165,14 @@ pub struct NewArgs {
     /// Search recursively for files
     #[arg(long, help = "Search recursively for files")]
     pub recursive: bool,
+    /// Optional prefix for the output files
+    #[arg(
+        short,
+        long,
+        default_value = DEFAULT_RAW_READ_PREFIX,
+        help = "Prefix for the output files"
+    )]
+    pub output_prefix: String,
 }
 
 #[derive(Args)]
