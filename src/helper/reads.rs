@@ -16,7 +16,7 @@ use crate::{
     re_capture, re_capture_dynamic, re_capture_lazy, re_match,
 };
 
-use super::files::FileMetadata;
+use super::{checksum::ChecksumType, files::FileMetadata};
 
 #[derive(Debug, PartialEq, Clone, Eq)]
 pub enum SampleNameFormat {
@@ -206,5 +206,120 @@ impl FastqReads {
         You can specify the format using the --sample-name flag.";
         assert!(len > 0, "No reads found. {}", help_msg);
         assert!(len <= 3, "Too many reads found. {}.", help_msg);
+    }
+}
+
+#[derive(Debug, PartialEq, Clone, Eq, Serialize, Deserialize)]
+pub enum RawReadStatus {
+    /// Assume paired-end reads
+    Complete,
+    CompleteWithSingleton,
+    Warning(RawReadWarningKind),
+    Error(RawReadErrorKind),
+}
+
+impl Default for RawReadStatus {
+    fn default() -> Self {
+        Self::Complete
+    }
+}
+
+#[derive(Debug, PartialEq, Clone, Eq, Serialize, Deserialize)]
+pub enum RawReadErrorKind {
+    MissingRead1,
+}
+
+#[derive(Debug, PartialEq, Clone, Eq, Serialize, Deserialize)]
+pub enum RawReadWarningKind {
+    MissingRead2,
+    MismatchHash,
+}
+
+#[derive(Debug, PartialEq, Clone, Eq, Serialize, Deserialize)]
+pub enum ReadChecksumStatus {
+    Match,
+    Mismatch(String),
+}
+
+pub struct RawReadChecker {
+    pub sample_name: String,
+    pub completeness_status: RawReadStatus,
+    pub checksum_status: Vec<ReadChecksumStatus>,
+}
+
+impl RawReadChecker {
+    pub fn new(sample_name: &str) -> Self {
+        Self {
+            sample_name: sample_name.to_string(),
+            completeness_status: RawReadStatus::default(),
+            checksum_status: Vec::new(),
+        }
+    }
+
+    pub fn check(&mut self, reads: &FastqReads) {
+        self.check_completeness(reads);
+        self.checksum(reads);
+    }
+
+    /// Check if the reads are error-free
+    /// It is error-free if the reads are complete
+    /// and the checksums match for all reads.
+    pub fn is_error_free(&self) -> bool {
+        self.completeness_status == RawReadStatus::Complete
+            && self
+                .checksum_status
+                .iter()
+                .all(|s| s == &ReadChecksumStatus::Match)
+    }
+
+    pub fn has_warnings(&self) -> bool {
+        matches!(&self.completeness_status, RawReadStatus::Warning(_))
+    }
+
+    pub fn has_errors(&self) -> bool {
+        matches!(&self.completeness_status, RawReadStatus::Error(_))
+    }
+
+    fn check_completeness(&mut self, reads: &FastqReads) {
+        let has_read1 = reads.read_1.is_some();
+        let has_read2 = reads.read_2.is_some();
+        let has_singleton = reads.singletons.is_some();
+
+        if has_read1 && has_read2 {
+            self.completeness_status = RawReadStatus::Complete;
+        } else if has_singleton {
+            self.completeness_status = RawReadStatus::CompleteWithSingleton;
+        } else if has_read1 && !has_read2 {
+            self.completeness_status = RawReadStatus::Warning(RawReadWarningKind::MissingRead2);
+        } else {
+            self.completeness_status = RawReadStatus::Error(RawReadErrorKind::MissingRead1);
+        }
+    }
+
+    fn checksum(&mut self, reads: &FastqReads) {
+        if let Some(read1) = &reads.read_1 {
+            self.checksum_status.push(self.check_hash(read1));
+        }
+
+        if let Some(read2) = &reads.read_2 {
+            self.checksum_status.push(self.check_hash(read2));
+        }
+
+        if let Some(singletons) = &reads.singletons {
+            self.checksum_status.push(self.check_hash(singletons));
+        }
+    }
+
+    fn check_hash(&self, read: &FileMetadata) -> ReadChecksumStatus {
+        let file_path = read.parent_dir.join(&read.file_name);
+        let checksum = ChecksumType::Sha256;
+        let hash = checksum
+            .sha256(&file_path)
+            .expect("Failed to generate hash");
+        if hash == read.sha256 {
+            ReadChecksumStatus::Match
+        } else {
+            ReadChecksumStatus::Mismatch(file_path.display().to_string())
+        }
     }
 }
