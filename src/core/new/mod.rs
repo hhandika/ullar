@@ -47,12 +47,13 @@ impl<'a> NewExecutor<'a> {
         self.match_sample_name_format();
         let files = FileFinder::new(self.dir, &format).find(self.is_recursive)?;
         let records = self.assign_reads(&files);
+        let record_count = records.len();
+        let file_count = files.len();
         spin.set_message(format!(
             "Found {} samples of {} files",
-            records.len(),
-            files.len(),
+            record_count, file_count
         ));
-        let output_path = self.write_config(&records, files.len())?;
+        let output_path = self.write_config(records, files.len())?;
         spin.finish_with_message(format!("{} Finished creating a config file", "✔".green(),));
 
         log::info!("Output: {}", output_path.display());
@@ -71,21 +72,21 @@ impl<'a> NewExecutor<'a> {
 
     fn write_config(
         &self,
-        records: &[FastqReads],
+        records: Vec<FastqReads>,
         file_counts: usize,
     ) -> Result<PathBuf, Box<dyn Error>> {
-        let data = serde_yaml::to_string(&records)?;
+        // let data = serde_yaml::to_string(&records)?;
         let strategy: ReadMatching = self.get_read_matching_strategy();
         let extension = self.file_extension();
         let config = RawReadConfig::new(
             self.dir,
-            &extension,
+            extension,
             records.len(),
             file_counts,
             strategy,
-            &data,
+            records.to_vec(),
         );
-        let output_path = config.write_yaml(self.output)?;
+        let output_path = config.to_yaml(self.output)?;
         Ok(output_path)
     }
 
