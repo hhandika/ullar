@@ -59,6 +59,8 @@ impl<'a> FastpRunner<'a> {
         if let Some(meta) = &self.sample.read_1 {
             let path = meta.parent_dir.join(&meta.file_name);
             path.to_path_buf()
+                .canonicalize()
+                .expect("Read 1 file not found")
         } else {
             panic!("Read 1 file not found")
         }
@@ -66,7 +68,11 @@ impl<'a> FastpRunner<'a> {
 
     fn get_read2(&self) -> Option<PathBuf> {
         if let Some(meta) = &self.sample.read_2 {
-            let path = meta.parent_dir.join(&meta.file_name);
+            let path = meta
+                .parent_dir
+                .join(&meta.file_name)
+                .canonicalize()
+                .expect("Read 2 file not found");
             Some(path)
         } else {
             log::warn!("Read 2 file not found");
