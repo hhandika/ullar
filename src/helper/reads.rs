@@ -256,9 +256,11 @@ impl RawReadChecker {
         }
     }
 
-    pub fn check(&mut self, reads: &FastqReads) {
+    pub fn check(&mut self, reads: &FastqReads, ignore_checksum: bool) {
         self.check_completeness(reads);
-        self.checksum(reads);
+        if !ignore_checksum {
+            self.checksum(reads);
+        }
     }
 
     /// Check if the reads are error-free
