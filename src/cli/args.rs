@@ -35,10 +35,14 @@ pub(crate) enum SubCommand {
     /// New subcommand to init a new project
     #[command(name = "new", about = "Initialize a new project")]
     New(NewArgs),
+    /// Clean raw reads
+    #[command(name = "clean", about = "Clean raw reads")]
+    Clean(CleanArgs),
     /// Subcommand for utility functions
     #[command(subcommand, name = "utils", about = "Utility functions")]
     Utils(UtilSubCommand),
 }
+
 
 #[derive(Subcommand)]
 pub(crate) enum UtilSubCommand {
@@ -58,6 +62,38 @@ pub(crate) enum ScannerSubcommand {
     /// Subcommand to scan reads
     #[command(name = "read", about = "Scan reads")]
     ReadSubCommand(ReadScanArgs),
+}
+
+
+#[derive(Args)]
+pub struct CleanArgs {
+    /// Path to the raw read configuration file
+    #[arg(short, long, help = "Path to the raw read configuration file")]
+    pub config: PathBuf,
+    /// Should the SHA256 checksum be checked
+    /// before cleaning the files
+    #[arg(long, help = "Process samples without checking SHA256 checksum")]
+    pub ignore_checksum: bool,
+    /// Process samples if true
+    /// else check the config file only
+    #[arg(long = "process", help = "Process samples if true else check for errors only")]
+    pub process_samples: bool,
+    /// Output directory to store the cleaned reads
+    /// Default used 'cleaned_reads'
+    #[arg(
+        short,
+        long,
+        default_value = "cleaned_reads",
+        help = "Output directory to store the cleaned reads"
+    )]
+    pub output: PathBuf,
+    /// Arg to allow user to input optional parameters
+    #[arg(
+        short,
+        long,
+        help = "Optional parameters for the cleaning process"
+    )]
+    pub optional_params: Option<String>,
 }
 
 #[derive(Args)]

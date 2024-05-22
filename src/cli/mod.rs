@@ -10,6 +10,7 @@ use self::args::{ScannerSubcommand, SubCommand, UllarCli, UtilSubCommand};
 use crate::{
     core::{
         new::NewExecutor,
+        qc::ReadCleaner,
         utils::{checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner},
     },
     helper,
@@ -41,6 +42,10 @@ impl Cli {
             SubCommand::New(new_args) => {
                 let mut parser = NewExecutor::new(new_args);
                 parser.execute().expect("Failed to execute new command");
+            }
+            SubCommand::Clean(clean_args) => {
+                let cleaner = ReadCleaner::new(clean_args);
+                cleaner.clean();
             }
             SubCommand::Utils(util_args) => self.parse_utils(util_args),
         }
