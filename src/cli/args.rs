@@ -4,6 +4,8 @@ use clap::{
     builder, crate_authors, crate_description, crate_name, crate_version, Args, Parser, Subcommand,
 };
 
+use crate::core::new::configs::DEFAULT_RAW_READ_FILENAME;
+
 #[derive(Parser)]
 #[command(name = crate_name!(), version = crate_version!(), about = crate_description!(), author = crate_authors!())]
 /// Main command line arguments
@@ -110,7 +112,7 @@ pub struct NewArgs {
     #[arg(
         short,
         long,
-        default_value = "configs",
+        default_value = DEFAULT_RAW_READ_FILENAME,
         help = "Select a directory for the config file."
     )]
     pub output: PathBuf,
