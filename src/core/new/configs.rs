@@ -6,7 +6,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::helper::reads::FastqReads;
 
-pub const DEFAULT_RAW_READ_FILENAME: &str = "raw_read";
+pub const DEFAULT_RAW_READ_PREFIX: &str = "raw_read";
+pub const DEFAULT_CONFIG_DIR: &str = "configs";
 const CONFIG_EXTENSION: &str = "yaml";
 
 pub enum FileMatchingStrategy {
@@ -61,7 +62,7 @@ impl RawReadConfig {
 
     pub fn to_yaml(&self, output_dir: &Path) -> Result<PathBuf, Box<dyn Error>> {
         fs::create_dir_all(output_dir)?;
-        let mut output = output_dir.join(DEFAULT_RAW_READ_FILENAME);
+        let mut output = output_dir.join(DEFAULT_RAW_READ_PREFIX);
         output.set_extension(CONFIG_EXTENSION);
         let writer = std::fs::File::create(&output)?;
         serde_yaml::to_writer(&writer, self)?;

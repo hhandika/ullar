@@ -2,6 +2,7 @@
 
 use std::{
     error::Error,
+    io::{self, Write},
     path::{Path, PathBuf},
     process::{Command, Output},
 };
@@ -20,7 +21,7 @@ pub struct FastpRunner<'a> {
     /// Sample to process
     sample: &'a FastqReads,
     /// Output directory
-    pub output_dir: &'a Path,
+    pub sample_output_dir: PathBuf,
     /// User specified fastp parameters
     /// Input as space separated string
     pub optional_params: Option<&'a str>,
@@ -35,24 +36,39 @@ impl<'a> FastpRunner<'a> {
     ) -> Self {
         FastpRunner {
             sample,
-            output_dir,
+            sample_output_dir: output_dir.join(&sample.sample_name),
             optional_params,
         }
     }
 
     /// Run fastp
-    pub fn run(&self) -> Result<Option<FastpReport>, Box<dyn Error>> {
+    pub fn run(&mut self) -> Result<Option<FastpReport>, Box<dyn Error>> {
         let read1 = self.get_read1();
-        let read2 = self.get_read2(); // Convert Option<&Path> to Option<&PathBuf>
+        let read2 = self.get_read2();
+        self.create_output_dir()?;
         let output = self.execute_fastp(&read1, read2.as_deref())?;
 
-        if self.is_success(&output) {
-            let report = FastpReport::new(self.output_dir);
-            report.create(&output)?;
-            return Ok(Some(report));
-        }
+        self.check_spades_success(&output)?;
 
         Ok(None)
+    }
+
+    fn create_output_dir(&self) -> Result<(), Box<dyn Error>> {
+        std::fs::create_dir_all(&self.sample_output_dir)?;
+        Ok(())
+    }
+
+    fn check_spades_success(&self, output: &Output) -> Result<Option<FastpReport>, Box<dyn Error>> {
+        if output.status.success() {
+            let report = FastpReport::new(&self.sample_output_dir);
+            report.create(&output)?;
+            return Ok(Some(report));
+        } else {
+            println!();
+            io::stdout().write_all(&output.stdout).unwrap();
+            io::stdout().write_all(&output.stderr).unwrap();
+            return Err("Error running fastp".into());
+        }
     }
 
     fn get_read1(&self) -> PathBuf {
@@ -81,16 +97,21 @@ impl<'a> FastpRunner<'a> {
         }
     }
 
-    fn is_success(&self, output: &Output) -> bool {
-        output.status.success()
-    }
-
     fn execute_fastp(&self, read1: &Path, read2: Option<&Path>) -> Result<Output, Box<dyn Error>> {
+        let output_read1 = self
+            .sample_output_dir
+            .join(read1.file_name().expect("Read 1 file not found"));
+
         let mut cmd = Command::new(FASTP_EXE);
 
         cmd.arg("-i").arg(read1);
+        cmd.arg("-o").arg(&output_read1);
         if let Some(input_r2) = read2 {
+            let output_read2 = self
+                .sample_output_dir
+                .join(input_r2.file_name().expect("Read 2 file not found"));
             cmd.arg("-I").arg(input_r2);
+            cmd.arg("-O").arg(&output_read2);
         }
 
         if let Some(params) = self.optional_params {
@@ -118,9 +139,9 @@ impl<'a> FastpReport<'a> {
     pub fn new(output_dir: &'a Path) -> Self {
         FastpReport {
             output_dir,
-            html: output_dir.join(FASTP_HTML),
-            json: output_dir.join(FASTP_JSON),
-            log: output_dir.join(FASTP_LOG),
+            html: PathBuf::from(FASTP_HTML),
+            json: PathBuf::from(FASTP_JSON),
+            log: PathBuf::from(FASTP_LOG),
         }
     }
 
