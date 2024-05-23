@@ -1,15 +1,15 @@
 //! Clean raw read files using Fastp
 pub mod fastp;
 
+use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::mpsc;
 
 use colored::Colorize;
 use comfy_table::Table;
-use rayon::prelude::*;
 
 use crate::cli::args::CleanArgs;
-use crate::helper::reads::{FastqReads, RawReadChecker};
+use crate::core::configs::ConfigCheck;
+use crate::helper::reads::FastqReads;
 use crate::helper::tracker::ProcessingTracker;
 use crate::helper::utils;
 
@@ -55,24 +55,24 @@ impl ReadCleaner<'_> {
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
         let spinner = utils::init_spinner();
-        let mut status = Vec::new();
+        let mut check = ConfigCheck::new(config.sample_counts);
 
         if self.skip_config_check {
             spinner.set_message("Skipping config data check\n");
         } else {
             spinner.set_message("Checking config data for errors");
-            status = self.check_config(&config.samples);
+            check.check_fastq(&config.samples, self.ignore_checksum);
             spinner.finish_with_message(format!("{} Finished checking config data\n", "✔".green()));
         }
 
         if !self.process_samples {
-            self.log_config_check(&status);
+            check.log_status();
             self.log_unprocessed();
             return;
         }
 
-        if !self.is_config_ok(&status) {
-            self.log_config_check(&status);
+        if !check.is_config_ok() {
+            check.log_status();
             log::error!("\n{}\n", "Config check failed".red());
             return;
         }
@@ -83,7 +83,18 @@ impl ReadCleaner<'_> {
         let config_path = self
             .write_output_config(&reports)
             .expect("Failed to write clean read config");
-        self.print_final_output(&config_path);
+        self.log_final_output(&config_path);
+    }
+
+    fn parse_config(&self) -> Result<RawReadConfig, Box<dyn std::error::Error>> {
+        let content = fs::read_to_string(self.config_path)?;
+        let config: RawReadConfig = serde_yaml::from_str(&content)?;
+
+        if config.sample_counts != config.samples.len() {
+            return Err("Sample counts do not match the number of samples".into());
+        }
+
+        Ok(config)
     }
 
     fn write_output_config(
@@ -100,21 +111,6 @@ impl ReadCleaner<'_> {
         config.to_yaml(&output_dir, reports)
     }
 
-    fn is_config_ok(&self, status: &[RawReadChecker]) -> bool {
-        status.iter().all(|s| s.is_ok()) || status.is_empty()
-    }
-
-    fn parse_config(&self) -> Result<RawReadConfig, Box<dyn std::error::Error>> {
-        let mut config = RawReadConfig::default();
-        config.from_yaml(self.config_path)?;
-
-        if config.sample_counts != config.samples.len() {
-            return Err("Sample counts do not match the number of samples".into());
-        }
-
-        Ok(config)
-    }
-
     fn clean_reads(&self, samples: &[FastqReads]) -> Vec<FastpReport> {
         let mut tracker = ProcessingTracker::new(samples.len());
         let time = std::time::Instant::now();
@@ -125,7 +121,7 @@ impl ReadCleaner<'_> {
 
             match results {
                 Ok(report) => {
-                    self.print_run_summary(&report);
+                    self.log_run_summary(&report);
                     tracker.success_counts += 1;
                     reports.push(report);
                 }
@@ -146,36 +142,6 @@ impl ReadCleaner<'_> {
         reports
     }
 
-    fn check_config(&self, samples: &[FastqReads]) -> Vec<RawReadChecker> {
-        let (tx, rx) = mpsc::channel();
-        samples.par_iter().for_each_with(tx, |tx, sample| {
-            let mut status = RawReadChecker::new(&sample.sample_name);
-            status.check(&sample, self.ignore_checksum);
-            tx.send(status).expect("Failed to send status");
-        });
-
-        rx.iter().collect()
-    }
-
-    fn log_config_check(&self, status: &[RawReadChecker]) {
-        let ok_samples = status.iter().filter(|s| s.is_ok()).count();
-        let samples_with_warnings = status.iter().filter(|s| s.has_warnings()).count();
-        let samples_with_errors = status.iter().filter(|s| s.has_errors()).count();
-
-        log::info!("{}", "Config check summary".cyan());
-        log::info!("{:18}: {}", "Total samples", status.len());
-        let ok_text = format!("{:18}: {}", "Pass", ok_samples);
-        log::info!("{}", ok_text.green());
-
-        if samples_with_warnings > 0 {
-            log::info!("{:18}: {}", "Warnings".yellow(), samples_with_warnings);
-        }
-
-        if samples_with_errors > 0 {
-            log::info!("{:18}: {}", "Errors".red(), samples_with_errors);
-        }
-    }
-
     fn log_unprocessed(&self) {
         let msg1 = "Samples were not processed";
         let msg2 = format!("To process samples use: {}", "ullar clean --process");
@@ -192,19 +158,19 @@ impl ReadCleaner<'_> {
 
     fn log_input(&self, config: &RawReadConfig) {
         log::info!("{}", "Input".cyan());
-        log::info!("{:18}: {}", "config_file", self.config_path.display());
-        log::info!("{:18}: {}", "sample_counts", config.sample_counts);
-        log::info!("{:18}: {}\n", "file_counts", config.file_counts);
+        log::info!("{:18}: {}", "Config file", self.config_path.display());
+        log::info!("{:18}: {}", "Sample counts", config.sample_counts);
+        log::info!("{:18}: {}\n", "File counts", config.file_counts);
     }
 
-    fn print_run_summary(&self, reports: &FastpReport) {
+    fn log_run_summary(&self, reports: &FastpReport) {
         log::info!("{:18}: {}", "Output directory", self.output_dir.display());
         log::info!("{:18}: {}", "HTML report", reports.html.display());
         log::info!("{:18}: {}", "JSON report", reports.json.display());
         log::info!("{:18}: {}", "Fastp log", reports.log.display());
     }
 
-    fn print_final_output(&self, config_path: &Path) {
+    fn log_final_output(&self, config_path: &Path) {
         log::info!("{}", "Output".cyan());
         log::info!("{:18}: {}", "Directory", self.output_dir.display());
         log::info!("{:18}: {}\n", "Config file", config_path.display());

@@ -114,6 +114,13 @@ impl FileMetadata {
             .generate(path)
             .expect("Failed to generate SHA256 hash");
     }
+
+    pub fn canonicalize(&self) -> PathBuf {
+        self.parent_dir
+            .join(&self.file_name)
+            .canonicalize()
+            .expect("Failed to canonicalize path")
+    }
 }
 
 #[cfg(test)]

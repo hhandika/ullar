@@ -5,9 +5,8 @@ use std::process::Command;
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
-use crate::core::qc::fastp::FASTP_EXE;
+use crate::core::{assembly::spades::SPADES_EXE, qc::fastp::FASTP_EXE};
 
-const SPADES_EXE: &str = "spades.py";
 const IQTREE2_EXE: &str = "iqtree2";
 const IQTREE_EXE: &str = "iqtree";
 

@@ -6,6 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use colored::Colorize;
 use once_cell::sync::Lazy;
 use rayon::prelude::*;
 use regex::Regex;
@@ -17,6 +18,30 @@ use crate::{
 };
 
 use super::{checksum::ChecksumType, files::FileMetadata};
+
+#[macro_export]
+macro_rules! check_read1_exists {
+    ($self: ident, $read1: ident) => {
+        if !$read1.exists() {
+            let msg = format!(
+                "\nRead 1 file not found for {}. Skipping it!\n",
+                $self.sample.sample_name
+            );
+            log::error!("{}", msg.red());
+            return Err("Read 1 file not found".into());
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! create_output_dir {
+    ($self: ident) => {
+        if !$self.sample_output_dir.exists() {
+            std::fs::create_dir_all(&$self.sample_output_dir)?;
+        }
+    };
+    () => {};
+}
 
 #[derive(Debug, PartialEq, Clone, Eq)]
 pub enum SampleNameFormat {
@@ -184,10 +209,49 @@ impl FastqReads {
         });
     }
 
+    /// Match reads if the reads are known
     pub fn match_define_reads(&mut self, read1: &Path, read2: Option<&Path>) {
         self.read_1 = Some(self.metadata(read1));
         if let Some(r2) = read2 {
             self.read_2 = Some(self.metadata(r2));
+        }
+    }
+
+    /// Get read 1 file path
+    /// Return empty path if read 1 is absent.
+    pub fn get_read1(&self) -> PathBuf {
+        if let Some(meta) = &self.read_1 {
+            meta.canonicalize()
+        } else {
+            PathBuf::new()
+        }
+    }
+
+    /// Get read 2 file path
+    /// Show warning if read 2 is absent.
+    pub fn get_read2(&self) -> Option<PathBuf> {
+        if let Some(meta) = &self.read_2 {
+            let path = meta.canonicalize();
+            Some(path)
+        } else {
+            let msg = format!(
+                "\nRead 2 file not found for {}. \
+                Proceeding with single end reads\n",
+                self.sample_name
+            );
+            log::warn!("{}", msg.yellow());
+            None
+        }
+    }
+
+    /// Get singletons file path
+    /// Ignore singletons if it is absent.
+    pub fn get_singleton(&self) -> Option<PathBuf> {
+        if let Some(meta) = &self.singletons {
+            let path = meta.canonicalize();
+            Some(path)
+        } else {
+            None
         }
     }
 
@@ -248,13 +312,13 @@ pub enum ReadChecksumStatus {
     Mismatch(String),
 }
 
-pub struct RawReadChecker {
+pub struct ReadChecker {
     pub sample_name: String,
     pub completeness_status: RawReadStatus,
     pub checksum_status: Vec<ReadChecksumStatus>,
 }
 
-impl RawReadChecker {
+impl ReadChecker {
     pub fn new(sample_name: &str) -> Self {
         Self {
             sample_name: sample_name.to_string(),
