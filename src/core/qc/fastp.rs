@@ -2,12 +2,14 @@
 
 use std::{
     error::Error,
-    io::{self, Write},
     path::{Path, PathBuf},
     process::{Command, Output},
 };
 
-use crate::helper::reads::FastqReads;
+use colored::Colorize;
+use indicatif::ProgressBar;
+
+use crate::helper::{reads::FastqReads, utils};
 
 pub const FASTP_EXE: &str = "fastp";
 
@@ -44,13 +46,25 @@ impl<'a> FastpRunner<'a> {
     /// Run fastp
     pub fn run(&mut self) -> Result<Option<FastpReport>, Box<dyn Error>> {
         let read1 = self.get_read1();
+
+        if !read1.exists() {
+            let msg = format!(
+                "Read 1 file not found for {}. Skipping sample!",
+                self.sample.sample_name
+            );
+            log::warn!("{}", msg);
+            return Ok(None);
+        }
+
         let read2 = self.get_read2();
         self.create_output_dir()?;
+        let spinner = utils::init_spinner();
+        spinner.set_message("Cleaning reads");
         let output = self.execute_fastp(&read1, read2.as_deref())?;
 
-        self.check_spades_success(&output)?;
+        let reports = self.check_spades_success(&output, &spinner)?;
 
-        Ok(None)
+        Ok(reports)
     }
 
     fn create_output_dir(&self) -> Result<(), Box<dyn Error>> {
@@ -58,16 +72,25 @@ impl<'a> FastpRunner<'a> {
         Ok(())
     }
 
-    fn check_spades_success(&self, output: &Output) -> Result<Option<FastpReport>, Box<dyn Error>> {
+    fn check_spades_success(
+        &self,
+        output: &Output,
+        spinner: &ProgressBar,
+    ) -> Result<Option<FastpReport>, Box<dyn Error>> {
         if output.status.success() {
+            spinner.finish_with_message(format!("{} Finished cleaning reads\n", "✔".green()));
             let report = FastpReport::new(&self.sample_output_dir);
             report.create(&output)?;
             return Ok(Some(report));
         } else {
-            println!();
-            io::stdout().write_all(&output.stdout).unwrap();
-            io::stdout().write_all(&output.stderr).unwrap();
-            return Err("Error running fastp".into());
+            spinner.finish_with_message(format!("{} Failed to clean reads\n", "✘".red()));
+            let err = String::from_utf8_lossy(&output.stderr);
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            log::info!("\n{}", err);
+            log::info!("{}", stdout);
+            // We return None here because
+            // we don't want to stop the process for the next samples
+            return Ok(None);
         }
     }
 
@@ -76,9 +99,9 @@ impl<'a> FastpRunner<'a> {
             let path = meta.parent_dir.join(&meta.file_name);
             path.to_path_buf()
                 .canonicalize()
-                .expect("Read 1 file not found")
+                .expect("Failed to get read 1 path")
         } else {
-            panic!("Read 1 file not found")
+            PathBuf::new()
         }
     }
 

@@ -53,17 +53,17 @@ impl ReadCleaner<'_> {
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
         let spinner = utils::init_spinner();
-        spinner.set_message("Checking config for errors");
         let mut status = Vec::new();
 
         if self.skip_config_check {
-            spinner.set_message("Skipping config check\n");
+            spinner.set_message("Skipping config data check\n");
         } else {
+            spinner.set_message("Checking config data for errors");
             status = self.check_config(&config.samples);
+            spinner.finish_with_message(format!("{} Finished checking config data\n", "✔".green()));
         }
 
         if !self.process_samples {
-            spinner.finish_with_message(format!("{} Finished checking samples\n", "✔".green()));
             self.log_config_check(&status);
             self.log_unprocessed();
             return;
@@ -73,7 +73,6 @@ impl ReadCleaner<'_> {
             self.log_config_check(&status);
         }
 
-        spinner.set_message("Cleaning reads");
         let (success_counts, failure_counts) = self.clean_reads(&config.samples);
         spinner.finish_with_message(format!("{} Finished cleaning reads\n", "✔".green()));
         self.print_final_summary(failure_counts, success_counts);
@@ -128,7 +127,7 @@ impl ReadCleaner<'_> {
         let samples_with_warnings = status.iter().filter(|s| s.has_warnings()).count();
         let samples_with_errors = status.iter().filter(|s| s.has_errors()).count();
 
-        log::info!("{}", "Sample check summary".cyan());
+        log::info!("{}", "Config check summary".cyan());
         log::info!("{:18}: {}", "Total samples", status.len());
         let ok_text = format!("{:18}: {}", "Pass", ok_samples);
         log::info!("{}", ok_text.green());
