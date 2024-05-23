@@ -8,7 +8,7 @@ use crate::helper::reads::FastqReads;
 
 pub const DEFAULT_RAW_READ_PREFIX: &str = "raw_read";
 pub const DEFAULT_CONFIG_DIR: &str = "configs";
-const CONFIG_EXTENSION: &str = "yaml";
+pub const CONFIG_EXTENSION: &str = "yaml";
 
 pub enum FileMatchingStrategy {
     Regex,

@@ -1,7 +1,7 @@
 //! Clean raw read files using Fastp
 pub mod fastp;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 
 use colored::Colorize;
@@ -15,6 +15,7 @@ use crate::helper::utils;
 
 use self::fastp::FastpReport;
 
+use super::configs::cleaned_reads::CleanReadConfig;
 use super::configs::raw_reads::RawReadConfig;
 
 pub const DEFAULT_CLEAN_READ_OUTPUT_DIR: &str = "cleaned_reads";
@@ -76,8 +77,27 @@ impl ReadCleaner<'_> {
             return;
         }
 
-        let tracker = self.clean_reads(&config.samples);
-        tracker.finalize();
+        let reports = self.clean_reads(&config.samples);
+
+        log::info!("{}", "Cleaning summary".cyan());
+        let config_path = self
+            .write_output_config(&reports)
+            .expect("Failed to write clean read config");
+        self.print_final_output(&config_path);
+    }
+
+    fn write_output_config(
+        &self,
+        reports: &[FastpReport],
+    ) -> Result<PathBuf, Box<dyn std::error::Error>> {
+        let output_dir = self.output_dir.join(DEFAULT_CLEAN_READ_OUTPUT_DIR);
+        let mut config = CleanReadConfig::new(
+            Some(self.config_path.to_path_buf()),
+            self.output_dir,
+            Vec::new(),
+            self.optional_params.map(|s| s.to_string()),
+        );
+        config.to_yaml(&output_dir, reports)
     }
 
     fn is_config_ok(&self, status: &[RawReadChecker]) -> bool {
@@ -95,17 +115,19 @@ impl ReadCleaner<'_> {
         Ok(config)
     }
 
-    fn clean_reads(&self, samples: &[FastqReads]) -> ProcessingTracker {
+    fn clean_reads(&self, samples: &[FastqReads]) -> Vec<FastpReport> {
         let mut tracker = ProcessingTracker::new(samples.len());
         let time = std::time::Instant::now();
+        let mut reports = Vec::new();
         samples.iter().enumerate().for_each(|(i, sample)| {
             let mut runner = fastp::FastpRunner::new(sample, self.output_dir, self.optional_params);
             let results = runner.run();
 
             match results {
-                Ok(reports) => {
-                    self.print_run_summary(&reports);
+                Ok(report) => {
+                    self.print_run_summary(&report);
                     tracker.success_counts += 1;
+                    reports.push(report);
                 }
                 Err(e) => {
                     log::error!("Failed to clean reads for sample: {}", sample.sample_name);
@@ -120,7 +142,8 @@ impl ReadCleaner<'_> {
             }
         });
 
-        tracker
+        tracker.finalize();
+        reports
     }
 
     fn check_config(&self, samples: &[FastqReads]) -> Vec<RawReadChecker> {
@@ -179,5 +202,11 @@ impl ReadCleaner<'_> {
         log::info!("{:18}: {}", "HTML report", reports.html.display());
         log::info!("{:18}: {}", "JSON report", reports.json.display());
         log::info!("{:18}: {}", "Fastp log", reports.log.display());
+    }
+
+    fn print_final_output(&self, config_path: &Path) {
+        log::info!("{}", "Output".cyan());
+        log::info!("{:18}: {}", "Directory", self.output_dir.display());
+        log::info!("{:18}: {}\n", "Config file", config_path.display());
     }
 }

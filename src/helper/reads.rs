@@ -184,6 +184,13 @@ impl FastqReads {
         });
     }
 
+    pub fn match_define_reads(&mut self, read1: &Path, read2: Option<&Path>) {
+        self.read_1 = Some(self.metadata(read1));
+        if let Some(r2) = read2 {
+            self.read_2 = Some(self.metadata(r2));
+        }
+    }
+
     fn match_read(&mut self, file_path: &Path) {
         if re_match!(READ1_REGEX, file_path) {
             self.read_1 = Some(self.metadata(file_path));
