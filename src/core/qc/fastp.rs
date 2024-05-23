@@ -47,7 +47,7 @@ impl<'a> FastpRunner<'a> {
     }
 
     /// Run fastp
-    pub fn run(&mut self) -> Result<Option<FastpReport>, Box<dyn Error>> {
+    pub fn run(&mut self) -> Result<FastpReport, Box<dyn Error>> {
         let decorator = self.print_header();
         let read1 = self.get_read1();
 
@@ -58,7 +58,7 @@ impl<'a> FastpRunner<'a> {
             );
             log::error!("{}", msg.red());
             decorator.get_sample_footer();
-            return Ok(None);
+            return Err("Read 1 file not found".into());
         }
 
         let read2 = self.get_read2();
@@ -69,11 +69,17 @@ impl<'a> FastpRunner<'a> {
         let output = self.execute_fastp(&read1, read2.as_deref())?;
 
         let reports = self.check_spades_success(&output, &spinner)?;
-        if let Some(report) = &reports {
-            self.print_output_summary(report);
+        match reports {
+            Some(report) => {
+                self.print_output_summary(&report);
+                decorator.get_sample_footer();
+                Ok(report)
+            }
+            None => {
+                decorator.get_sample_footer();
+                Err("Failed to clean reads".into())
+            }
         }
-        decorator.get_sample_footer();
-        Ok(reports)
     }
 
     fn create_output_dir(&self) -> Result<(), Box<dyn Error>> {

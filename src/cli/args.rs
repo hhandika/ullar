@@ -4,7 +4,7 @@ use clap::{
     builder, crate_authors, crate_description, crate_name, crate_version, Args, Parser, Subcommand,
 };
 
-use crate::core::new::configs::{DEFAULT_RAW_READ_PREFIX, DEFAULT_CONFIG_DIR};
+use crate::core::configs::raw_reads::{DEFAULT_RAW_READ_PREFIX, DEFAULT_CONFIG_DIR};
 use crate::core::qc::DEFAULT_CLEAN_READ_OUTPUT_DIR;
 
 

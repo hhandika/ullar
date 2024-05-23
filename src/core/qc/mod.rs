@@ -10,11 +10,12 @@ use rayon::prelude::*;
 
 use crate::cli::args::CleanArgs;
 use crate::helper::reads::{FastqReads, RawReadChecker};
+use crate::helper::tracker::ProcessingTracker;
 use crate::helper::utils;
 
 use self::fastp::FastpReport;
 
-use super::new::configs::RawReadConfig;
+use super::configs::raw_reads::RawReadConfig;
 
 pub const DEFAULT_CLEAN_READ_OUTPUT_DIR: &str = "cleaned_reads";
 
@@ -71,11 +72,12 @@ impl ReadCleaner<'_> {
 
         if !self.is_config_ok(&status) {
             self.log_config_check(&status);
+            log::error!("\n{}\n", "Config check failed".red());
+            return;
         }
 
-        let (success_counts, failure_counts) = self.clean_reads(&config.samples);
-        spinner.finish_with_message(format!("{} Finished cleaning reads\n", "✔".green()));
-        self.print_final_summary(failure_counts, success_counts);
+        let tracker = self.clean_reads(&config.samples);
+        tracker.finalize();
     }
 
     fn is_config_ok(&self, status: &[RawReadChecker]) -> bool {
@@ -93,31 +95,32 @@ impl ReadCleaner<'_> {
         Ok(config)
     }
 
-    fn clean_reads(&self, samples: &[FastqReads]) -> (usize, usize) {
-        let sample_counts = samples.len();
-        let success_counts = 0;
-        let mut failure_counts = 0;
-        let mut total_executed = 0;
-        samples.iter().for_each(|sample| {
-            total_executed += 1;
-            log::info!(
-                "\n{}: {} of {}\n",
-                "Processing sample",
-                total_executed,
-                sample_counts
-            );
+    fn clean_reads(&self, samples: &[FastqReads]) -> ProcessingTracker {
+        let mut tracker = ProcessingTracker::new(samples.len());
+        let time = std::time::Instant::now();
+        samples.iter().enumerate().for_each(|(i, sample)| {
             let mut runner = fastp::FastpRunner::new(sample, self.output_dir, self.optional_params);
-            let reports = runner.run().expect("Failed to run fastp");
+            let results = runner.run();
 
-            match reports {
-                Some(reports) => self.print_run_summary(&reports),
-                None => {
-                    failure_counts += 1;
+            match results {
+                Ok(reports) => {
+                    self.print_run_summary(&reports);
+                    tracker.success_counts += 1;
                 }
+                Err(e) => {
+                    log::error!("Failed to clean reads for sample: {}", sample.sample_name);
+                    log::error!("{}", e);
+                    tracker.failure_counts += 1;
+                }
+            }
+            tracker.update(time.elapsed().as_secs_f64());
+
+            if i < samples.len() - 1 {
+                tracker.print_summary();
             }
         });
 
-        (success_counts, failure_counts)
+        tracker
     }
 
     fn check_config(&self, samples: &[FastqReads]) -> Vec<RawReadChecker> {
@@ -176,17 +179,5 @@ impl ReadCleaner<'_> {
         log::info!("{:18}: {}", "HTML report", reports.html.display());
         log::info!("{:18}: {}", "JSON report", reports.json.display());
         log::info!("{:18}: {}", "Fastp log", reports.log.display());
-    }
-
-    fn print_final_summary(&self, success_counts: usize, failure_counts: usize) {
-        let total_samples = failure_counts + success_counts;
-        let success = format!("{:18}: {}", "Success", success_counts);
-        let failure = format!("{:18}: {}", "Failure", failure_counts);
-        let total = format!("{:18}: {}", "Total", total_samples);
-
-        log::info!("\n{}", "Summary".cyan());
-        log::info!("{}", total);
-        log::info!("{}", success.green());
-        log::info!("{}", failure.red());
     }
 }
