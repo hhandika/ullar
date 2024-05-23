@@ -54,7 +54,7 @@ impl<'a> NewExecutor<'a> {
             record_count, file_count
         ));
         let output_path = self.write_config(records, files.len())?;
-        spin.finish_with_message(format!("{} Finished creating a config file", "✔".green(),));
+        spin.finish_with_message(format!("{} Finished creating a config file\n", "✔".green(),));
 
         log::info!("Output: {}", output_path.display());
         Ok(())

@@ -13,7 +13,7 @@ use crate::{
         qc::ReadCleaner,
         utils::{checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner},
     },
-    helper,
+    helper::{self, utils::PrettyHeader},
 };
 pub struct Cli {
     pub command: UllarCli,
@@ -38,6 +38,7 @@ impl Cli {
             self.command.log_dir.as_ref(),
             self.command.log_prefix.as_str(),
         );
+        PrettyHeader::new().get_welcome_header();
         match &self.command.sub_cmd {
             SubCommand::New(new_args) => {
                 let mut parser = NewExecutor::new(new_args);
