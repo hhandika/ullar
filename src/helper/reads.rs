@@ -266,7 +266,7 @@ impl RawReadChecker {
     /// Check if the reads are error-free
     /// It is error-free if the reads are complete
     /// and the checksums match for all reads.
-    pub fn is_error_free(&self) -> bool {
+    pub fn is_ok(&self) -> bool {
         self.completeness_status == RawReadStatus::Complete
             && self
                 .checksum_status
