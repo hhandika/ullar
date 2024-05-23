@@ -9,6 +9,7 @@ use std::time::Instant;
 use self::args::{ScannerSubcommand, SubCommand, UllarCli, UtilSubCommand};
 use crate::{
     core::{
+        assembly::Assembly,
         new::NewExecutor,
         qc::ReadCleaner,
         utils::{checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner},
@@ -47,6 +48,10 @@ impl Cli {
             SubCommand::Clean(clean_args) => {
                 let cleaner = ReadCleaner::new(clean_args);
                 cleaner.clean();
+            }
+            SubCommand::Assemble(assembly_args) => {
+                let assembly = Assembly::new(assembly_args);
+                assembly.assemble();
             }
             SubCommand::Utils(util_args) => self.parse_utils(util_args),
         }

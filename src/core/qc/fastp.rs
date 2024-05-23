@@ -9,9 +9,12 @@ use std::{
 use colored::Colorize;
 use indicatif::ProgressBar;
 
-use crate::helper::{
-    reads::FastqReads,
-    utils::{self, PrettyHeader},
+use crate::{
+    check_read1_exists, create_output_dir,
+    helper::{
+        reads::FastqReads,
+        utils::{self, PrettyHeader},
+    },
 };
 
 pub const FASTP_EXE: &str = "fastp";
@@ -49,21 +52,12 @@ impl<'a> FastpRunner<'a> {
     /// Run fastp
     pub fn run(&mut self) -> Result<FastpReport, Box<dyn Error>> {
         let decorator = self.print_header();
-        let read1 = self.get_read1();
+        let read1 = self.sample.get_read1();
+        check_read1_exists!(self, read1);
 
-        if !read1.exists() {
-            let msg = format!(
-                "\nRead 1 file not found for {}. Skipping it!\n",
-                self.sample.sample_name
-            );
-            log::error!("{}", msg.red());
-            decorator.get_sample_footer();
-            return Err("Read 1 file not found".into());
-        }
-
-        let read2 = self.get_read2();
+        let read2 = self.sample.get_read2();
         self.print_input_summary(&read1, read2.as_deref());
-        self.create_output_dir()?;
+        create_output_dir!();
         let spinner = utils::init_spinner();
         spinner.set_message("Cleaning reads");
         let mut fastp = Fastp::new(&self.sample_output_dir);
@@ -81,11 +75,6 @@ impl<'a> FastpRunner<'a> {
                 Err("Failed to clean reads".into())
             }
         }
-    }
-
-    fn create_output_dir(&self) -> Result<(), Box<dyn Error>> {
-        std::fs::create_dir_all(&self.sample_output_dir)?;
-        Ok(())
     }
 
     fn check_success(
@@ -108,36 +97,6 @@ impl<'a> FastpRunner<'a> {
             // We return None here because
             // we don't want to stop the process for the next samples
             return Ok(None);
-        }
-    }
-
-    fn get_read1(&self) -> PathBuf {
-        if let Some(meta) = &self.sample.read_1 {
-            let path = meta.parent_dir.join(&meta.file_name);
-            path.to_path_buf()
-                .canonicalize()
-                .expect("Failed to get read 1 path")
-        } else {
-            PathBuf::new()
-        }
-    }
-
-    fn get_read2(&self) -> Option<PathBuf> {
-        if let Some(meta) = &self.sample.read_2 {
-            let path = meta
-                .parent_dir
-                .join(&meta.file_name)
-                .canonicalize()
-                .expect("Read 2 file not found");
-            Some(path)
-        } else {
-            let msg = format!(
-                "\nRead 2 file not found for {}. \
-                Proceeding with single end reads\n",
-                self.sample.sample_name
-            );
-            log::warn!("{}", msg.yellow());
-            None
         }
     }
 

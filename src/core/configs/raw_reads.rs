@@ -68,18 +68,6 @@ impl RawReadConfig {
         serde_yaml::to_writer(&writer, self)?;
         Ok(output)
     }
-
-    pub fn from_yaml(&mut self, input: &Path) -> Result<(), Box<dyn Error>> {
-        let reader = std::fs::File::open(input)?;
-        let config: RawReadConfig = serde_yaml::from_reader(reader)?;
-        self.input_dir = config.input_dir;
-        self.file_extension = config.file_extension;
-        self.sample_counts = config.sample_counts;
-        self.file_counts = config.file_counts;
-        self.read_matching = config.read_matching;
-        self.samples = config.samples;
-        Ok(())
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
