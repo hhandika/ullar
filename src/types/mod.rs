@@ -2,15 +2,17 @@
 
 use std::{fmt::Display, str::FromStr};
 
+use serde::{Deserialize, Serialize};
+
 /// Data type for each feature
-#[derive(Debug, PartialEq, Clone, Copy, Eq)]
+#[derive(Debug, PartialEq, Clone, Copy, Eq, Serialize, Deserialize)]
 pub enum Task {
     /// Raw read quality control task
     /// Cleans and filters raw reads
     /// and generates a quality report
     /// for each raw read file
     /// Current implementation uses Fastp
-    RawReadQc,
+    CleanReads,
     /// Assembly task
     /// Assembles cleaned reads
     /// into contigs
@@ -38,7 +40,7 @@ pub enum Task {
 impl Display for Task {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Task::RawReadQc => write!(f, "RawReadQc"),
+            Task::CleanReads => write!(f, "CleanReads"),
             Task::Assembly => write!(f, "Assembly"),
             Task::ReadMapping => write!(f, "ReadMapping"),
             Task::Alignment => write!(f, "Alignment"),
@@ -53,7 +55,7 @@ impl FromStr for Task {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "RawReadQc" => Ok(Task::RawReadQc),
+            "CleanReads" => Ok(Task::CleanReads),
             "Assembly" => Ok(Task::Assembly),
             "ReadMapping" => Ok(Task::ReadMapping),
             "Alignment" => Ok(Task::Alignment),

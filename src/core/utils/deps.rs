@@ -3,6 +3,7 @@
 use std::process::Command;
 
 use colored::Colorize;
+use serde::{Deserialize, Serialize};
 
 use crate::core::qc::fastp::FASTP_EXE;
 
@@ -253,6 +254,7 @@ fn re_capture_version(version: &str) -> String {
         .to_string()
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct DepMetadata {
     pub name: String,
     pub version: String,
