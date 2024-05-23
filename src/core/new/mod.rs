@@ -1,12 +1,12 @@
 //! Implementation of the `new` subcommand.
-pub mod configs;
+
 use std::path::PathBuf;
 use std::{error::Error, path::Path};
 
 use colored::Colorize;
 
-use self::configs::{RawReadConfig, ReadMatching};
 use crate::cli::args::NewArgs;
+use crate::core::configs::raw_reads::{RawReadConfig, ReadMatching};
 use crate::helper::files::FileFinder;
 use crate::helper::reads::{FastqReads, ReadAssignment, SampleNameFormat};
 use crate::helper::utils;
