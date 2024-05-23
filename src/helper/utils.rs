@@ -9,6 +9,8 @@ use colored::Colorize;
 
 const LINE_DECORATOR_LEN: usize = 80;
 const BYTE_TO_GB: u64 = 1024 * 1024 * 1024;
+const HEADER_SYMBOL: char = '=';
+const FOOTER_SYMBOL: char = '-';
 
 #[cfg(not(tarpaulin_include))]
 pub fn init_spinner() -> ProgressBar {
@@ -25,78 +27,76 @@ pub fn init_spinner() -> ProgressBar {
 }
 
 pub struct PrettyHeader {
-    text: String,
-    sym: char,
     len: usize,
-    text_len: usize,
-    sym_len: usize,
+    symbol_counts: usize,
 }
 
 impl PrettyHeader {
     pub fn new() -> Self {
         Self {
-            text: String::new(),
-            sym: '=',
             len: LINE_DECORATOR_LEN,
-            text_len: 0,
-            sym_len: 0,
+            symbol_counts: 0,
         }
     }
 
     pub fn get_welcome_header(&mut self) {
         let version = crate_version!();
         let app_name = crate_name!();
-        self.text = format!("{} v{}", app_name, version);
-        self.get_len();
-        let symbols = self.generate_header_symbols();
-        let text = format!("{} {} {}", symbols, self.text, symbols);
+        let text = format!("{} v{}", app_name, version);
+        let text = self.get_header(&text);
+        self.len = text.len();
+        self.update_symbol_counts();
         log::info!("{}", text.yellow());
         log::info!("{}", crate_description!().yellow());
-        let closing_line = text.len();
-        log::info!("{}", self.generate_symbols(closing_line).yellow());
+        log::info!("{}", self.generate_footer_symbols().yellow());
         SystemInfo::new().get_system_info();
     }
 
-    pub fn get_sample_header(&mut self, text: &str) -> String {
-        self.text = text.to_string();
-        self.get_len();
-        if self.text_len > self.len {
-            self.text.yellow().to_string()
-        } else {
-            self.get_header()
+    pub fn get_sample_header(&mut self, header_text: &str) -> String {
+        let mut text = header_text.to_string();
+        if header_text.len() < self.len {
+            text = self.get_header(&header_text);
         }
+        self.len = text.len();
+        self.update_symbol_counts();
+        text.cyan().to_string()
     }
 
-    fn get_header(&mut self) -> String {
-        let symbols = self.generate_header_symbols();
-        let header = format!("Processing {}", self.text);
-
-        format!("{} {} {}", symbols, header, symbols)
-            .yellow()
-            .to_string()
+    pub fn get_sample_footer(&self) {
+        let decorator = self.generate_footer_symbols().cyan().to_string();
+        log::info!("{}", decorator);
     }
 
-    fn get_len(&mut self) {
-        self.text_len = self.text.len();
-
-        if self.len > self.text_len {
-            self.sym_len = (self.len - self.text_len) / 2;
-        } else {
-            self.sym_len = self.len;
-        }
-    }
-
-    fn generate_header_symbols(&self) -> String {
-        let mut len = self.sym_len;
-        if self.text_len % 2 != 0 {
-            len += 1;
+    fn get_header(&mut self, header_text: &str) -> String {
+        let header_len = header_text.len();
+        let mut header = String::from(header_text);
+        if self.len > header_len {
+            self.symbol_counts = (self.len - header_len) / 2;
+            header = self.generate_header(header_text);
         }
 
-        self.generate_symbols(len)
+        header
     }
 
-    fn generate_symbols(&self, len: usize) -> String {
-        self.sym.to_string().repeat(len)
+    fn update_symbol_counts(&mut self) {
+        self.symbol_counts = self.len;
+    }
+
+    fn generate_header(&mut self, header_text: &str) -> String {
+        let decorator = self.generate_symbols(HEADER_SYMBOL);
+        let mut header = format!("{} {} {}", decorator, header_text, decorator);
+        if header.len() > self.len {
+            header.truncate(self.len);
+        }
+        header
+    }
+
+    fn generate_footer_symbols(&self) -> String {
+        self.generate_symbols(FOOTER_SYMBOL)
+    }
+
+    fn generate_symbols(&self, symbol: char) -> String {
+        symbol.to_string().repeat(self.symbol_counts)
     }
 }
 

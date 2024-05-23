@@ -94,9 +94,18 @@ impl ReadCleaner<'_> {
     }
 
     fn clean_reads(&self, samples: &[FastqReads]) -> (usize, usize) {
+        let sample_counts = samples.len();
         let success_counts = 0;
         let mut failure_counts = 0;
+        let mut total_executed = 0;
         samples.iter().for_each(|sample| {
+            total_executed += 1;
+            log::info!(
+                "\n{}: {} of {}\n",
+                "Processing sample",
+                total_executed,
+                sample_counts
+            );
             let mut runner = fastp::FastpRunner::new(sample, self.output_dir, self.optional_params);
             let reports = runner.run().expect("Failed to run fastp");
 

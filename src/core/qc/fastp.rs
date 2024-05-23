@@ -9,7 +9,10 @@ use std::{
 use colored::Colorize;
 use indicatif::ProgressBar;
 
-use crate::helper::{reads::FastqReads, utils};
+use crate::helper::{
+    reads::FastqReads,
+    utils::{self, PrettyHeader},
+};
 
 pub const FASTP_EXE: &str = "fastp";
 
@@ -45,25 +48,31 @@ impl<'a> FastpRunner<'a> {
 
     /// Run fastp
     pub fn run(&mut self) -> Result<Option<FastpReport>, Box<dyn Error>> {
+        let decorator = self.print_header();
         let read1 = self.get_read1();
 
         if !read1.exists() {
             let msg = format!(
-                "Read 1 file not found for {}. Skipping sample!",
+                "\nRead 1 file not found for {}. Skipping it!\n",
                 self.sample.sample_name
             );
-            log::warn!("{}", msg);
+            log::error!("{}", msg.red());
+            decorator.get_sample_footer();
             return Ok(None);
         }
 
         let read2 = self.get_read2();
+        self.print_input_summary(&read1, read2.as_deref());
         self.create_output_dir()?;
         let spinner = utils::init_spinner();
         spinner.set_message("Cleaning reads");
         let output = self.execute_fastp(&read1, read2.as_deref())?;
 
         let reports = self.check_spades_success(&output, &spinner)?;
-
+        if let Some(report) = &reports {
+            self.print_output_summary(report);
+        }
+        decorator.get_sample_footer();
         Ok(reports)
     }
 
@@ -114,8 +123,12 @@ impl<'a> FastpRunner<'a> {
                 .expect("Read 2 file not found");
             Some(path)
         } else {
-            log::warn!("Read 2 file not found");
-            log::warn!("Proceeding with single end reads");
+            let msg = format!(
+                "\nRead 2 file not found for {}. \
+                Proceeding with single end reads\n",
+                self.sample.sample_name
+            );
+            log::warn!("{}", msg.yellow());
             None
         }
     }
@@ -148,6 +161,37 @@ impl<'a> FastpRunner<'a> {
         params.split_whitespace().for_each(|param| {
             cmd.arg(param);
         });
+    }
+
+    fn print_header(&self) -> PrettyHeader {
+        let mut decorator = PrettyHeader::new();
+        let header = decorator.get_sample_header(&self.sample.sample_name);
+        log::info!("{}", header);
+        decorator
+    }
+
+    fn print_input_summary(&self, read1: &Path, read2: Option<&Path>) {
+        log::info!("{}", "Input".cyan());
+        log::info!("{:18}: {}", "Read 1", self.get_file_name(read1));
+        if let Some(read2) = read2 {
+            log::info!("{:18}: {}", "Read 2", self.get_file_name(read2));
+        }
+        log::info!("{:18}: AUTO-DETECT\n", "Adapter");
+    }
+
+    fn get_file_name(&self, path: &Path) -> String {
+        path.file_name()
+            .expect("Failed to get file name")
+            .to_string_lossy()
+            .to_string()
+    }
+
+    fn print_output_summary(&self, report: &FastpReport) {
+        log::info!("{}", "Output".cyan());
+        log::info!("{:18}: {}", "Directory", report.output_dir.display());
+        log::info!("{:18}: {}", "HTML", report.html.display());
+        log::info!("{:18}: {}", "JSON", report.json.display());
+        log::info!("{:18}: {}\n", "Log", report.log.display());
     }
 }
 
