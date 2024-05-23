@@ -5,6 +5,7 @@ use std::path::Path;
 use std::sync::mpsc;
 
 use colored::Colorize;
+use comfy_table::Table;
 use rayon::prelude::*;
 
 use crate::cli::args::CleanArgs;
@@ -62,7 +63,7 @@ impl ReadCleaner<'_> {
         }
 
         if !self.process_samples {
-            spinner.finish_with_message(format!("{} Finished checking config\n", "✔".green()));
+            spinner.finish_with_message(format!("{} Finished checking samples\n", "✔".green()));
             self.log_config_check(&status);
             self.log_unprocessed();
             return;
@@ -73,13 +74,13 @@ impl ReadCleaner<'_> {
         }
 
         spinner.set_message("Cleaning reads");
-        let (succes_counts, failure_counts) = self.clean_reads(&config.samples);
+        let (success_counts, failure_counts) = self.clean_reads(&config.samples);
         spinner.finish_with_message(format!("{} Finished cleaning reads\n", "✔".green()));
-        self.print_final_summary(failure_counts, succes_counts);
+        self.print_final_summary(failure_counts, success_counts);
     }
 
     fn is_config_ok(&self, status: &[RawReadChecker]) -> bool {
-        status.iter().all(|s| s.is_error_free()) || status.is_empty()
+        status.iter().all(|s| s.is_ok()) || status.is_empty()
     }
 
     fn parse_config(&self) -> Result<RawReadConfig, Box<dyn std::error::Error>> {
@@ -123,36 +124,36 @@ impl ReadCleaner<'_> {
     }
 
     fn log_config_check(&self, status: &[RawReadChecker]) {
-        let error_free_samples = status.iter().filter(|s| s.is_error_free()).count();
+        let ok_samples = status.iter().filter(|s| s.is_ok()).count();
         let samples_with_warnings = status.iter().filter(|s| s.has_warnings()).count();
         let samples_with_errors = status.iter().filter(|s| s.has_errors()).count();
 
-        let count = format!("\nSummary of {} samples checked", status.len());
-        let error_free = format!("{:18}: {}", "Error free", error_free_samples);
-
-        log::info!("{}", count.cyan());
-        log::info!("{}", error_free);
+        log::info!("{}", "Sample check summary".cyan());
+        log::info!("{:18}: {}", "Total samples", status.len());
+        let ok_text = format!("{:18}: {}", "Pass", ok_samples);
+        log::info!("{}", ok_text.green());
 
         if samples_with_warnings > 0 {
-            let warnings = format!("{:18}: {}", "Warnings", samples_with_warnings);
-            log::info!("{}", warnings.yellow());
+            log::info!("{:18}: {}", "Warnings".yellow(), samples_with_warnings);
         }
 
         if samples_with_errors > 0 {
-            let errors = format!("{:18}: {}", "Errors", samples_with_errors);
-            log::info!("{}", errors.red());
+            log::info!("{:18}: {}", "Errors".red(), samples_with_errors);
         }
     }
 
     fn log_unprocessed(&self) {
-        let msg = format!(
-            "\n{}\n{}: {}",
-            "Samples were not processed",
-            "To continue processing samples use",
-            "ullar clean --process".green()
+        let msg1 = "Samples were not processed";
+        let msg2 = format!("To process samples use: {}", "ullar clean --process");
+        let msg3 = format!(
+            "To skip config check use: {}",
+            "ullar clean --process --skip-config-check"
         );
 
-        log::info!("{}", msg);
+        let mut table = Table::new();
+        let text = format!("{}\n{}\n{}", msg1, msg2, msg3);
+        table.add_row(vec![text]);
+        log::info!("\n{}", table);
     }
 
     fn log_input(&self, config: &RawReadConfig) {
