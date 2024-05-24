@@ -182,3 +182,39 @@ impl FromStr for RawReadFormat {
         }
     }
 }
+
+pub enum SymlinkFileSearchFormat {
+    /// For contigs file
+    Contigs,
+    Fastq,
+    Fasta,
+    Nexus,
+    Phylip,
+}
+
+impl Display for SymlinkFileSearchFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SymlinkFileSearchFormat::Contigs => write!(f, "contigs"),
+            SymlinkFileSearchFormat::Fastq => write!(f, "fastq"),
+            SymlinkFileSearchFormat::Fasta => write!(f, "fasta"),
+            SymlinkFileSearchFormat::Nexus => write!(f, "nexus"),
+            SymlinkFileSearchFormat::Phylip => write!(f, "phylip"),
+        }
+    }
+}
+
+impl FromStr for SymlinkFileSearchFormat {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "contigs" => Ok(SymlinkFileSearchFormat::Contigs),
+            "fastq" => Ok(SymlinkFileSearchFormat::Fastq),
+            "fasta" => Ok(SymlinkFileSearchFormat::Fasta),
+            "nexus" => Ok(SymlinkFileSearchFormat::Nexus),
+            "phylip" => Ok(SymlinkFileSearchFormat::Phylip),
+            _ => Err(format!("Unknown symlink file search format: {}", s)),
+        }
+    }
+}
