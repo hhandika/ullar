@@ -187,7 +187,6 @@ impl Fastp {
         if let Some(params) = optional_params {
             self.build_custom_params(&mut cmd, params);
         }
-        println!("Output: {}", self.output_dir.display());
 
         Ok(cmd.output()?)
     }
