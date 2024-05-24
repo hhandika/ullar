@@ -40,7 +40,7 @@ impl<'a> Symlinks<'a> {
 
     pub fn create(&self) {
         self.log_input();
-        PathCheck::new(&self.output_dir, true).prompt_exists();
+        PathCheck::new(self.output_dir, true).prompt_exists();
         let spinner = common::init_spinner();
         spinner.set_message("Finding matching files...");
         let mut files = self.find_files();
@@ -58,7 +58,7 @@ impl<'a> Symlinks<'a> {
         // Create atomic vector to count for symlinks
         let success_count = AtomicUsize::new(0);
         let failure_count = AtomicUsize::new(0);
-        fs::create_dir_all(&self.output_dir).expect("Failed to create output directory");
+        fs::create_dir_all(self.output_dir).expect("Failed to create output directory");
         files.par_iter().for_each(|file| {
             let destination = self.create_destination_path(file);
             let status = symlink(file, destination);
@@ -71,7 +71,7 @@ impl<'a> Symlinks<'a> {
         (success_count.into_inner(), failure_count.into_inner())
     }
 
-    fn create_destination_path(&self, file: &PathBuf) -> PathBuf {
+    fn create_destination_path(&self, file: &Path) -> PathBuf {
         let mut file_name = file
             .file_name()
             .unwrap_or_default()
@@ -87,7 +87,7 @@ impl<'a> Symlinks<'a> {
         files.retain(|file| self.is_contigs(file));
     }
 
-    fn is_contigs(&self, file: &PathBuf) -> bool {
+    fn is_contigs(&self, file: &Path) -> bool {
         file.file_name()
             .unwrap_or_default()
             .to_string_lossy()
