@@ -87,7 +87,7 @@ impl<'a> SpadeRunner<'a> {
         spinner: &ProgressBar,
     ) -> Result<SpadeReports, Box<dyn Error>> {
         if output.status.success() {
-            let reports = SpadeReports::new(&self.sample_output_dir);
+            let reports = SpadeReports::new(&self.sample.sample_name, &self.sample_output_dir);
             if !self.keep_intermediates {
                 spinner.set_message("Removing intermediates");
                 reports.remove_intermediates()?;
@@ -96,7 +96,7 @@ impl<'a> SpadeRunner<'a> {
                     "Intermediate SPAdes files were removed.",
                     "✔".green()
                 );
-                reports.finalize(&self.sample.sample_name);
+                reports.finalize();
             }
 
             spinner.finish_with_message(format!("{} Finished cleaning reads\n", "✔".green()));
@@ -197,6 +197,7 @@ impl<'a> Spades<'a> {
 }
 
 pub struct SpadeReports {
+    pub sample_name: String,
     pub output_dir: PathBuf,
     pub contigs: PathBuf,
     pub scaffolds: PathBuf,
@@ -205,8 +206,9 @@ pub struct SpadeReports {
 }
 
 impl SpadeReports {
-    pub fn new(output_dir: &Path) -> SpadeReports {
+    pub fn new(sample_name: &str, output_dir: &Path) -> SpadeReports {
         SpadeReports {
+            sample_name: sample_name.to_string(),
             output_dir: output_dir.to_path_buf(),
             contigs: output_dir.join(SPADES_CONTIGS),
             scaffolds: output_dir.join(SPADES_SCAFFOLDS),
@@ -225,20 +227,25 @@ impl SpadeReports {
     }
 
     // We rename contigs.fasta to sample_name-contigs.fasta
-    pub fn finalize(&self, sample_name: &str) -> PathBuf {
+    pub fn finalize(&self) {
         let contigs = self.output_dir.join(SPADES_CONTIGS);
         let new_contigs = self
             .output_dir
-            .join(format!("{}{}", sample_name, CONTIG_SUFFIX))
+            .join(format!("{}{}", self.sample_name, CONTIG_SUFFIX))
             .with_extension(CONTIG_EXTENSION);
 
         let rename = std::fs::rename(&contigs, &new_contigs);
         match rename {
-            Ok(_) => new_contigs,
+            Ok(_) => {
+                log::info!(
+                    "\n{} {}\n",
+                    "Contigs file was renamed to",
+                    new_contigs.display()
+                );
+            }
             Err(e) => {
                 log::error!("Failed to rename contigs file: {}", e);
                 log::error!("Contigs file will be saved as: {}", contigs.display());
-                contigs
             }
         }
     }
