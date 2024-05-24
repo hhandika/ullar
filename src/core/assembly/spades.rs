@@ -126,7 +126,7 @@ impl<'a> SpadeRunner<'a> {
             log::info!("{:18}: {}", "Singleton", singleton.display());
         }
         match deps.metadata {
-            Some(dep) => log::info!("{:18}: {} v{}", "Assembler\n", dep.name, dep.version),
+            Some(dep) => log::info!("{:18}: {} v{}\n", "Assembler", dep.name, dep.version),
             None => log::info!("{:18}: {}\n", "Assembler", "SPAdes".to_string()),
         }
     }
