@@ -69,8 +69,11 @@ impl<'a> PathCheck<'a> {
 
     fn delete_dir(&self) {
         fs::remove_dir_all(self.path).expect("Failed to remove directory");
-        let msg = format!("\nDirectory {} has been removed.\n", self.path.display());
-        log::warn!("{}", msg.red());
+        let msg = format!(
+            "\nDirectory {} has been removed.\n",
+            self.path.display().to_string().red()
+        );
+        log::warn!("{}", msg);
     }
 
     fn delete_file(&self) {
