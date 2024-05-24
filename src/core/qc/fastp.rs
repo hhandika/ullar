@@ -60,7 +60,7 @@ impl<'a> FastpRunner<'a> {
         let spinner = common::init_spinner();
         spinner.set_message("Cleaning reads");
         let mut fastp = Fastp::new(&self.sample_output_dir);
-        let output = fastp.execute(&read1, read2.as_deref(), self.optional_params.as_deref())?;
+        let output = fastp.execute(&read1, read2.as_deref(), self.optional_params)?;
 
         let reports = self.check_success(&output, fastp, &spinner)?;
         match reports {
@@ -85,10 +85,10 @@ impl<'a> FastpRunner<'a> {
         if output.status.success() {
             spinner.set_message(format!("Creating report for {}", self.sample.sample_name));
             let report = FastpReport::new(fastp_data, &self.sample.sample_name);
-            report.create(&output)?;
+            report.create(output)?;
             report.finalize();
             spinner.finish_with_message(format!("{} Finished cleaning reads\n", "✔".green()));
-            return Ok(Some(report));
+            Ok(Some(report))
         } else {
             spinner.finish_with_message(format!("{} Failed to clean reads\n", "✘".red()));
             let err = String::from_utf8_lossy(&output.stderr);
@@ -97,7 +97,7 @@ impl<'a> FastpRunner<'a> {
             log::info!("{}", stdout);
             // We return None here because
             // we don't want to stop the process for the next samples
-            return Ok(None);
+            Ok(None)
         }
     }
 

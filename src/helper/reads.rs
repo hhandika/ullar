@@ -118,7 +118,7 @@ impl<'a> ReadAssignment<'a> {
         });
 
         rx.iter().fold(file_map, |mut acc, (k, v)| {
-            acc.entry(k).or_insert_with(Vec::new).push(v);
+            acc.entry(k).or_default().push(v);
             acc
         })
     }

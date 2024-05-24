@@ -196,7 +196,7 @@ mod tests {
         let path = Path::new("test.fastq");
         let format = SupportedFormats::Fastq;
         let finder = FileFinder::new(path, &format);
-        assert_eq!(finder.is_matching_file(path), true);
+        assert!(finder.is_matching_file(path));
     }
 
     #[test]
@@ -217,7 +217,7 @@ mod tests {
             let path = Path::new(path);
             let format = SupportedFormats::Fastq;
             let finder = FileFinder::new(path, &format);
-            assert_eq!(finder.is_matching_file(path), true);
+            assert!(finder.is_matching_file(path));
         }
     }
 
@@ -234,7 +234,7 @@ mod tests {
             let path = Path::new(path);
             let format = SupportedFormats::Fasta;
             let finder = FileFinder::new(path, &format);
-            assert_eq!(finder.is_matching_file(path), true);
+            assert!(finder.is_matching_file(path));
         }
     }
 

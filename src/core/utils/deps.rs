@@ -43,6 +43,12 @@ pub struct DependencyCheck {
     pub iqtree: Option<DepMetadata>,
 }
 
+impl Default for DependencyCheck {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DependencyCheck {
     pub fn new() -> Self {
         Self {
@@ -117,6 +123,12 @@ pub struct SpadesMetadata {
     pub metadata: Option<DepMetadata>,
 }
 
+impl Default for SpadesMetadata {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SpadesMetadata {
     pub fn new() -> Self {
         Self { metadata: None }
@@ -138,17 +150,23 @@ impl SpadesMetadata {
 
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {
         let executable = SPADES_EXE.to_string();
-        let version = re_capture_version(&version_data);
+        let version = re_capture_version(version_data);
         Some(DepMetadata {
             name: "SPAdes".to_string(),
             version: version.to_string(),
-            executable: executable,
+            executable,
         })
     }
 }
 
 pub struct FastpMetadata {
     pub metadata: Option<DepMetadata>,
+}
+
+impl Default for FastpMetadata {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl FastpMetadata {
@@ -172,17 +190,23 @@ impl FastpMetadata {
 
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {
         let executable = FASTP_EXE.to_string();
-        let version = re_capture_version(&version_data);
+        let version = re_capture_version(version_data);
         Some(DepMetadata {
             name: "fastp".to_string(),
             version: version.to_string(),
-            executable: executable,
+            executable,
         })
     }
 }
 
 pub struct IqtreeMetadata {
     metadata: Option<DepMetadata>,
+}
+
+impl Default for IqtreeMetadata {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl IqtreeMetadata {
@@ -216,13 +240,13 @@ impl IqtreeMetadata {
     }
 
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {
-        let version = re_capture_version(&version_data);
+        let version = re_capture_version(version_data);
         let executable = self.get_executable(&version);
         let name = self.name(&version);
         Some(DepMetadata {
-            name: name,
-            version: version,
-            executable: executable,
+            name,
+            version,
+            executable,
         })
     }
 
@@ -254,18 +278,11 @@ fn re_capture_version(version: &str) -> String {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct DepMetadata {
     pub name: String,
     pub version: String,
     pub executable: String,
 }
 
-impl Default for DepMetadata {
-    fn default() -> Self {
-        Self {
-            name: String::new(),
-            version: String::new(),
-            executable: String::new(),
-        }
-    }
-}
+

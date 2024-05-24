@@ -183,6 +183,7 @@ impl FromStr for RawReadFormat {
     }
 }
 
+#[derive(Debug, PartialEq, Clone, Copy, Eq, Serialize, Deserialize)]
 pub enum SymlinkFileSearchFormat {
     /// For contigs file
     Contigs,

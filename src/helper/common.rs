@@ -31,6 +31,12 @@ pub struct PrettyHeader {
     symbol_counts: usize,
 }
 
+impl Default for PrettyHeader {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PrettyHeader {
     pub fn new() -> Self {
         Self {
@@ -55,7 +61,7 @@ impl PrettyHeader {
     pub fn get_sample_header(&mut self, header_text: &str) -> String {
         let mut text = header_text.to_string();
         if header_text.len() < self.len {
-            text = self.get_header(&header_text);
+            text = self.get_header(header_text);
         }
         self.len = text.len();
         self.update_symbol_counts();
@@ -109,6 +115,12 @@ pub struct SystemInfo {
     pub threads: usize,
     pub total_memory: String,
     pub date: String,
+}
+
+impl Default for SystemInfo {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SystemInfo {

@@ -45,7 +45,7 @@ impl ConfigCheck {
         let (tx, rx) = mpsc::channel();
         samples.par_iter().for_each_with(tx, |tx, sample| {
             let mut status = ReadChecker::new(&sample.sample_name);
-            status.check(&sample, ignore_checksum);
+            status.check(sample, ignore_checksum);
             tx.send(status).expect("Failed to send status");
         });
 

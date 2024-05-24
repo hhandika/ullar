@@ -56,17 +56,17 @@ pub(crate) enum SubCommand {
 pub(crate) enum UtilSubCommand {
     /// Check and manage dependencies
     #[command(name = "deps", about = "Check and manage dependencies")]
-    CheckDepsSubcommand,
+    CheckDeps,
     /// Subcommand to hash files
     #[command(name = "checksum", about = "Hash files")]
-    ChecksumSubcommand(Sha256Args),
+    Checksum(Sha256Args),
     /// Scan directory for files
     #[command(subcommand, name = "scan", about = "Scan directory for files")]
-    ScanSubcommand(ScannerSubcommand),
+    Scan(ScannerSubcommand),
     /// Extra function to create symlink on POSIX system
     #[cfg(target_family = "unix")]
     #[command(name = "symlink", about = "Create symlink on POSIX system")]
-    SymlinkSubcommand(SymlinkArgs),
+    Symlink(SymlinkArgs),
 }
 
 #[derive(Subcommand)]
@@ -279,7 +279,7 @@ pub struct SymlinkArgs {
     pub dir: PathBuf,
     /// Path to the symlink
     #[cfg(target_family = "unix")]
-    #[arg(short, long, help = "Path to the symlink")]
+    #[arg(short, long, default_value = "symlinks", help = "Path to the symlink")]
     pub output: PathBuf,
     /// Supported format
     #[cfg(target_family = "unix")]

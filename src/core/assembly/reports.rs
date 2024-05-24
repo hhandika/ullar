@@ -40,7 +40,7 @@ impl SpadeReports {
             .into_iter()
             .filter_map(|e| e.ok())
             .filter(|e| !self.is_essential_spades_file(e.path()))
-            .for_each(|e| self.remove(&e.path()));
+            .for_each(|e| self.remove(e.path()));
         Ok(())
     }
 
@@ -84,13 +84,13 @@ impl SpadeReports {
     fn remove(&self, entry: &Path) {
         if entry.is_file() {
             std::fs::remove_file(entry)
-                .expect(&format!("Failed to remove file {}", entry.display()));
+                .unwrap_or_else(|_| panic!("Failed to remove file {}", entry.display()));
         }
 
         // We remove the directory and its contents
         if entry.is_dir() {
             std::fs::remove_dir_all(entry)
-                .expect(&format!("Failed to remove directory {}", entry.display()));
+                .unwrap_or_else(|_| panic!("Failed to remove directory {}", entry.display()));
         }
     }
 }

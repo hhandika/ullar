@@ -40,7 +40,7 @@ pub struct Assembly<'a> {
 
 impl Assembly<'_> {
     /// Initialize a new Assembly instance
-    pub fn new<'a>(args: &'a AssemblyArgs) -> Assembly<'a> {
+    pub fn new(args: &AssemblyArgs) -> Assembly<'_> {
         Assembly {
             config_path: &args.config,
             ignore_checksum: args.ignore_checksum,
