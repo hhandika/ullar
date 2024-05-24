@@ -6,7 +6,7 @@ use spades::SpadeRunner;
 
 use crate::{
     cli::args::AssemblyArgs,
-    helper::{files::PathCheck, reads::FastqReads, tracker::ProcessingTracker, utils},
+    helper::{common, files::PathCheck, reads::FastqReads, tracker::ProcessingTracker},
 };
 
 use self::spades::SpadeReports;
@@ -56,7 +56,7 @@ impl Assembly<'_> {
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
         PathCheck::new(self.output_dir, true).prompt_exists();
-        let spinner = utils::init_spinner();
+        let spinner = common::init_spinner();
         let mut check = ConfigCheck::new(config.sample_counts);
 
         if self.skip_config_check {

@@ -10,10 +10,12 @@ use colored::Colorize;
 use indicatif::ProgressBar;
 
 use crate::{
-    check_read1_exists, create_output_dir,
+    check_read1_exists,
+    core::utils::deps::FastpMetadata,
+    create_output_dir,
     helper::{
+        common::{self, PrettyHeader},
         reads::FastqReads,
-        utils::{self, PrettyHeader},
     },
     parse_optional_params,
 };
@@ -55,8 +57,7 @@ impl<'a> FastpRunner<'a> {
         let read2 = self.sample.get_read2();
         self.print_input_summary(&read1, read2.as_deref());
         create_output_dir!(self);
-        println!("{}", self.sample_output_dir.display());
-        let spinner = utils::init_spinner();
+        let spinner = common::init_spinner();
         spinner.set_message("Cleaning reads");
         let mut fastp = Fastp::new(&self.sample_output_dir);
         let output = fastp.execute(&read1, read2.as_deref(), self.optional_params.as_deref())?;
@@ -106,12 +107,20 @@ impl<'a> FastpRunner<'a> {
     }
 
     fn print_input_summary(&self, read1: &Path, read2: Option<&Path>) {
+        let fastp_meta = FastpMetadata::new().get();
+        let meta = if let Some(meta) = fastp_meta.metadata {
+            format!("{} v{}", meta.name, meta.version)
+        } else {
+            "fastp".to_string()
+        };
+
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Read 1", self.get_file_name(read1));
         if let Some(read2) = read2 {
             log::info!("{:18}: {}", "Read 2", self.get_file_name(read2));
         }
-        log::info!("{:18}: AUTO-DETECT\n", "Adapter");
+        log::info!("{:18}: AUTO-DETECT", "Adapter");
+        log::info!("{:18}: {}\n", "Cleaner", meta);
     }
 
     fn get_file_name(&self, path: &Path) -> String {
@@ -176,6 +185,7 @@ impl Fastp {
         if let Some(params) = optional_params {
             self.build_custom_params(&mut cmd, params);
         }
+        println!("Output: {}", self.output_dir.display());
 
         Ok(cmd.output()?)
     }

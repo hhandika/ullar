@@ -36,7 +36,7 @@ impl<'a> PathCheck<'a> {
 
     pub fn prompt_exists(&self) {
         if self.path.exists() {
-            self.prompt_users("Path already exists. Do you want to delete it?")
+            self.prompt_users("Path already exists. Do you want to delete it?");
         }
     }
 
@@ -54,15 +54,18 @@ impl<'a> PathCheck<'a> {
             }
             Ok(false) => {
                 log::info!(
-                    "\nUser chose not to delete {}. Exiting program...\n",
-                    self.path.display()
+                    "\nUser chose not to delete the {} directory. \
+                    Rename the directory manually to proceed. \
+                    Exiting program...\n",
+                    self.path.display().to_string().red()
                 );
                 log::info!("");
-                return;
+                std::process::exit(0);
             }
             Err(_) => {
                 log::error!("\nFailed to get user input. Exiting program...\n");
-                return;
+                log::info!("");
+                std::process::exit(1);
             }
         }
     }

@@ -9,7 +9,7 @@ use crate::{
     helper::{
         files::{FileFinder, CSV_EXT},
         reads::{FastqReads, ReadAssignment, SampleNameFormat},
-        utils,
+        common,
     },
     types::SupportedFormats,
 };
@@ -37,7 +37,7 @@ impl<'a> ReadScanner<'a> {
     }
 
     pub fn scan(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let spinner = utils::init_spinner();
+        let spinner = common::init_spinner();
         spinner.set_message("Scanning FASTQ reads...");
         let format = SupportedFormats::Fastq;
         let files = self.find_files(&format);

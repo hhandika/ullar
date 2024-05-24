@@ -14,7 +14,7 @@ use crate::{
         qc::ReadCleaner,
         utils::{checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner},
     },
-    helper::{self, utils::PrettyHeader},
+    helper::{self, common::PrettyHeader},
 };
 pub struct Cli {
     pub command: UllarCli,

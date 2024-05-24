@@ -15,7 +15,7 @@ use crate::{
     helper::{
         checksum::{ChecksumType, FileSha256},
         files::{FileFinder, CSV_EXT},
-        utils,
+        common,
     },
     types::SupportedFormats,
 };
@@ -83,7 +83,7 @@ impl<'a> Sha256Executor<'a> {
     }
 
     pub fn execute(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let spinner = utils::init_spinner();
+        let spinner = common::init_spinner();
         spinner.set_message("Finding files...");
         let files = self.find_files()?;
         spinner.set_message(format!("Generating SHA256 from {} files...", files.len()));
