@@ -133,9 +133,8 @@ impl ReadCleaner<'_> {
 
             match results {
                 Ok(report) => {
-                    self.log_run_summary(&report);
-                    tracker.success_counts += 1;
                     reports.push(report);
+                    tracker.success_counts += 1;
                 }
                 Err(e) => {
                     log::error!("Failed to clean reads for sample: {}", sample.sample_name);
@@ -173,13 +172,6 @@ impl ReadCleaner<'_> {
         log::info!("{:18}: {}", "Config file", self.config_path.display());
         log::info!("{:18}: {}", "Sample counts", config.sample_counts);
         log::info!("{:18}: {}\n", "File counts", config.file_counts);
-    }
-
-    fn log_run_summary(&self, reports: &FastpReport) {
-        log::info!("{:18}: {}", "Output directory", self.output_dir.display());
-        log::info!("{:18}: {}", "HTML report", reports.html.display());
-        log::info!("{:18}: {}", "JSON report", reports.json.display());
-        log::info!("{:18}: {}", "Fastp log", reports.log.display());
     }
 
     fn log_final_output(&self, config_path: &Path) {

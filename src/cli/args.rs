@@ -204,6 +204,9 @@ pub struct AssemblyArgs {
     /// Check config for errors
     #[arg(long, help = "Continue processing samples without checking the config file")]
     pub skip_config_check: bool,
+    /// Remove SPAdes intermediate files
+    #[arg(long, help = "Remove SPAdes intermediate files")]
+    pub keep_intermediates: bool,
 }
 
 

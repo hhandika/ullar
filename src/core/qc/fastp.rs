@@ -15,6 +15,7 @@ use crate::{
         reads::FastqReads,
         utils::{self, PrettyHeader},
     },
+    parse_optional_params,
 };
 
 pub const FASTP_EXE: &str = "fastp";
@@ -240,8 +241,6 @@ impl Fastp {
     }
 
     fn build_custom_params(&self, cmd: &mut Command, params: &str) {
-        params.split_whitespace().for_each(|param| {
-            cmd.arg(param);
-        });
+        parse_optional_params!(cmd, params);
     }
 }
