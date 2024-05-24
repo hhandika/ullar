@@ -42,14 +42,12 @@ impl<'a> SpadeRunner<'a> {
 
     pub fn run(&mut self) -> Result<SpadeReports, Box<dyn Error>> {
         let decorator = self.print_header();
-
         let read1 = self.sample.get_read1();
         check_read1_exists!(self, read1);
-
         let read2 = self.sample.get_read2();
         let singleton = self.sample.get_singleton();
         self.print_input_summary(&read1, read2.as_deref(), singleton.as_deref());
-        create_output_dir!();
+        create_output_dir!(self);
         let spinner = utils::init_spinner();
         spinner.set_message("Assembling reads");
         let reports = SpadeReports::new(&self.sample_output_dir);

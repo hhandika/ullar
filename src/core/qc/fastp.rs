@@ -54,10 +54,9 @@ impl<'a> FastpRunner<'a> {
         let decorator = self.print_header();
         let read1 = self.sample.get_read1();
         check_read1_exists!(self, read1);
-
         let read2 = self.sample.get_read2();
         self.print_input_summary(&read1, read2.as_deref());
-        create_output_dir!();
+        create_output_dir!(self);
         let spinner = utils::init_spinner();
         spinner.set_message("Cleaning reads");
         let mut fastp = Fastp::new(&self.sample_output_dir);
@@ -200,11 +199,9 @@ impl Fastp {
     ) -> Result<Output, Box<dyn Error>> {
         self.get_read1_filename(input_read1);
         let output_read1 = self.output_dir.join(self.read1_filename.as_str());
-
         let mut cmd = Command::new(FASTP_EXE);
 
         cmd.arg("-i").arg(input_read1);
-        cmd.arg("-o").arg(&output_read1);
         if let Some(r2) = input_read2 {
             self.get_read2_filename(r2);
             let output_read2 = self.output_dir.join(
@@ -215,6 +212,7 @@ impl Fastp {
             cmd.arg("-I").arg(r2);
             cmd.arg("-O").arg(&output_read2);
         }
+        cmd.arg("-o").arg(&output_read1);
 
         if let Some(params) = optional_params {
             self.build_custom_params(&mut cmd, params);

@@ -9,6 +9,7 @@ use comfy_table::Table;
 
 use crate::cli::args::CleanArgs;
 use crate::core::configs::ConfigCheck;
+use crate::helper::files::PathCheck;
 use crate::helper::reads::FastqReads;
 use crate::helper::tracker::ProcessingTracker;
 use crate::helper::utils;
@@ -54,11 +55,12 @@ impl ReadCleaner<'_> {
     pub fn clean(&self) {
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
+        PathCheck::new(self.output_dir, true).prompt_exists();
         let spinner = utils::init_spinner();
         let mut check = ConfigCheck::new(config.sample_counts);
 
         if self.skip_config_check {
-            spinner.set_message("Skipping config data check\n");
+            spinner.finish_with_message("Skipping config data check\n");
         } else {
             spinner.set_message("Checking config data for errors");
             check.check_fastq(&config.samples, self.ignore_checksum);
@@ -71,7 +73,7 @@ impl ReadCleaner<'_> {
             return;
         }
 
-        if !check.is_config_ok() {
+        if !check.is_config_ok() && !self.skip_config_check {
             check.log_status();
             log::error!("\n{}\n", "Config check failed".red());
             return;

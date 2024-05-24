@@ -13,7 +13,7 @@ use crate::{
     types::Task,
 };
 
-use super::raw_reads::CONFIG_EXTENSION;
+use super::raw_reads::{CONFIG_EXTENSION, DEFAULT_CONFIG_DIR};
 
 pub const DEFAULT_CLEANED_READ_CONFIG: &str = "cleaned_read";
 
@@ -71,14 +71,14 @@ impl CleanReadConfig {
         reports: &[FastpReport],
     ) -> Result<PathBuf, Box<dyn std::error::Error>> {
         fs::create_dir_all(output_dir)?;
-        let mut output = output_dir.join(DEFAULT_CLEANED_READ_CONFIG);
-        output.set_extension(CONFIG_EXTENSION);
+        let mut output_dir = Path::new(DEFAULT_CONFIG_DIR).join(DEFAULT_CLEANED_READ_CONFIG);
+        output_dir.set_extension(CONFIG_EXTENSION);
         self.parse_fastp_report(reports);
         self.get_sample_counts();
         self.get_file_counts();
-        let writer = fs::File::create(&output)?;
+        let writer = fs::File::create(&output_dir)?;
         serde_yaml::to_writer(&writer, self)?;
-        Ok(output)
+        Ok(output_dir)
     }
 
     pub fn from_yaml(&mut self, input: &Path) -> Result<(), Box<dyn std::error::Error>> {

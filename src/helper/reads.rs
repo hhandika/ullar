@@ -40,7 +40,6 @@ macro_rules! create_output_dir {
             std::fs::create_dir_all(&$self.sample_output_dir)?;
         }
     };
-    () => {};
 }
 
 #[derive(Debug, PartialEq, Clone, Eq)]
