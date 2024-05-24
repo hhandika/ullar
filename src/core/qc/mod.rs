@@ -136,7 +136,6 @@ impl ReadCleaner<'_> {
     ) -> Result<PathBuf, Box<dyn std::error::Error>> {
         let spin = common::init_spinner();
         spin.set_message("Writing output config");
-        let output_dir = self.output_dir.join(DEFAULT_CLEAN_READ_OUTPUT_DIR);
         let fastp_dep = FastpMetadata::new().get();
         let mut metadata = Vec::new();
 
@@ -150,7 +149,7 @@ impl ReadCleaner<'_> {
             self.optional_params.map(|s| s.to_string()),
         );
 
-        let output = config.to_yaml(&output_dir, reports);
+        let output = config.to_yaml(reports);
         spin.finish_with_message(format!("{} Finished writing output config\n", "✔".green()));
         output
     }
