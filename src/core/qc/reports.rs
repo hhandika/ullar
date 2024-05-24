@@ -51,7 +51,7 @@ impl FastpReport {
                         .next()
                         .is_none()
             })
-            .for_each(|e| std::fs::remove_dir(&e.path()).expect("Failed removing directory"));
+            .for_each(|e| std::fs::remove_dir(e.path()).expect("Failed removing directory"));
     }
 
     fn write_log(&self, output: &Output) -> Result<(), Box<dyn Error>> {

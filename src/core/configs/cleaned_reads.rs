@@ -87,11 +87,7 @@ impl CleanReadConfig {
             let sample_name = report.sample_name.clone();
             let parent_path = report.fastp_data.output_dir.to_path_buf();
             let read1_path = parent_path.join(&report.fastp_data.read1_filename);
-            let read2_path = if let Some(read2) = &report.fastp_data.read2_filename {
-                Some(parent_path.join(read2))
-            } else {
-                None
-            };
+            let read2_path = report.fastp_data.read2_filename.as_ref().map(|read2| parent_path.join(read2));
             fastq.match_define_reads(sample_name, &read1_path, read2_path.as_deref());
             tx.send(fastq).expect("Failed to send fastq reads")
         });

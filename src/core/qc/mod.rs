@@ -42,7 +42,7 @@ pub struct ReadCleaner<'a> {
 
 impl ReadCleaner<'_> {
     /// Initialize a new ReadCleaner instance
-    pub fn new<'a>(args: &'a CleanArgs) -> ReadCleaner<'a> {
+    pub fn new(args: &CleanArgs) -> ReadCleaner<'_> {
         ReadCleaner {
             config_path: &args.config,
             ignore_checksum: args.ignore_checksum,

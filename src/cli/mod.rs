@@ -65,19 +65,17 @@ impl Cli {
 
     fn parse_utils(&self, util_args: &UtilSubCommand) {
         match util_args {
-            UtilSubCommand::ChecksumSubcommand(sha256_args) => {
+            UtilSubCommand::Checksum(sha256_args) => {
                 let parser = Sha256Executor::new(sha256_args);
                 parser.execute().expect("Failed to execute sha256 command");
             }
-            UtilSubCommand::ScanSubcommand(scan_subcommand) => {
-                self.parse_read_scan(scan_subcommand)
-            }
-            UtilSubCommand::CheckDepsSubcommand => {
+            UtilSubCommand::Scan(scan_subcommand) => self.parse_read_scan(scan_subcommand),
+            UtilSubCommand::CheckDeps => {
                 let mut deps = DependencyCheck::new();
                 deps.check();
             }
             #[cfg(target_family = "unix")]
-            UtilSubCommand::SymlinkSubcommand(args) => Symlinks::new(args).create(),
+            UtilSubCommand::Symlink(args) => Symlinks::new(args).create(),
         }
     }
 
