@@ -15,6 +15,8 @@ use super::configs::{cleaned_reads::CleanReadConfig, ConfigCheck};
 
 pub mod spades;
 
+pub const DEFAULT_ASSEMBLY_OUTPUT_DIR: &str = "assemblies";
+
 pub struct Assembly<'a> {
     /// Path to the assembly configuration file
     pub config_path: &'a Path,
@@ -140,13 +142,13 @@ impl Assembly<'_> {
         log::info!("{}", "Assembly input".cyan());
         log::info!("{:18}: {}", "Config file", self.config_path.display());
         log::info!("{:18}: {}", "Sample counts", config.sample_counts);
-        log::info!("{:18}: {}", "File counts", config.file_counts);
+        log::info!("{:18}: {}\n", "File counts", config.file_counts);
     }
 
     fn log_output(&self, reports: &[SpadeReports]) {
         log::info!("{}", "Assembly summary".cyan());
         let output_dir = self.output_dir.join("assemblies");
         log::info!("{:18}: {}", "Output directory", output_dir.display());
-        log::info!("{:18}: {}", "Number of samples", reports.len());
+        log::info!("{:18}: {}", "Total samples", reports.len());
     }
 }
