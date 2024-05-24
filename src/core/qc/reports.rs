@@ -2,6 +2,8 @@
 
 use std::{error::Error, path::PathBuf, process::Output};
 
+use walkdir::WalkDir;
+
 use super::fastp::Fastp;
 
 const FASTP_HTML: &str = "fastp.html";
@@ -33,6 +35,23 @@ impl FastpReport {
         self.write_log(output)?;
         self.organize()?;
         Ok(())
+    }
+
+    /// Clean up the output directory by removing all empty directories
+    pub fn finalize(&self) {
+        WalkDir::new(&self.fastp_data.output_dir)
+            .into_iter()
+            .filter_map(|e| e.ok())
+            // Filter only empty directories
+            .filter(|e| {
+                e.path().is_dir()
+                    && e.path()
+                        .read_dir()
+                        .expect("Failed finding directory")
+                        .next()
+                        .is_none()
+            })
+            .for_each(|e| std::fs::remove_dir(&e.path()).expect("Failed removing directory"));
     }
 
     fn write_log(&self, output: &Output) -> Result<(), Box<dyn Error>> {

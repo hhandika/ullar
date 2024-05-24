@@ -45,7 +45,7 @@ impl SpadeReports {
     }
 
     // We rename contigs.fasta to sample_name-contigs.fasta
-    pub fn finalize(&self) {
+    pub fn finalize(&mut self) {
         let contigs = self.output_dir.join(SPADES_CONTIGS);
         let new_contigs = self
             .output_dir
@@ -60,6 +60,7 @@ impl SpadeReports {
                     "Contigs file was renamed to",
                     new_contigs.display()
                 );
+                self.contigs = new_contigs;
             }
             Err(e) => {
                 log::error!("Failed to rename contigs file: {}", e);
