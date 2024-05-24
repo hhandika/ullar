@@ -43,7 +43,6 @@ impl FastpReport {
     fn organize(&self) -> Result<(), Box<dyn Error>> {
         let report_dir = self.fastp_data.output_dir.join(FASTP_REPORT_DIR);
         std::fs::create_dir_all(&report_dir)?;
-        println!("{}", report_dir.display());
         std::fs::rename(&self.html, report_dir.join(FASTP_HTML))?;
         std::fs::rename(&self.json, report_dir.join(FASTP_JSON))?;
 

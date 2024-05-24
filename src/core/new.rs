@@ -9,7 +9,7 @@ use crate::cli::args::NewArgs;
 use crate::core::configs::raw_reads::{RawReadConfig, ReadMatching};
 use crate::helper::files::FileFinder;
 use crate::helper::reads::{FastqReads, ReadAssignment, SampleNameFormat};
-use crate::helper::utils;
+use crate::helper::common;
 use crate::types::SupportedFormats;
 
 pub struct NewExecutor<'a> {
@@ -41,7 +41,7 @@ impl<'a> NewExecutor<'a> {
     }
 
     pub fn execute(&mut self) -> Result<(), Box<dyn Error>> {
-        let spin = utils::init_spinner();
+        let spin = common::init_spinner();
         spin.set_message("Finding files...");
         let format = SupportedFormats::Fastq;
         self.match_sample_name_format();

@@ -45,19 +45,20 @@ impl ProcessingTracker {
 
     pub fn print_summary(&self) {
         let mut table = self.print_table();
-        let remaining_samples = self.sample_counts - self.total_processed;
+        let remaining_samples = format!(
+            "Remaining samples: {} / {}",
+            self.sample_counts - self.total_processed,
+            self.sample_counts
+        );
         self.add_mean_runtime(&mut table);
         table.add_row(vec![
             "Estimate wait time",
             &format!("{:.2} s", self.wait_time),
         ]);
-        log::info!("\n{}", "Run Summary".cyan());
+
+        log::info!("\n{}", "Run Summary".green());
         log::info!("{}", table);
-        log::info!(
-            "\nRemaining samples: {} / {}\n",
-            remaining_samples,
-            self.sample_counts
-        );
+        log::info!("\n{}\n", remaining_samples.green());
     }
 
     fn print_table(&self) -> Table {

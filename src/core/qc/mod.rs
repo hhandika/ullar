@@ -10,10 +10,10 @@ use comfy_table::Table;
 
 use crate::cli::args::CleanArgs;
 use crate::core::configs::ConfigCheck;
+use crate::helper::common;
 use crate::helper::files::PathCheck;
 use crate::helper::reads::FastqReads;
 use crate::helper::tracker::ProcessingTracker;
-use crate::helper::utils;
 
 use self::reports::FastpReport;
 
@@ -58,9 +58,8 @@ impl ReadCleaner<'_> {
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
         PathCheck::new(self.output_dir, true).prompt_exists();
-        let spinner = utils::init_spinner();
+        let spinner = common::init_spinner();
         let mut check = ConfigCheck::new(config.sample_counts);
-
         if self.skip_config_check {
             spinner.finish_with_message("Skipping config data check\n");
         } else {
@@ -103,7 +102,7 @@ impl ReadCleaner<'_> {
         &self,
         reports: &[FastpReport],
     ) -> Result<PathBuf, Box<dyn std::error::Error>> {
-        let spin = utils::init_spinner();
+        let spin = common::init_spinner();
         spin.set_message("Writing output config");
         let output_dir = self.output_dir.join(DEFAULT_CLEAN_READ_OUTPUT_DIR);
         let fastp_dep = FastpMetadata::new().get();
