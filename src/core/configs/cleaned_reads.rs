@@ -8,7 +8,7 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 use crate::{
-    core::{qc::fastp::FastpReport, utils::deps::DepMetadata},
+    core::{qc::reports::FastpReport, utils::deps::DepMetadata},
     helper::reads::FastqReads,
     types::Task,
 };

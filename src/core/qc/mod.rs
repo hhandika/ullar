@@ -1,5 +1,6 @@
 //! Clean raw read files using Fastp
 pub mod fastp;
+pub mod reports;
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -14,7 +15,7 @@ use crate::helper::reads::FastqReads;
 use crate::helper::tracker::ProcessingTracker;
 use crate::helper::utils;
 
-use self::fastp::FastpReport;
+use self::reports::FastpReport;
 
 use super::configs::cleaned_reads::CleanReadConfig;
 use super::configs::raw_reads::RawReadConfig;
