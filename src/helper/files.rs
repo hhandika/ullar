@@ -6,6 +6,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use colored::Colorize;
+use dialoguer::{theme::ColorfulTheme, Confirm};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -21,6 +23,62 @@ use crate::{
 use super::checksum::ChecksumType;
 
 pub const CSV_EXT: &str = "csv";
+
+pub struct PathCheck<'a> {
+    path: &'a Path,
+    is_dir: bool,
+}
+
+impl<'a> PathCheck<'a> {
+    pub fn new(path: &'a Path, is_dir: bool) -> Self {
+        Self { path, is_dir }
+    }
+
+    pub fn prompt_exists(&self) {
+        if self.path.exists() {
+            self.prompt_users("Path already exists. Do you want to delete it?")
+        }
+    }
+
+    fn prompt_users(&self, message: &str) {
+        let selection = Confirm::with_theme(&ColorfulTheme::default())
+            .with_prompt(message)
+            .interact();
+        match selection {
+            Ok(true) => {
+                if self.is_dir {
+                    self.delete_dir();
+                } else {
+                    self.delete_file();
+                }
+            }
+            Ok(false) => {
+                log::info!(
+                    "\nUser chose not to delete {}. Exiting program...\n",
+                    self.path.display()
+                );
+                log::info!("");
+                return;
+            }
+            Err(_) => {
+                log::error!("\nFailed to get user input. Exiting program...\n");
+                return;
+            }
+        }
+    }
+
+    fn delete_dir(&self) {
+        fs::remove_dir_all(self.path).expect("Failed to remove directory");
+        let msg = format!("\nDirectory {} has been removed.\n", self.path.display());
+        log::warn!("{}", msg.red());
+    }
+
+    fn delete_file(&self) {
+        fs::remove_file(self.path).expect("Failed to remove file");
+        let msg = format!("\nFile {} has been removed.\n", self.path.display());
+        log::warn!("{}", msg.red());
+    }
+}
 
 /// Find all raw read files in the specified directory
 pub struct FileFinder<'a> {

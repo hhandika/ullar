@@ -30,7 +30,7 @@ impl ProcessingTracker {
     pub fn update(&mut self, runtime: f64) {
         self.total_runtime += runtime;
         self.total_processed += 1;
-        self.mean_runtime = self.total_runtime / self.sample_counts as f64;
+        self.mean_runtime = self.total_runtime / self.total_processed as f64;
         self.wait_time = self.mean_runtime * (self.sample_counts - self.total_processed) as f64;
     }
 
@@ -43,7 +43,10 @@ impl ProcessingTracker {
     pub fn print_summary(&self) {
         let mut table = self.print_table();
         let remaining_samples = self.sample_counts - self.total_processed;
-        table.add_row(vec!["Wait time", &format!("{:.2} s", self.wait_time)]);
+        table.add_row(vec![
+            "Estimate wait time",
+            &format!("{:.2} s", self.wait_time),
+        ]);
         log::info!("\n{}", "Run Summary".cyan());
         log::info!("{}", table);
         log::info!(
