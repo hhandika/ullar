@@ -9,10 +9,11 @@ use crate::{
     helper::{common, files::PathCheck, reads::FastqReads, tracker::ProcessingTracker},
 };
 
-use self::spades::SpadeReports;
+use self::reports::SpadeReports;
 
 use super::configs::{cleaned_reads::CleanReadConfig, ConfigCheck};
 
+pub mod reports;
 pub mod spades;
 
 pub const DEFAULT_ASSEMBLY_OUTPUT_DIR: &str = "assemblies";
