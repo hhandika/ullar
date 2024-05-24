@@ -25,8 +25,9 @@ pub struct CleanReadConfig {
     pub input_init_dir: PathBuf,
     pub sample_counts: usize,
     pub file_counts: usize,
-    pub dependency: Vec<DepMetadata>,
+    pub dependencies: Vec<DepMetadata>,
     pub task: Task,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub optional_params: Option<String>,
     pub samples: Vec<FastqReads>,
 }
@@ -38,7 +39,7 @@ impl Default for CleanReadConfig {
             input_init_dir: PathBuf::new(),
             sample_counts: 0,
             file_counts: 0,
-            dependency: Vec::new(),
+            dependencies: Vec::new(),
             task: Task::CleanReads,
             optional_params: None,
             samples: Vec::new(),
@@ -50,7 +51,7 @@ impl CleanReadConfig {
     pub fn new(
         config_path: Option<PathBuf>,
         input_init_dir: &Path,
-        dependency: Vec<DepMetadata>,
+        dependencies: Vec<DepMetadata>,
         optional_params: Option<String>,
     ) -> Self {
         Self {
@@ -58,7 +59,7 @@ impl CleanReadConfig {
             input_init_dir: input_init_dir.to_path_buf(),
             sample_counts: 0,
             file_counts: 0,
-            dependency,
+            dependencies,
             task: Task::CleanReads,
             optional_params,
             samples: Vec::new(),
@@ -73,26 +74,12 @@ impl CleanReadConfig {
         fs::create_dir_all(output_dir)?;
         let mut output_dir = Path::new(DEFAULT_CONFIG_DIR).join(DEFAULT_CLEANED_READ_CONFIG);
         output_dir.set_extension(CONFIG_EXTENSION);
-        self.parse_fastp_report(reports);
+        self.samples = self.parse_fastp_report(reports);
         self.get_sample_counts();
         self.get_file_counts();
         let writer = fs::File::create(&output_dir)?;
         serde_yaml::to_writer(&writer, self)?;
         Ok(output_dir)
-    }
-
-    pub fn from_yaml(&mut self, input: &Path) -> Result<(), Box<dyn std::error::Error>> {
-        let reader = fs::File::open(input)?;
-        let config: CleanReadConfig = serde_yaml::from_reader(reader)?;
-        self.config_path = config.config_path;
-        self.input_init_dir = config.input_init_dir;
-        self.sample_counts = config.sample_counts;
-        self.file_counts = config.file_counts;
-        self.dependency = config.dependency;
-        self.task = config.task;
-        self.optional_params = config.optional_params;
-        self.samples = config.samples;
-        Ok(())
     }
 
     fn parse_fastp_report(&self, reports: &[FastpReport]) -> Vec<FastqReads> {

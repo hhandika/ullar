@@ -259,3 +259,13 @@ pub struct DepMetadata {
     pub version: String,
     pub executable: String,
 }
+
+impl Default for DepMetadata {
+    fn default() -> Self {
+        Self {
+            name: String::new(),
+            version: String::new(),
+            executable: String::new(),
+        }
+    }
+}

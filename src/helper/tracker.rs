@@ -37,7 +37,7 @@ impl ProcessingTracker {
     pub fn finalize(&self) {
         let table = self.print_table();
         log::info!("\n{}", "Final Summary".cyan());
-        log::info!("{}", table);
+        log::info!("{}\n", table);
     }
 
     pub fn print_summary(&self) {
