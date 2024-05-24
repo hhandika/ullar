@@ -201,7 +201,7 @@ impl FastqReads {
 
     /// Match all reads to the FastqReads struct
     pub fn match_all(&mut self, sample_name: String, reads: &[PathBuf]) {
-        self.check_reads(reads.len());
+        self.check_reads(reads, reads.len());
         self.sample_name = sample_name;
         reads.iter().for_each(|r| {
             self.match_read(r);
@@ -271,12 +271,29 @@ impl FastqReads {
         metadata
     }
 
-    fn check_reads(&self, len: usize) {
-        let help_msg = "Please, check sample name format. \
+    fn check_reads(&self, reads: &[PathBuf], len: usize) {
+        let help_msg = format!(
+            "Please, check sample name format. \
         Make sure it matches to the right format. \
-        You can specify the format using the --sample-name flag.";
-        assert!(len > 0, "No reads found. {}", help_msg);
-        assert!(len <= 3, "Too many reads found. {}.", help_msg);
+        You can specify the format using the {} argument \
+        or use regex to match the sample name using the {} argument",
+            "--sample-name".green(),
+            "--re-sample".green()
+        );
+        let too_many_reads = "Too many reads found".red();
+        let sample_founds = reads
+            .iter()
+            .enumerate()
+            .map(|(i, r)| format!("{}: {:?}\n", i + 1, r.display()))
+            .collect::<String>();
+        assert!(len > 0, "No reads found. {}", help_msg.red());
+        assert!(
+            len <= 3,
+            "{}. {}.\nProblematic reads:\n{}",
+            too_many_reads,
+            help_msg,
+            sample_founds
+        );
     }
 }
 
