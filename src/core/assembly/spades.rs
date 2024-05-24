@@ -115,12 +115,28 @@ impl<'a> SpadeRunner<'a> {
     fn print_input_summary(&self, read1: &Path, read2: Option<&Path>, singleton: Option<&Path>) {
         let deps = SpadesMetadata::new().get();
         log::info!("{}", "Input summary".cyan());
-        log::info!("{:18}: {}", "Read 1", read1.display());
+
+        let read1_filename = read1
+            .file_name()
+            .unwrap_or_default()
+            .to_str()
+            .unwrap_or_default();
+        log::info!("{:18}: {}", "Read 1", read1_filename);
         if let Some(read2) = read2 {
-            log::info!("{:18}: {}", "Read 2", read2.display());
+            let read2_filename = read2
+                .file_name()
+                .unwrap_or_default()
+                .to_str()
+                .unwrap_or_default();
+            log::info!("{:18}: {}", "Read 2", read2_filename);
         }
         if let Some(singleton) = singleton {
-            log::info!("{:18}: {}", "Singleton", singleton.display());
+            let singleton_filename = singleton
+                .file_name()
+                .unwrap_or_default()
+                .to_str()
+                .unwrap_or_default();
+            log::info!("{:18}: {}", "Singleton", singleton_filename);
         }
         match deps.metadata {
             Some(dep) => log::info!("{:18}: {} v{}\n", "Assembler", dep.name, dep.version),
