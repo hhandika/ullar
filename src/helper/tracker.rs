@@ -35,7 +35,10 @@ impl ProcessingTracker {
     }
 
     pub fn finalize(&self) {
-        let table = self.print_table();
+        let success_rate = self.success_counts as f64 / self.sample_counts as f64 * 100.0;
+        let mut table = self.print_table();
+        table.add_row(vec!["Success rate", &format!("{:.2}%", success_rate)]);
+        self.add_mean_runtime(&mut table);
         log::info!("\n{}", "Final Summary".cyan());
         log::info!("{}\n", table);
     }
@@ -43,6 +46,7 @@ impl ProcessingTracker {
     pub fn print_summary(&self) {
         let mut table = self.print_table();
         let remaining_samples = self.sample_counts - self.total_processed;
+        self.add_mean_runtime(&mut table);
         table.add_row(vec![
             "Estimate wait time",
             &format!("{:.2} s", self.wait_time),
@@ -57,18 +61,18 @@ impl ProcessingTracker {
     }
 
     fn print_table(&self) -> Table {
-        let success_rate = self.success_counts as f64 / self.sample_counts as f64 * 100.0;
-
         let mut table = Table::new();
         table.set_header(vec!["Metric", "Value"]);
         table
             .add_row(vec!["Total samples", &self.sample_counts.to_string()])
             .add_row(vec!["Total processed", &self.total_processed.to_string()])
             .add_row(vec!["Success", &self.success_counts.to_string()])
-            .add_row(vec!["Failure", &self.failure_counts.to_string()])
-            .add_row(vec!["Success rate", &format!("{:.2}%", success_rate)])
-            .add_row(vec!["Mean runtime", &format!("{:.2} s", self.mean_runtime)]);
+            .add_row(vec!["Failure", &self.failure_counts.to_string()]);
 
         table
+    }
+
+    fn add_mean_runtime(&self, table: &mut Table) {
+        table.add_row(vec!["Mean runtime", &format!("{:.2} s", self.mean_runtime)]);
     }
 }

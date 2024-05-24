@@ -6,6 +6,7 @@ use clap::{
 
 use crate::core::configs::raw_reads::{DEFAULT_RAW_READ_PREFIX, DEFAULT_CONFIG_DIR};
 use crate::core::qc::DEFAULT_CLEAN_READ_OUTPUT_DIR;
+use crate::core::assembly::DEFAULT_ASSEMBLY_OUTPUT_DIR;
 
 
 #[derive(Parser)]
@@ -192,7 +193,8 @@ pub struct AssemblyArgs {
     #[arg(long = "process", help = "Process samples if true else check for errors only")]
     pub process_samples: bool,
     /// Output directory to store the assemblies
-    #[arg(short, long, help = "Output directory to store the assemblies")]
+    #[arg(short, long, default_value = DEFAULT_ASSEMBLY_OUTPUT_DIR,
+        help = "Output directory to store the assemblies")]
     pub output: PathBuf,
     /// Optional parameters for the assembly process
     #[arg(
