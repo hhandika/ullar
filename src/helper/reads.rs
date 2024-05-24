@@ -209,11 +209,12 @@ impl FastqReads {
     }
 
     /// Match reads if the reads are known
-    pub fn match_define_reads(&mut self, read1: &Path, read2: Option<&Path>) {
+    pub fn match_define_reads(&mut self, sample_name: String, read1: &Path, read2: Option<&Path>) {
         self.read_1 = Some(self.metadata(read1));
         if let Some(r2) = read2 {
             self.read_2 = Some(self.metadata(r2));
         }
+        self.sample_name = sample_name;
     }
 
     /// Get read 1 file path
