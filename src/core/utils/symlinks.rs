@@ -123,7 +123,7 @@ impl<'a> Symlinks<'a> {
 
     fn log_output(&self, file_count: usize, success: usize, fail: usize) {
         log::info!("{}", "Output".cyan());
-        log::info!("{:18}: {}\n", "Directory", self.output_dir.display());
+        log::info!("{:18}: {}", "Directory", self.output_dir.display());
         log::info!("{:18}: {}", "File counts", file_count);
         log::info!("{:18}: {}", "Symlink created", success);
         log::info!("{:18}: {}", "Symlink failed", fail);
