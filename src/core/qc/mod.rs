@@ -18,6 +18,7 @@ use self::fastp::FastpReport;
 
 use super::configs::cleaned_reads::CleanReadConfig;
 use super::configs::raw_reads::RawReadConfig;
+use super::utils::deps::FastpMetadata;
 
 pub const DEFAULT_CLEAN_READ_OUTPUT_DIR: &str = "cleaned_reads";
 
@@ -80,8 +81,6 @@ impl ReadCleaner<'_> {
         }
 
         let reports = self.clean_reads(&config.samples);
-
-        log::info!("{}", "Cleaning summary".cyan());
         let config_path = self
             .write_output_config(&reports)
             .expect("Failed to write clean read config");
@@ -103,14 +102,25 @@ impl ReadCleaner<'_> {
         &self,
         reports: &[FastpReport],
     ) -> Result<PathBuf, Box<dyn std::error::Error>> {
+        let spin = utils::init_spinner();
+        spin.set_message("Writing output config");
         let output_dir = self.output_dir.join(DEFAULT_CLEAN_READ_OUTPUT_DIR);
+        let fastp_dep = FastpMetadata::new().get();
+        let mut metadata = Vec::new();
+
+        if let Some(fastp) = fastp_dep.metadata {
+            metadata.push(fastp);
+        }
         let mut config = CleanReadConfig::new(
             Some(self.config_path.to_path_buf()),
             self.output_dir,
-            Vec::new(),
+            metadata,
             self.optional_params.map(|s| s.to_string()),
         );
-        config.to_yaml(&output_dir, reports)
+
+        let output = config.to_yaml(&output_dir, reports);
+        spin.finish_with_message(format!("{} Finished writing output config\n", "✔".green()));
+        output
     }
 
     fn clean_reads(&self, samples: &[FastqReads]) -> Vec<FastpReport> {
@@ -173,7 +183,7 @@ impl ReadCleaner<'_> {
     }
 
     fn log_final_output(&self, config_path: &Path) {
-        log::info!("{}", "Output".cyan());
+        log::info!("{}", "\nOutput".cyan());
         log::info!("{:18}: {}", "Directory", self.output_dir.display());
         log::info!("{:18}: {}\n", "Config file", config_path.display());
     }
