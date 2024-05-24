@@ -114,7 +114,7 @@ impl DependencyCheck {
 }
 
 pub struct SpadesMetadata {
-    metadata: Option<DepMetadata>,
+    pub metadata: Option<DepMetadata>,
 }
 
 impl SpadesMetadata {

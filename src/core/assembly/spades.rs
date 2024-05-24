@@ -6,10 +6,13 @@ use std::{
 
 use colored::Colorize;
 use indicatif::ProgressBar;
+use sysinfo::System;
 use walkdir::WalkDir;
 
 use crate::{
-    check_read1_exists, create_output_dir,
+    check_read1_exists,
+    core::utils::deps::SpadesMetadata,
+    create_output_dir,
     helper::{
         reads::FastqReads,
         utils::{self, PrettyHeader},
@@ -113,6 +116,7 @@ impl<'a> SpadeRunner<'a> {
     }
 
     fn print_input_summary(&self, read1: &Path, read2: Option<&Path>, singleton: Option<&Path>) {
+        let deps = SpadesMetadata::new().get();
         log::info!("{}", "Input summary".cyan());
         log::info!("{:18}: {}", "Read 1", read1.display());
         if let Some(read2) = read2 {
@@ -120,6 +124,10 @@ impl<'a> SpadeRunner<'a> {
         }
         if let Some(singleton) = singleton {
             log::info!("{:18}: {}", "Singleton", singleton.display());
+        }
+        match deps.metadata {
+            Some(dep) => log::info!("{:18}: {} v{}", "Assembler\n", dep.name, dep.version),
+            None => log::info!("{:18}: {}\n", "Assembler", "SPAdes".to_string()),
         }
     }
 
@@ -164,6 +172,9 @@ impl<'a> Spades<'a> {
             cmd.arg("--pe-s").arg(singleton);
         }
 
+        cmd.arg("-o").arg(&self.output_dir);
+        cmd.arg("-t").arg(Spades::get_thread_count());
+
         match optional_params {
             Some(params) => {
                 parse_optional_params!(cmd, params);
@@ -174,6 +185,11 @@ impl<'a> Spades<'a> {
         }
 
         Ok(cmd.output()?)
+    }
+
+    fn get_thread_count() -> String {
+        let sysinfo = System::new_all();
+        sysinfo.cpus().len().to_string()
     }
 }
 
