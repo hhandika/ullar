@@ -60,6 +60,32 @@ jobs:
           file: ullar.tar.gz
           asset_name: ullar-Linux-musl-x86_64.tar.gz
           tag: ${{ github.ref }}
+    
+  linux_arm:
+    name: Linux arm64 GNU
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Build
+        uses: houseabsolute/actions-rust-cross@v0
+        with:
+          command: both
+          target: aarch64-unknown-linux-gnu
+          args: --release
+
+      - name: Compress release
+        run: tar czvf ullar.tar.gz -C target/aarch64-unknown-linux-gnu/release ullar
+
+      - name: Upload release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: segul.tar.gz
+          asset_name: ullar-Linux-arm64.tar.gz
+          tag: ${{ github.ref }}
+
 
   macos:
     name: macOS x86_64
