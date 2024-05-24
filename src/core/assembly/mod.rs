@@ -1,12 +1,12 @@
-use std::{fs, path::Path};
+use std::{fs, path::Path, time::Instant};
 
 use colored::Colorize;
 use comfy_table::Table;
-use rayon::prelude::*;
+use spades::SpadeRunner;
 
 use crate::{
     cli::args::AssemblyArgs,
-    helper::{reads::FastqReads, utils},
+    helper::{reads::FastqReads, tracker::ProcessingTracker, utils},
 };
 
 use self::spades::SpadeReports;
@@ -30,6 +30,9 @@ pub struct Assembly<'a> {
     pub optional_params: Option<&'a str>,
     /// Check config for errors
     pub skip_config_check: bool,
+    /// Remove SPAdes intermediate files
+    /// by default
+    pub keep_intermediates: bool,
 }
 
 impl Assembly<'_> {
@@ -42,6 +45,7 @@ impl Assembly<'_> {
             output_dir: &args.output,
             optional_params: args.optional_params.as_deref(),
             skip_config_check: args.skip_config_check,
+            keep_intermediates: args.keep_intermediates,
         }
     }
 
@@ -66,7 +70,7 @@ impl Assembly<'_> {
             return;
         }
 
-        if !check.is_config_ok() {
+        if !check.is_config_ok() && !self.skip_config_check {
             check.log_status();
             log::error!("\n{}\n", "Config check failed".red());
             return;
@@ -82,16 +86,39 @@ impl Assembly<'_> {
         Ok(config)
     }
 
-    #[allow(unused_variables, dead_code)]
     fn assemble_reads(&self, samples: &[FastqReads]) -> Vec<SpadeReports> {
-        let reports = Vec::new();
-        let spinner = utils::init_spinner();
-        spinner.set_message("Assembling cleaned reads");
+        let time = Instant::now();
+        let mut tracker = ProcessingTracker::new(samples.len());
+        let mut reports = Vec::new();
 
-        samples.par_iter().for_each(|sample| unimplemented!());
+        samples.iter().enumerate().for_each(|(idx, sample)| {
+            let results = SpadeRunner::new(
+                sample,
+                self.output_dir,
+                self.optional_params,
+                self.keep_intermediates,
+            )
+            .run();
 
-        spinner.finish_with_message(format!("{} Finished assembling reads\n", "✔".green()));
+            match results {
+                Ok(report) => {
+                    reports.push(report);
+                    tracker.success_counts += 1;
+                }
+                Err(e) => {
+                    log::error!("Failed to assemble sample: {}", sample.sample_name);
+                    log::error!("Error: {}", e);
+                    tracker.failure_counts += 1;
+                }
+            }
 
+            tracker.update(time.elapsed().as_secs_f64());
+            if idx < samples.len() - 1 {
+                tracker.print_summary();
+            }
+        });
+
+        tracker.finalize();
         reports
     }
 
