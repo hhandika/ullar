@@ -10,9 +10,7 @@ use colored::Colorize;
 use indicatif::ProgressBar;
 
 use crate::{
-    check_read1_exists,
-    core::utils::deps::FastpMetadata,
-    create_output_dir,
+    check_read1_exists, create_output_dir,
     helper::{
         common::{self, PrettyHeader},
         reads::FastqReads,
@@ -109,20 +107,12 @@ impl<'a> FastpRunner<'a> {
     }
 
     fn print_input_summary(&self, read1: &Path, read2: Option<&Path>) {
-        let fastp_meta = FastpMetadata::new().get();
-        let meta = if let Some(meta) = fastp_meta.metadata {
-            format!("{} v{}", meta.name, meta.version)
-        } else {
-            "fastp".to_string()
-        };
-
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Read 1", self.get_file_name(read1));
         if let Some(read2) = read2 {
             log::info!("{:18}: {}", "Read 2", self.get_file_name(read2));
         }
-        log::info!("{:18}: AUTO-DETECT", "Adapter");
-        log::info!("{:18}: {}\n", "Cleaner", meta);
+        log::info!("{:18}: AUTO-DETECT\n", "Adapter");
     }
 
     fn get_file_name(&self, path: &Path) -> String {

@@ -7,11 +7,15 @@ use spades::SpadeRunner;
 use crate::{
     cli::args::AssemblyArgs,
     helper::{common, files::PathCheck, reads::FastqReads, tracker::ProcessingTracker},
+    types::Task,
 };
 
 use self::reports::SpadeReports;
 
-use super::configs::{cleaned_reads::CleanReadConfig, ConfigCheck};
+use super::{
+    configs::{cleaned_reads::CleanReadConfig, ConfigCheck},
+    utils::deps::SpadesMetadata,
+};
 
 pub mod reports;
 pub mod spades;
@@ -36,6 +40,7 @@ pub struct Assembly<'a> {
     /// Remove SPAdes intermediate files
     /// by default
     pub keep_intermediates: bool,
+    task: Task,
 }
 
 impl Assembly<'_> {
@@ -49,6 +54,7 @@ impl Assembly<'_> {
             optional_params: args.optional_params.as_deref(),
             skip_config_check: args.skip_config_check,
             keep_intermediates: args.keep_intermediates,
+            task: Task::Assembly,
         }
     }
 
@@ -82,8 +88,8 @@ impl Assembly<'_> {
             return;
         }
 
-        let reports = self.assemble_reads(&config.samples);
-        self.log_output(&reports);
+        let _ = self.assemble_reads(&config.samples);
+        self.log_output();
     }
 
     fn parse_config(&self) -> Result<CleanReadConfig, Box<dyn std::error::Error>> {
@@ -143,16 +149,25 @@ impl Assembly<'_> {
     }
 
     fn log_input(&self, config: &CleanReadConfig) {
-        log::info!("{}", "Assembly input".cyan());
-        log::info!("{:18}: {}", "Config file", self.config_path.display());
+        log::info!("{}", "Input".cyan());
+        log::info!("{:18}: {}", "Config path", self.config_path.display());
         log::info!("{:18}: {}", "Sample counts", config.sample_counts);
-        log::info!("{:18}: {}\n", "File counts", config.file_counts);
+        log::info!("{:18}: {}", "File counts", config.file_counts);
+        log::info!("{:18}: {}", "Task", self.task);
+        self.log_spade_info();
     }
 
-    fn log_output(&self, reports: &[SpadeReports]) {
-        log::info!("{}", "Assembly summary".cyan());
+    fn log_output(&self) {
+        log::info!("{}", "Output summary".cyan());
         let output_dir = self.output_dir.join("assemblies");
         log::info!("{:18}: {}", "Output directory", output_dir.display());
-        log::info!("{:18}: {}", "Total samples", reports.len());
+    }
+
+    fn log_spade_info(&self) {
+        let deps = SpadesMetadata::new().get();
+        match deps.metadata {
+            Some(dep) => log::info!("{:18}: {} v{}\n", "Assembler", dep.name, dep.version),
+            None => log::info!("{:18}: {}\n", "Assembler", "SPAdes".to_string()),
+        }
     }
 }

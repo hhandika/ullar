@@ -9,7 +9,6 @@ use walkdir::WalkDir;
 
 const SPADES_CONTIGS: &str = "contigs.fasta";
 const SPADES_SCAFFOLDS: &str = "scaffolds.fasta";
-const SPADES_REPORT: &str = "spades_report.html";
 const SPADES_LOG: &str = "spades.log";
 pub const CONTIG_SUFFIX: &str = "-contigs";
 const CONTIG_EXTENSION: &str = "fasta";
@@ -19,7 +18,6 @@ pub struct SpadeReports {
     pub output_dir: PathBuf,
     pub contigs: PathBuf,
     pub scaffolds: PathBuf,
-    pub report: PathBuf,
     pub log: PathBuf,
 }
 
@@ -30,7 +28,6 @@ impl SpadeReports {
             output_dir: output_dir.to_path_buf(),
             contigs: output_dir.join(SPADES_CONTIGS),
             scaffolds: output_dir.join(SPADES_SCAFFOLDS),
-            report: output_dir.join(SPADES_REPORT),
             log: output_dir.join(SPADES_LOG),
         }
     }
@@ -76,7 +73,6 @@ impl SpadeReports {
         } else {
             file.ends_with(&self.contigs)
                 || file.ends_with(&self.scaffolds)
-                || file.ends_with(&self.report)
                 || file.ends_with(&self.log)
         }
     }
