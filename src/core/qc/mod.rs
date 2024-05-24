@@ -14,6 +14,7 @@ use crate::helper::common;
 use crate::helper::files::PathCheck;
 use crate::helper::reads::FastqReads;
 use crate::helper::tracker::ProcessingTracker;
+use crate::types::Task;
 
 use self::reports::FastpReport;
 
@@ -38,6 +39,7 @@ pub struct ReadCleaner<'a> {
     pub optional_params: Option<&'a str>,
     /// Check config for errors
     pub skip_config_check: bool,
+    task: Task,
 }
 
 impl ReadCleaner<'_> {
@@ -50,6 +52,7 @@ impl ReadCleaner<'_> {
             output_dir: &args.output,
             optional_params: args.optional_params.as_deref(),
             skip_config_check: args.skip_config_check,
+            task: Task::CleanReads,
         }
     }
 
@@ -172,12 +175,22 @@ impl ReadCleaner<'_> {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config file", self.config_path.display());
         log::info!("{:18}: {}", "Sample counts", config.sample_counts);
-        log::info!("{:18}: {}\n", "File counts", config.file_counts);
+        log::info!("{:18}: {}", "File counts", config.file_counts);
+        log::info!("{:18}: {}", "Task", self.task);
+        self.log_fastp_info();
     }
 
     fn log_final_output(&self, config_path: &Path) {
         log::info!("{}", "\nOutput".cyan());
         log::info!("{:18}: {}", "Directory", self.output_dir.display());
         log::info!("{:18}: {}\n", "Config file", config_path.display());
+    }
+
+    fn log_fastp_info(&self) {
+        let deps = FastpMetadata::new().get();
+        match deps.metadata {
+            Some(dep) => log::info!("{:18}: {} v{}\n", "Cleaner", dep.name, dep.version),
+            None => log::info!("{:18}: {}\n", "Cleaner", "fastp"),
+        }
     }
 }

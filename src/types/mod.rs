@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 /// Data type for each feature
 #[derive(Debug, PartialEq, Clone, Copy, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Task {
     /// Raw read quality control task
     /// Cleans and filters raw reads
@@ -40,12 +41,12 @@ pub enum Task {
 impl Display for Task {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Task::CleanReads => write!(f, "CleanReads"),
-            Task::Assembly => write!(f, "Assembly"),
-            Task::ReadMapping => write!(f, "ReadMapping"),
+            Task::CleanReads => write!(f, "Read Cleaning"),
+            Task::Assembly => write!(f, "De Novo Assembly"),
+            Task::ReadMapping => write!(f, "Read Mapping"),
             Task::Alignment => write!(f, "Alignment"),
-            Task::AlignmentQc => write!(f, "AlignmentQc"),
-            Task::TreeInference => write!(f, "TreeInference"),
+            Task::AlignmentQc => write!(f, "Alignment Quality Control"),
+            Task::TreeInference => write!(f, "Tree Inference"),
         }
     }
 }

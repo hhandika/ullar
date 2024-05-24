@@ -9,9 +9,7 @@ use indicatif::ProgressBar;
 use sysinfo::System;
 
 use crate::{
-    check_read1_exists,
-    core::utils::deps::SpadesMetadata,
-    create_output_dir,
+    check_read1_exists, create_output_dir,
     helper::{
         common::{self, PrettyHeader},
         reads::FastqReads,
@@ -113,7 +111,6 @@ impl<'a> SpadeRunner<'a> {
     }
 
     fn print_input_summary(&self, read1: &Path, read2: Option<&Path>, singleton: Option<&Path>) {
-        let deps = SpadesMetadata::new().get();
         log::info!("{}", "Input summary".cyan());
 
         let read1_filename = read1
@@ -138,18 +135,26 @@ impl<'a> SpadeRunner<'a> {
                 .unwrap_or_default();
             log::info!("{:18}: {}", "Singleton", singleton_filename);
         }
-        match deps.metadata {
-            Some(dep) => log::info!("{:18}: {} v{}\n", "Assembler", dep.name, dep.version),
-            None => log::info!("{:18}: {}\n", "Assembler", "SPAdes".to_string()),
-        }
+        log::info!("");
     }
 
     fn print_output_summary(&self, reports: &SpadeReports) {
-        log::info!("{}", "Output summary".cyan());
-        log::info!("{:18}: {}", "Contigs", reports.contigs.display());
-        log::info!("{:18}: {}", "Scaffolds", reports.scaffolds.display());
-        log::info!("{:18}: {}", "Report", reports.report.display());
-        log::info!("{:18}: {}", "Log", reports.log.display());
+        log::info!("{}", "Output".cyan());
+        log::info!("{:18}: {}", "Directory", reports.output_dir.display());
+        log::info!("{:18}: {}", "Contigs", self.get_file_name(&reports.contigs));
+        log::info!(
+            "{:18}: {}",
+            "Scaffolds",
+            self.get_file_name(&reports.scaffolds)
+        );
+        log::info!("{:18}: {}", "Log", self.get_file_name(&reports.log));
+    }
+
+    fn get_file_name(&self, path: &Path) -> String {
+        path.file_name()
+            .expect("Failed to get file name")
+            .to_string_lossy()
+            .to_string()
     }
 }
 
