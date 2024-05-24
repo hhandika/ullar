@@ -60,7 +60,7 @@ impl Assembly<'_> {
         let mut check = ConfigCheck::new(config.sample_counts);
 
         if self.skip_config_check {
-            spinner.set_message("Skipping config data check\n");
+            spinner.finish_with_message("Skipping config data check\n");
         } else {
             spinner.set_message("Checking config data for errors");
             check.check_fastq(&config.samples, self.ignore_checksum);

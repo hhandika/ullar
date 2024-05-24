@@ -229,9 +229,7 @@ impl SpadeReports {
     }
 
     fn remove(&self, entry: &Path) {
-        if entry.is_dir() {
-            std::fs::remove_dir_all(entry).unwrap();
-        } else {
+        if entry.is_file() {
             std::fs::remove_file(entry).unwrap();
         }
     }
