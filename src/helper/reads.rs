@@ -281,11 +281,9 @@ impl FastqReads {
             "--re-sample".green()
         );
         let too_many_reads = "Too many reads found".red();
-        let sample_founds = reads
-            .iter()
-            .enumerate()
-            .map(|(i, r)| format!("{}: {:?}\n", i + 1, r.display()))
-            .collect::<String>();
+        let sample_founds = reads.iter().enumerate().fold(String::new(), |acc, (i, r)| {
+            format!("{}{}. {}\n", acc, i + 1, r.display())
+        });
         assert!(len > 0, "No reads found. {}", help_msg.red());
         assert!(
             len <= 3,
