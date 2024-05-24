@@ -85,7 +85,7 @@ impl<'a> FastpRunner<'a> {
     ) -> Result<Option<FastpReport>, Box<dyn Error>> {
         if output.status.success() {
             spinner.finish_with_message(format!("{} Finished cleaning reads\n", "✔".green()));
-            let report = FastpReport::new(fastp_data);
+            let report = FastpReport::new(fastp_data, &self.sample.sample_name);
             report.create(&output)?;
             return Ok(Some(report));
         } else {
@@ -139,15 +139,17 @@ impl<'a> FastpRunner<'a> {
 #[derive(Debug, Clone)]
 pub struct FastpReport {
     pub fastp_data: Fastp,
+    pub sample_name: String,
     pub html: PathBuf,
     pub json: PathBuf,
     pub log: PathBuf,
 }
 
 impl FastpReport {
-    pub fn new(fastp_data: Fastp) -> Self {
+    pub fn new(fastp_data: Fastp, sample_name: &str) -> Self {
         FastpReport {
             fastp_data,
+            sample_name: sample_name.to_string(),
             html: PathBuf::from(FASTP_HTML),
             json: PathBuf::from(FASTP_JSON),
             log: PathBuf::from(FASTP_LOG),

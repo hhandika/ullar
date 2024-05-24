@@ -86,6 +86,7 @@ impl CleanReadConfig {
         let (tx, rx) = channel();
         reports.par_iter().for_each_with(tx, |tx, report| {
             let mut fastq = FastqReads::new();
+            let sample_name = report.sample_name.clone();
             let parent_path = report.fastp_data.output_dir.to_path_buf();
             let read1_path = parent_path.join(&report.fastp_data.read1_filename);
             let read2_path = if let Some(read2) = &report.fastp_data.read2_filename {
@@ -93,7 +94,7 @@ impl CleanReadConfig {
             } else {
                 None
             };
-            fastq.match_define_reads(&read1_path, read2_path.as_deref());
+            fastq.match_define_reads(sample_name, &read1_path, read2_path.as_deref());
             tx.send(fastq).expect("Failed to send fastq reads")
         });
 
