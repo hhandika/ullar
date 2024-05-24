@@ -12,12 +12,14 @@ use crate::{
         assembly::Assembly,
         new::NewExecutor,
         qc::ReadCleaner,
-        utils::{
-            checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner, symlinks::Symlinks,
-        },
+        utils::{checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner},
     },
     helper::{self, common::PrettyHeader},
 };
+
+#[cfg(target_family = "unix")]
+use crate::core::utils::symlinks::Symlinks;
+
 pub struct Cli {
     pub command: UllarCli,
 }
