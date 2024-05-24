@@ -68,10 +68,8 @@ impl CleanReadConfig {
 
     pub fn to_yaml(
         &mut self,
-        output_dir: &Path,
         reports: &[FastpReport],
     ) -> Result<PathBuf, Box<dyn std::error::Error>> {
-        fs::create_dir_all(output_dir)?;
         let mut output_dir = Path::new(DEFAULT_CONFIG_DIR).join(DEFAULT_CLEANED_READ_CONFIG);
         output_dir.set_extension(CONFIG_EXTENSION);
         self.samples = self.parse_fastp_report(reports);
