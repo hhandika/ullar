@@ -12,7 +12,9 @@ use crate::{
         assembly::Assembly,
         new::NewExecutor,
         qc::ReadCleaner,
-        utils::{checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner},
+        utils::{
+            checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner, symlinks::Symlinks,
+        },
     },
     helper::{self, common::PrettyHeader},
 };
@@ -74,6 +76,8 @@ impl Cli {
                 let mut deps = DependencyCheck::new();
                 deps.check();
             }
+            #[cfg(target_family = "unix")]
+            UtilSubCommand::SymlinkSubcommand(args) => Symlinks::new(args).create(),
         }
     }
 

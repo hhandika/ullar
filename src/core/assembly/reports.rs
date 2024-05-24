@@ -11,7 +11,7 @@ const SPADES_CONTIGS: &str = "contigs.fasta";
 const SPADES_SCAFFOLDS: &str = "scaffolds.fasta";
 const SPADES_REPORT: &str = "spades_report.html";
 const SPADES_LOG: &str = "spades.log";
-const CONTIG_SUFFIX: &str = "-contigs";
+pub const CONTIG_SUFFIX: &str = "-contigs";
 const CONTIG_EXTENSION: &str = "fasta";
 
 pub struct SpadeReports {

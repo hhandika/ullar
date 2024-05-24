@@ -63,6 +63,10 @@ pub(crate) enum UtilSubCommand {
     /// Scan directory for files
     #[command(subcommand, name = "scan", about = "Scan directory for files")]
     ScanSubcommand(ScannerSubcommand),
+    /// Extra function to create symlink on POSIX system
+    #[cfg(target_family = "unix")]
+    #[command(name = "symlink", about = "Create symlink on POSIX system")]
+    SymlinkSubcommand(SymlinkArgs),
 }
 
 #[derive(Subcommand)]
@@ -264,4 +268,29 @@ pub struct ReadScanArgs {
         value_parser = builder::PossibleValuesParser::new(["simple", "descriptive"])
     )]
     pub sample_name: String,
+}
+
+#[cfg(target_family = "unix")]
+#[derive(Args)]
+pub struct SymlinkArgs {
+    /// Path to the file to link
+    #[cfg(target_family = "unix")]
+    #[arg(short, long, help = "Input directory to scan")]
+    pub dir: PathBuf,
+    /// Path to the symlink
+    #[cfg(target_family = "unix")]
+    #[arg(short, long, help = "Path to the symlink")]
+    pub output: PathBuf,
+    /// Supported format
+    #[cfg(target_family = "unix")]
+    #[arg(
+        short, 
+        long , 
+        default_value = "contigs",
+        help = "Specify input format",
+        value_parser = builder::PossibleValuesParser::new([
+            "contigs", "fastq", "fasta", "nexus", "phylip", "text"
+        ])
+    )]
+    pub format: String,
 }
