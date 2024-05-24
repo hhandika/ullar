@@ -7,9 +7,9 @@ use colored::Colorize;
 
 use crate::cli::args::NewArgs;
 use crate::core::configs::raw_reads::{RawReadConfig, ReadMatching};
+use crate::helper::common;
 use crate::helper::files::FileFinder;
 use crate::helper::reads::{FastqReads, ReadAssignment, SampleNameFormat};
-use crate::helper::common;
 use crate::types::SupportedFormats;
 
 pub struct NewExecutor<'a> {
@@ -42,6 +42,7 @@ impl<'a> NewExecutor<'a> {
 
     pub fn execute(&mut self) -> Result<(), Box<dyn Error>> {
         let spin = common::init_spinner();
+        self.log_input();
         spin.set_message("Finding files...");
         let format = SupportedFormats::Fastq;
         self.match_sample_name_format();
@@ -56,7 +57,7 @@ impl<'a> NewExecutor<'a> {
         let output_path = self.write_config(records, files.len())?;
         spin.finish_with_message(format!("{} Finished creating a config file\n", "✔".green(),));
 
-        log::info!("Output: {}", output_path.display());
+        self.log_output(&output_path, record_count, file_count);
         Ok(())
     }
 
@@ -104,5 +105,23 @@ impl<'a> NewExecutor<'a> {
         } else {
             ReadMatching::regex(self.sample_name_format.to_string())
         }
+    }
+
+    fn log_input(&self) {
+        log::info!("{}", "Input".cyan());
+        log::info!("{:18}: {}", "Directory", self.dir.display());
+        log::info!(
+            "{:18}: {}",
+            "Sample name format",
+            self.sample_name_format.to_string()
+        );
+    }
+
+    fn log_output(&self, output_path: &Path, record_counts: usize, file_counts: usize) {
+        log::info!("{}", "\nOutput".cyan());
+        log::info!("{:18}: {}", "Directory", self.output.display());
+        log::info!("{:18}: {}", "Config file", output_path.display());
+        log::info!("{:18}: {}", "Sample counts", record_counts);
+        log::info!("{:18}: {}", "File counts", file_counts);
     }
 }
