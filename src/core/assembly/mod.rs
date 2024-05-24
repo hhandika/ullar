@@ -56,7 +56,9 @@ impl Assembly<'_> {
     pub fn assemble(&self) {
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
-        PathCheck::new(self.output_dir, true).prompt_exists();
+        if self.process_samples {
+            PathCheck::new(self.output_dir, true).prompt_exists();
+        }
         let spinner = common::init_spinner();
         let mut check = ConfigCheck::new(config.sample_counts);
 

@@ -41,8 +41,8 @@ impl<'a> NewExecutor<'a> {
     }
 
     pub fn execute(&mut self) -> Result<(), Box<dyn Error>> {
-        let spin = common::init_spinner();
         self.log_input();
+        let spin = common::init_spinner();
         spin.set_message("Finding files...");
         let format = SupportedFormats::Fastq;
         self.match_sample_name_format();
@@ -111,16 +111,20 @@ impl<'a> NewExecutor<'a> {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Directory", self.dir.display());
         log::info!(
-            "{:18}: {}",
+            "{:18}: {}\n",
             "Sample name format",
             self.sample_name_format.to_string()
         );
     }
 
     fn log_output(&self, output_path: &Path, record_counts: usize, file_counts: usize) {
+        let config_filename = output_path
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy();
         log::info!("{}", "\nOutput".cyan());
         log::info!("{:18}: {}", "Directory", self.output.display());
-        log::info!("{:18}: {}", "Config file", output_path.display());
+        log::info!("{:18}: {}", "Config file", config_filename);
         log::info!("{:18}: {}", "Sample counts", record_counts);
         log::info!("{:18}: {}", "File counts", file_counts);
     }
