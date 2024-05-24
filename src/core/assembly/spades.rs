@@ -216,7 +216,7 @@ impl SpadeReports {
         WalkDir::new(&self.output_dir)
             .into_iter()
             .filter_map(|e| e.ok())
-            .filter(|e| SpadeReports::is_essential_spades_file(e.path()))
+            .filter(|e| !SpadeReports::is_essential_spades_file(e.path()))
             .for_each(|e| self.remove(&e.path()));
         Ok(())
     }
