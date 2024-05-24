@@ -83,9 +83,11 @@ impl<'a> FastpRunner<'a> {
         spinner: &ProgressBar,
     ) -> Result<Option<FastpReport>, Box<dyn Error>> {
         if output.status.success() {
-            spinner.finish_with_message(format!("{} Finished cleaning reads\n", "✔".green()));
+            spinner.set_message(format!("Creating report for {}", self.sample.sample_name));
             let report = FastpReport::new(fastp_data, &self.sample.sample_name);
             report.create(&output)?;
+            report.finalize();
+            spinner.finish_with_message(format!("{} Finished cleaning reads\n", "✔".green()));
             return Ok(Some(report));
         } else {
             spinner.finish_with_message(format!("{} Failed to clean reads\n", "✘".red()));

@@ -87,6 +87,36 @@ impl ReadCleaner<'_> {
         self.log_final_output(&config_path);
     }
 
+    fn clean_reads(&self, samples: &[FastqReads]) -> Vec<FastpReport> {
+        let mut tracker = ProcessingTracker::new(samples.len());
+        let time = std::time::Instant::now();
+        let mut reports = Vec::new();
+        samples.iter().enumerate().for_each(|(i, sample)| {
+            let mut runner = fastp::FastpRunner::new(sample, self.output_dir, self.optional_params);
+            let results = runner.run();
+
+            match results {
+                Ok(report) => {
+                    reports.push(report);
+                    tracker.success_counts += 1;
+                }
+                Err(e) => {
+                    log::error!("Failed to clean reads for sample: {}", sample.sample_name);
+                    log::error!("{}", e);
+                    tracker.failure_counts += 1;
+                }
+            }
+            tracker.update(time.elapsed().as_secs_f64());
+
+            if i < samples.len() - 1 {
+                tracker.print_summary();
+            }
+        });
+
+        tracker.finalize();
+        reports
+    }
+
     fn parse_config(&self) -> Result<RawReadConfig, Box<dyn std::error::Error>> {
         let content = fs::read_to_string(self.config_path)?;
         let config: RawReadConfig = serde_yaml::from_str(&content)?;
@@ -121,36 +151,6 @@ impl ReadCleaner<'_> {
         let output = config.to_yaml(&output_dir, reports);
         spin.finish_with_message(format!("{} Finished writing output config\n", "✔".green()));
         output
-    }
-
-    fn clean_reads(&self, samples: &[FastqReads]) -> Vec<FastpReport> {
-        let mut tracker = ProcessingTracker::new(samples.len());
-        let time = std::time::Instant::now();
-        let mut reports = Vec::new();
-        samples.iter().enumerate().for_each(|(i, sample)| {
-            let mut runner = fastp::FastpRunner::new(sample, self.output_dir, self.optional_params);
-            let results = runner.run();
-
-            match results {
-                Ok(report) => {
-                    reports.push(report);
-                    tracker.success_counts += 1;
-                }
-                Err(e) => {
-                    log::error!("Failed to clean reads for sample: {}", sample.sample_name);
-                    log::error!("{}", e);
-                    tracker.failure_counts += 1;
-                }
-            }
-            tracker.update(time.elapsed().as_secs_f64());
-
-            if i < samples.len() - 1 {
-                tracker.print_summary();
-            }
-        });
-
-        tracker.finalize();
-        reports
     }
 
     fn log_unprocessed(&self) {

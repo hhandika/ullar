@@ -81,7 +81,7 @@ impl<'a> SpadeRunner<'a> {
         spinner: &ProgressBar,
     ) -> Result<SpadeReports, Box<dyn Error>> {
         if output.status.success() {
-            let reports = SpadeReports::new(&self.sample.sample_name, &self.sample_output_dir);
+            let mut reports = SpadeReports::new(&self.sample.sample_name, &self.sample_output_dir);
             if !self.keep_intermediates {
                 spinner.set_message("Removing intermediates");
                 reports.remove_intermediates()?;
