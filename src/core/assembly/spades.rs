@@ -27,6 +27,7 @@ pub struct SpadeRunner<'a> {
     pub sample_output_dir: PathBuf,
     pub optional_params: Option<&'a str>,
     pub keep_intermediates: bool,
+    pub rename_contigs: bool,
 }
 
 impl<'a> SpadeRunner<'a> {
@@ -35,12 +36,14 @@ impl<'a> SpadeRunner<'a> {
         output_dir: &Path,
         optional_params: Option<&'a str>,
         keep_intermediates: bool,
+        rename_contigs: bool,
     ) -> SpadeRunner<'a> {
         SpadeRunner {
             sample,
             sample_output_dir: output_dir.join(&sample.sample_name),
             optional_params,
             keep_intermediates,
+            rename_contigs,
         }
     }
 
@@ -88,7 +91,9 @@ impl<'a> SpadeRunner<'a> {
                     "Intermediate SPAdes files were removed.",
                     "✔".green()
                 );
-                reports.finalize();
+                if self.rename_contigs {
+                    reports.rename_contigs();
+                }
             }
 
             spinner.finish_with_message(format!("{} Finished cleaning reads\n", "✔".green()));
