@@ -63,16 +63,33 @@ impl<'a> SpadeRunner<'a> {
             singleton.as_deref(),
             &self.sample_output_dir,
         );
-        let output = spades.execute(self.optional_params)?;
-        let report = self.check_spades_success(&output, &spinner);
-
-        match report {
-            Ok(reports) => {
-                self.print_output_summary(&reports);
-                decorator.get_sample_footer();
-                Ok(reports)
+        let output = spades.execute(self.optional_params);
+        match output {
+            Ok(output) => self.create_report(&output, &spinner, &decorator),
+            Err(e) => {
+                spinner.finish_with_message(format!("{} Failed to assemble reads\n", "✘".red()));
+                Err(e)
             }
-            Err(e) => Err(e),
+        }
+    }
+
+    fn create_report(
+        &self,
+        output: &Output,
+        spinner: &ProgressBar,
+        decorator: &PrettyHeader,
+    ) -> Result<SpadeReports, Box<dyn Error>> {
+        let reports = self.check_spades_success(&output, &spinner);
+        match reports {
+            Ok(report) => {
+                self.print_output_summary(&report);
+                decorator.get_sample_footer();
+                Ok(report)
+            }
+            Err(e) => {
+                decorator.get_sample_footer();
+                Err(e)
+            }
         }
     }
 

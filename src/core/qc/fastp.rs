@@ -58,18 +58,34 @@ impl<'a> FastpRunner<'a> {
         let spinner = common::init_spinner();
         spinner.set_message("Cleaning reads");
         let mut fastp = Fastp::new(&self.sample_output_dir);
-        let output = fastp.execute(&read1, read2.as_deref(), self.optional_params)?;
+        let output = fastp.execute(&read1, read2.as_deref(), self.optional_params);
 
-        let reports = self.check_success(&output, fastp, &spinner)?;
+        match output {
+            Ok(output) => self.create_report(&output, fastp, &spinner, &decorator),
+            Err(e) => {
+                spinner.finish_with_message(format!("{} Failed to clean reads\n", "✘".red()));
+                Err(e)
+            }
+        }
+    }
+
+    fn create_report(
+        &self,
+        output: &Output,
+        fastp_data: Fastp,
+        spinner: &ProgressBar,
+        decorator: &PrettyHeader,
+    ) -> Result<FastpReport, Box<dyn Error>> {
+        let reports = self.check_success(&output, fastp_data, &spinner);
         match reports {
-            Some(report) => {
+            Ok(report) => {
                 self.print_output_summary(&report);
                 decorator.get_sample_footer();
                 Ok(report)
             }
-            None => {
+            Err(e) => {
                 decorator.get_sample_footer();
-                Err("Failed to clean reads".into())
+                Err(e)
             }
         }
     }
@@ -79,23 +95,21 @@ impl<'a> FastpRunner<'a> {
         output: &Output,
         fastp_data: Fastp,
         spinner: &ProgressBar,
-    ) -> Result<Option<FastpReport>, Box<dyn Error>> {
+    ) -> Result<FastpReport, Box<dyn Error>> {
         if output.status.success() {
             spinner.set_message(format!("Creating report for {}", self.sample.sample_name));
             let report = FastpReport::new(fastp_data, &self.sample.sample_name);
             report.create(output)?;
             report.finalize();
             spinner.finish_with_message(format!("{} Finished cleaning reads\n", "✔".green()));
-            Ok(Some(report))
+            Ok(report)
         } else {
             spinner.finish_with_message(format!("{} Failed to clean reads\n", "✘".red()));
             let err = String::from_utf8_lossy(&output.stderr);
             let stdout = String::from_utf8_lossy(&output.stdout);
             log::info!("\n{}", err);
             log::info!("{}", stdout);
-            // We return None here because
-            // we don't want to stop the process for the next samples
-            Ok(None)
+            Err("Failed to clean reads".into())
         }
     }
 
