@@ -40,6 +40,8 @@ pub struct Assembly<'a> {
     /// Remove SPAdes intermediate files
     /// by default
     pub keep_intermediates: bool,
+    /// Rename contigs file to sample name
+    pub rename_contigs: bool,
     task: Task,
 }
 
@@ -54,6 +56,7 @@ impl Assembly<'_> {
             optional_params: args.optional_params.as_deref(),
             skip_config_check: args.skip_config_check,
             keep_intermediates: args.keep_intermediates,
+            rename_contigs: args.rename_contigs,
             task: Task::Assembly,
         }
     }
@@ -109,6 +112,7 @@ impl Assembly<'_> {
                 self.output_dir,
                 self.optional_params,
                 self.keep_intermediates,
+                self.rename_contigs,
             )
             .run();
 

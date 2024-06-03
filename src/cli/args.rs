@@ -213,6 +213,9 @@ pub struct AssemblyArgs {
     /// Remove SPAdes intermediate files
     #[arg(long, help = "Remove SPAdes intermediate files")]
     pub keep_intermediates: bool,
+    /// Rename contigs file to sample name
+    #[arg(long, help = "Rename contigs file to sample name")]
+    pub rename_contigs: bool,
 }
 
 

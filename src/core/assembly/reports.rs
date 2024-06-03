@@ -42,7 +42,7 @@ impl SpadeReports {
     }
 
     // We rename contigs.fasta to sample_name-contigs.fasta
-    pub fn finalize(&mut self) {
+    pub fn rename_contigs(&mut self) {
         let contigs = self.output_dir.join(SPADES_CONTIGS);
         let new_contigs = self
             .output_dir
