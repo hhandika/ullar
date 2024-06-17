@@ -42,10 +42,10 @@ pub const SIMPLE_NAME_REGEX: &str = r"(^[a-zA-Z0-9]+)";
 pub const DESCRIPTIVE_NAME_REGEX: &str = r"^(\w+)(_|-)([a-zA-Z0-9]+)(?:_|-)";
 
 /// Match Read 1 from file name
-pub const READ1_REGEX: &str = r"^(.+?)(_|-)(?i)(R1|1|read1|read_1|read-1)(?:.*)$";
+pub const READ1_REGEX: &str = r"^(.+?)(_|-)(?i)(R1|1|read1|read_1|read-1)(?!\d)(?:.*)$";
 
 /// Match Read 2 from file name
-pub const READ2_REGEX: &str = r"^(.+?)(_|-)(?i)(R2|2|read2|read_2|read-2)(?:.*)$";
+pub const READ2_REGEX: &str = r"^(.+?)(_|-)(?i)(R2|2|read2|read_2|read-2)(?!\d)(?:.*)$";
 
 /// Lazy static regex matcher
 ///
