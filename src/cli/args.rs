@@ -40,6 +40,10 @@ pub(crate) enum SubCommand {
     /// New subcommand to init a new project
     #[command(name = "new", about = "Initialize a new project")]
     New(NewArgs),
+    /// Initialize config file to allow starting from any step
+    /// of the pipeline workflow.
+    #[command(name = "init", about = "Initialize config file")]
+    Init(InitArgs),
     /// Clean raw reads
     #[command(name = "clean", about = "Clean raw reads")]
     Clean(CleanArgs),
@@ -56,6 +60,7 @@ pub(crate) enum SubCommand {
     #[command(subcommand, name = "utils", about = "Utility functions")]
     Utils(UtilSubCommand),
 }
+
 
 #[derive(Subcommand)]
 pub(crate) enum MapSubCommand {
@@ -111,6 +116,26 @@ pub struct NewArgs {
         help = "Select a directory for the raw read location."
     )]
     pub dir: PathBuf,
+    #[command(flatten)]
+    pub common: CommonInitArgs,
+    
+}
+
+#[derive(Args)]
+pub struct InitArgs {
+    /// Name of the project
+    #[arg(
+        short,
+        long,
+        help = "Select a directory for the raw read location."
+    )]
+    pub dir: PathBuf,
+    #[command(flatten)]
+    pub common: CommonInitArgs,
+}
+
+#[derive(Args)]
+pub struct CommonInitArgs {
     /// Output directory for the config file
     #[arg(
         short,
@@ -240,6 +265,16 @@ pub struct AssemblyArgs {
     /// Rename contigs file to sample name
     #[arg(long, help = "Rename contigs file to sample name")]
     pub rename_contigs: bool,
+}
+
+#[derive(Args)]
+pub struct AssemblyInitArgs {
+    /// Path to the assembly input directory
+    #[arg(short, long, help = "Path to the assembly input directory")]
+    pub dir: PathBuf,
+    /// Output directory to store the assemblies
+    #[arg(short, long, default_value = DEFAULT_CONFIG_DIR, help = "Output directory to write the config file")]
+    pub output: PathBuf,
 }
 
 #[derive(Args)]
