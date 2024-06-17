@@ -46,6 +46,9 @@ pub(crate) enum SubCommand {
     /// Assemble cleaned reads
     #[command(name = "assemble", about = "Assemble cleaned reads")]
     Assemble(AssemblyArgs),
+    /// For checking dependencies
+    #[command(subcommand, name = "deps", about = "Check dependencies")]
+    Deps(DepsSubcommand),
     /// Subcommand for utility functions
     #[command(subcommand, name = "utils", about = "Utility functions")]
     Utils(UtilSubCommand),
@@ -54,9 +57,6 @@ pub(crate) enum SubCommand {
 
 #[derive(Subcommand)]
 pub(crate) enum UtilSubCommand {
-    /// Check and manage dependencies
-    #[command(name = "deps", about = "Check and manage dependencies")]
-    CheckDeps,
     /// Subcommand to hash files
     #[command(name = "checksum", about = "Hash files")]
     Checksum(Sha256Args),
@@ -68,6 +68,20 @@ pub(crate) enum UtilSubCommand {
     #[command(name = "symlink", about = "Create symlink on POSIX system")]
     Symlink(SymlinkArgs),
 }
+
+#[derive(Subcommand)]
+pub(crate) enum DepsSubcommand {
+    /// Check and manage dependencies
+    #[command(name = "check", about = "Check and manage dependencies")]
+    Check,
+    /// Install dependencies
+    #[command(name = "install", about = "Install dependencies")]
+    Install,
+    /// Update dependencies
+    #[command(name = "update", about = "Update dependencies")]
+    Update,
+}
+
 
 #[derive(Subcommand)]
 pub(crate) enum ScannerSubcommand {
