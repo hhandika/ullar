@@ -4,7 +4,7 @@
 use std::path::Path;
 
 use crate::{
-    cli::args::InitMapArgs,
+    cli::args::MapInitArgs,
     core::{assembly::DEFAULT_ASSEMBLY_OUTPUT_DIR, configs::raw_reads::DEFAULT_CONFIG_DIR},
 };
 
@@ -30,10 +30,10 @@ impl Default for InitMappingConfig<'_> {
 }
 
 impl<'a> InitMappingConfig<'a> {
-    pub fn new(args: &'a InitMapArgs) -> Self {
+    pub fn new(args: &'a MapInitArgs) -> Self {
         Self {
             input_dir: &args.dir,
-            output_dir: &args.output,
+            output_dir: &args.common.output,
             #[cfg(target_family = "unix")]
             phyluce: args.phyluce,
         }
@@ -41,6 +41,7 @@ impl<'a> InitMappingConfig<'a> {
 
     pub fn initialize(&self) {
         if cfg!(target_family = "unix") {
+            #[cfg(target_family = "unix")]
             self.execute_unix();
         } else {
             unimplemented!("Mapping contigs to reference sequence");
