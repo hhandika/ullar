@@ -5,11 +5,11 @@ use std::path::Path;
 
 use crate::{
     cli::args::InitMapArgs,
-    core::{
-        assembly::DEFAULT_ASSEMBLY_OUTPUT_DIR, configs::raw_reads::DEFAULT_CONFIG_DIR,
-        utils::symlinks::Symlinks,
-    },
+    core::{assembly::DEFAULT_ASSEMBLY_OUTPUT_DIR, configs::raw_reads::DEFAULT_CONFIG_DIR},
 };
+
+#[cfg(target_family = "unix")]
+use crate::core::utils::symlinks::Symlinks;
 
 pub struct InitMappingConfig<'a> {
     pub input_dir: &'a Path,
@@ -38,12 +38,14 @@ impl<'a> InitMappingConfig<'a> {
 
     pub fn initialize(&self) {
         if self.phyluce {
+            #[cfg(target_family = "unix")]
             self.generate_phyluce_symlinks();
         } else {
             unimplemented!("Mapping contigs to reference sequence");
         }
     }
 
+    #[cfg(target_family = "unix")]
     fn generate_phyluce_symlinks(&self) {
         let mut symlink = Symlinks::default();
         symlink.dir = self.input_dir;

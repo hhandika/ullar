@@ -251,6 +251,7 @@ pub struct InitMapArgs {
     #[arg(short, long, default_value = DEFAULT_CONFIG_DIR, help = "Output directory to write the config file")]
     pub output: PathBuf,
     /// Create symlink for phyluce compatibility
+    #[cfg(target_family = "unix")]
     #[arg(long, help = "Create symlink for phyluce compatibility")]
     pub phyluce: bool,
 }
