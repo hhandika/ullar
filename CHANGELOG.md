@@ -14,7 +14,7 @@
 
 ## v0.2.0
 
-- Support cleaning and assemblying reads
+- Support cleaning and assembling reads
 
 ## v0.1.0
 
