@@ -40,8 +40,16 @@ impl<'a> InitMappingConfig<'a> {
     }
 
     pub fn initialize(&self) {
+        if cfg!(target_family = "unix") {
+            self.execute_unix();
+        } else {
+            unimplemented!("Mapping contigs to reference sequence");
+        }
+    }
+
+    #[cfg(target_family = "unix")]
+    fn execute_unix(&self) {
         if self.phyluce {
-            #[cfg(target_family = "unix")]
             self.generate_phyluce_symlinks();
         } else {
             unimplemented!("Mapping contigs to reference sequence");
