@@ -244,6 +244,9 @@ pub struct AssemblyArgs {
 
 #[derive(Args)]
 pub struct InitMapArgs {
+    /// Path to the assembly input directory
+    #[arg(short, long, help = "Path to the assembly input directory")]
+    pub dir: PathBuf,
     /// Output directory to store the assemblies
     #[arg(short, long, default_value = DEFAULT_CONFIG_DIR, help = "Output directory to write the config file")]
     pub output: PathBuf,

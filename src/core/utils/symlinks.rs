@@ -25,6 +25,16 @@ pub struct Symlinks<'a> {
     pub format: SymlinkFileSearchFormat,
 }
 
+impl Default for Symlinks<'_> {
+    fn default() -> Self {
+        Self {
+            dir: Path::new(""),
+            output_dir: Path::new(""),
+            format: SymlinkFileSearchFormat::Contigs,
+        }
+    }
+}
+
 #[cfg(target_family = "unix")]
 impl<'a> Symlinks<'a> {
     pub fn new(args: &'a SymlinkArgs) -> Self {
