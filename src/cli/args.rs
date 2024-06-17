@@ -42,8 +42,8 @@ pub(crate) enum SubCommand {
     New(NewArgs),
     /// Initialize config file to allow starting from any step
     /// of the pipeline workflow.
-    #[command(name = "init", about = "Initialize config file")]
-    Init(InitArgs),
+    #[command(subcommand, name = "init", about = "Initialize config file")]
+    Init(InitSubCommand),
     /// Clean raw reads
     #[command(name = "clean", about = "Clean raw reads")]
     Clean(CleanArgs),
@@ -51,8 +51,8 @@ pub(crate) enum SubCommand {
     #[command(name = "assemble", about = "Assemble cleaned reads")]
     Assemble(AssemblyArgs),
     /// Map contigs to reference
-    #[command(subcommand, name = "map", about = "Map contigs to reference")]
-    Map(MapSubCommand),
+    #[command(name = "map", about = "Map contigs to reference")]
+    Map,
     /// For checking dependencies
     #[command(subcommand, name = "deps", about = "Check dependencies")]
     Deps(DepsSubcommand),
@@ -61,14 +61,15 @@ pub(crate) enum SubCommand {
     Utils(UtilSubCommand),
 }
 
-
 #[derive(Subcommand)]
-pub(crate) enum MapSubCommand {
-    /// Map contigs to reference
-    #[command(name = "init", about = "Create config file for mapping contigs to reference")]
-    Init(InitMapArgs),
+pub(crate) enum InitSubCommand {
+    /// Initialize config file for assembly
+    #[command(name = "assembly", about = "Initialize config file for assembly")]
+    Assembly(AssemblyInitArgs),
+    /// Initialize config file for mapping contigs
+    #[command(name = "map", about = "Initialize config file for mapping contigs")]
+    Map(MapInitArgs),
 }
-
 
 #[derive(Subcommand)]
 pub(crate) enum UtilSubCommand {
@@ -278,13 +279,12 @@ pub struct AssemblyInitArgs {
 }
 
 #[derive(Args)]
-pub struct InitMapArgs {
+pub struct MapInitArgs {
     /// Path to the assembly input directory
     #[arg(short, long, help = "Path to the assembly input directory")]
     pub dir: PathBuf,
-    /// Output directory to store the assemblies
-    #[arg(short, long, default_value = DEFAULT_CONFIG_DIR, help = "Output directory to write the config file")]
-    pub output: PathBuf,
+    #[command(flatten)]
+    pub common: CommonInitArgs,
     /// Create symlink for phyluce compatibility
     #[cfg(target_family = "unix")]
     #[arg(long, help = "Create symlink for phyluce compatibility")]
