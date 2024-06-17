@@ -12,7 +12,7 @@ const FASTP_LOG: &str = "fastp.log";
 const FASTP_REPORT_DIR: &str = "reports";
 
 #[derive(Debug, Clone)]
-pub struct FastpReport {
+pub struct CleanReadReport {
     pub fastp_data: Fastp,
     pub sample_name: String,
     pub html: PathBuf,
@@ -20,9 +20,9 @@ pub struct FastpReport {
     pub log: PathBuf,
 }
 
-impl FastpReport {
+impl CleanReadReport {
     pub fn new(fastp_data: Fastp, sample_name: &str) -> Self {
-        FastpReport {
+        CleanReadReport {
             fastp_data,
             sample_name: sample_name.to_string(),
             html: PathBuf::from(FASTP_HTML),

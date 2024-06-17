@@ -27,13 +27,14 @@ impl<'a> NewExecutor<'a> {
     pub fn new(args: &'a NewArgs) -> Self {
         Self {
             dir: args.dir.as_path(),
-            output: args.output.as_path(),
-            extension: args.extension.as_deref(),
-            separator: args.separator,
-            length: args.length,
-            re_sample: args.re_sample.as_deref(),
-            is_recursive: args.recursive,
+            output: args.common.output.as_path(),
+            extension: args.common.extension.as_deref(),
+            separator: args.common.separator,
+            length: args.common.length,
+            re_sample: args.common.re_sample.as_deref(),
+            is_recursive: args.common.recursive,
             sample_name_format: args
+                .common
                 .sample_name
                 .parse::<SampleNameFormat>()
                 .expect("Invalid sample name format"),

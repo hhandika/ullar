@@ -11,8 +11,8 @@ use self::args::{ScannerSubcommand, SubCommand, UllarCli, UtilSubCommand};
 use crate::{
     core::{
         assembly::Assembly,
+        init::new::NewExecutor,
         map::init::InitMappingConfig,
-        new::NewExecutor,
         qc::ReadCleaner,
         utils::{checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner},
     },
@@ -51,6 +51,7 @@ impl Cli {
                 let mut parser = NewExecutor::new(new_args);
                 parser.execute().expect("Failed to execute new command");
             }
+            SubCommand::Init(_) => unimplemented!("Init command is not yet implemented"),
             SubCommand::Clean(clean_args) => {
                 let cleaner = ReadCleaner::new(clean_args);
                 cleaner.clean();

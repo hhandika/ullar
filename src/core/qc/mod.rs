@@ -16,7 +16,7 @@ use crate::helper::reads::FastqReads;
 use crate::helper::tracker::ProcessingTracker;
 use crate::types::Task;
 
-use self::reports::FastpReport;
+use self::reports::CleanReadReport;
 
 use super::configs::cleaned_reads::CleanReadConfig;
 use super::configs::raw_reads::RawReadConfig;
@@ -92,7 +92,7 @@ impl ReadCleaner<'_> {
         self.log_final_output(&config_path);
     }
 
-    fn clean_reads(&self, samples: &[FastqReads]) -> Vec<FastpReport> {
+    fn clean_reads(&self, samples: &[FastqReads]) -> Vec<CleanReadReport> {
         let mut tracker = ProcessingTracker::new(samples.len());
         let time = std::time::Instant::now();
         let mut reports = Vec::new();
@@ -135,7 +135,7 @@ impl ReadCleaner<'_> {
 
     fn write_output_config(
         &self,
-        reports: &[FastpReport],
+        reports: &[CleanReadReport],
     ) -> Result<PathBuf, Box<dyn std::error::Error>> {
         let spin = common::init_spinner();
         spin.set_message("Writing output config");

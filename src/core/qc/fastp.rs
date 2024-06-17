@@ -18,7 +18,7 @@ use crate::{
     parse_optional_params,
 };
 
-use super::reports::FastpReport;
+use super::reports::CleanReadReport;
 
 pub const FASTP_EXE: &str = "fastp";
 
@@ -48,7 +48,7 @@ impl<'a> FastpRunner<'a> {
     }
 
     /// Run fastp
-    pub fn run(&mut self) -> Result<FastpReport, Box<dyn Error>> {
+    pub fn run(&mut self) -> Result<CleanReadReport, Box<dyn Error>> {
         let decorator = self.print_header();
         let read1 = self.sample.get_read1();
         check_read1_exists!(self, read1);
@@ -75,7 +75,7 @@ impl<'a> FastpRunner<'a> {
         fastp_data: Fastp,
         spinner: &ProgressBar,
         decorator: &PrettyHeader,
-    ) -> Result<FastpReport, Box<dyn Error>> {
+    ) -> Result<CleanReadReport, Box<dyn Error>> {
         let reports = self.check_success(&output, fastp_data, &spinner);
         match reports {
             Ok(report) => {
@@ -95,10 +95,10 @@ impl<'a> FastpRunner<'a> {
         output: &Output,
         fastp_data: Fastp,
         spinner: &ProgressBar,
-    ) -> Result<FastpReport, Box<dyn Error>> {
+    ) -> Result<CleanReadReport, Box<dyn Error>> {
         if output.status.success() {
             spinner.set_message(format!("Creating report for {}", self.sample.sample_name));
-            let report = FastpReport::new(fastp_data, &self.sample.sample_name);
+            let report = CleanReadReport::new(fastp_data, &self.sample.sample_name);
             report.create(output)?;
             report.finalize();
             spinner.finish_with_message(format!("{} Finished cleaning reads\n", "✔".green()));
@@ -136,7 +136,7 @@ impl<'a> FastpRunner<'a> {
             .to_string()
     }
 
-    fn print_output_summary(&self, report: &FastpReport) {
+    fn print_output_summary(&self, report: &CleanReadReport) {
         log::info!("{}", "Output".cyan());
         log::info!(
             "{:18}: {}",

@@ -8,7 +8,7 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 use crate::{
-    core::{qc::reports::FastpReport, utils::deps::DepMetadata},
+    core::{qc::reports::CleanReadReport, utils::deps::DepMetadata},
     helper::reads::FastqReads,
     types::Task,
 };
@@ -68,10 +68,9 @@ impl CleanReadConfig {
 
     pub fn to_yaml(
         &mut self,
-        reports: &[FastpReport],
+        reports: &[CleanReadReport],
     ) -> Result<PathBuf, Box<dyn std::error::Error>> {
-        let mut output_dir = Path::new(DEFAULT_CONFIG_DIR).join(DEFAULT_CLEANED_READ_CONFIG);
-        output_dir.set_extension(CONFIG_EXTENSION);
+        let output_dir = self.generate_output_dir();
         self.samples = self.parse_fastp_report(reports);
         self.get_sample_counts();
         self.get_file_counts();
@@ -80,14 +79,24 @@ impl CleanReadConfig {
         Ok(output_dir)
     }
 
-    fn parse_fastp_report(&self, reports: &[FastpReport]) -> Vec<FastqReads> {
+    fn generate_output_dir(&mut self) -> PathBuf {
+        let mut output_dir = Path::new(DEFAULT_CONFIG_DIR).join(DEFAULT_CLEANED_READ_CONFIG);
+        output_dir.set_extension(CONFIG_EXTENSION);
+        output_dir
+    }
+
+    fn parse_fastp_report(&self, reports: &[CleanReadReport]) -> Vec<FastqReads> {
         let (tx, rx) = channel();
         reports.par_iter().for_each_with(tx, |tx, report| {
             let mut fastq = FastqReads::new();
             let sample_name = report.sample_name.clone();
             let parent_path = report.fastp_data.output_dir.to_path_buf();
             let read1_path = parent_path.join(&report.fastp_data.read1_filename);
-            let read2_path = report.fastp_data.read2_filename.as_ref().map(|read2| parent_path.join(read2));
+            let read2_path = report
+                .fastp_data
+                .read2_filename
+                .as_ref()
+                .map(|read2| parent_path.join(read2));
             fastq.match_define_reads(sample_name, &read1_path, read2_path.as_deref());
             tx.send(fastq).expect("Failed to send fastq reads")
         });
