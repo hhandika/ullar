@@ -5,11 +5,11 @@ use colored::Colorize;
 use comfy_table::Table;
 
 use crate::{
-    cli::args::ReadScanArgs,
+    cli::commands::utils::ReadScanArgs,
     helper::{
+        common,
         files::{FileFinder, CSV_EXT},
         reads::{FastqReads, ReadAssignment, SampleNameFormat},
-        common,
     },
     types::SupportedFormats,
 };

@@ -9,7 +9,7 @@ use colored::Colorize;
 use rayon::prelude::*;
 
 use crate::{
-    cli::args::SymlinkArgs,
+    cli::commands::utils::SymlinkArgs,
     core::assembly::reports::CONTIG_SUFFIX,
     helper::{
         common,

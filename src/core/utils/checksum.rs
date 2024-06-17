@@ -11,11 +11,11 @@ use comfy_table::Table;
 use rayon::prelude::*;
 
 use crate::{
-    cli::args,
+    cli::commands::utils::Sha256Args,
     helper::{
         checksum::{ChecksumType, FileSha256},
-        files::{FileFinder, CSV_EXT},
         common,
+        files::{FileFinder, CSV_EXT},
     },
     types::SupportedFormats,
 };
@@ -69,7 +69,7 @@ pub struct Sha256Executor<'a> {
 }
 
 impl<'a> Sha256Executor<'a> {
-    pub fn new(args: &'a args::Sha256Args) -> Self {
+    pub fn new(args: &'a Sha256Args) -> Self {
         Self {
             dir: args.dir.as_path(),
             output: args.output.as_path(),

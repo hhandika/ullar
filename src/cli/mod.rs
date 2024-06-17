@@ -1,13 +1,15 @@
 //! Command-line interface for ULLAR project.
-pub mod args;
+pub mod commands;
 
-use args::DepsSubcommand;
 use clap::Parser;
+use commands::{
+    deps::DepsSubcommand,
+    utils::{ScannerSubcommand, UtilSubCommand},
+    UllarCli, UllarSubcommand,
+};
 use segul::helper::utils;
-
 use std::time::Instant;
 
-use self::args::{ScannerSubcommand, SubCommand, UllarCli, UtilSubCommand};
 use crate::{
     core::{
         assembly::Assembly,
@@ -46,23 +48,23 @@ impl Cli {
         );
         PrettyHeader::new().get_welcome_header();
         match &self.command.sub_cmd {
-            SubCommand::New(new_args) => {
+            UllarSubcommand::New(new_args) => {
                 let mut parser = NewExecutor::new(new_args);
                 parser.execute().expect("Failed to execute new command");
             }
-            SubCommand::Init(_) => unimplemented!("Init command is not yet implemented"),
-            SubCommand::Clean(clean_args) => {
+            UllarSubcommand::Init(_) => unimplemented!("Init command is not yet implemented"),
+            UllarSubcommand::Clean(clean_args) => {
                 let cleaner = ReadCleaner::new(clean_args);
                 cleaner.clean();
             }
-            SubCommand::Assemble(assembly_args) => {
+            UllarSubcommand::Assemble(assembly_args) => {
                 let assembly = Assembly::new(assembly_args);
                 assembly.assemble();
             }
-            SubCommand::Map => unimplemented!("Map command is not yet implemented"),
-            SubCommand::Deps(subcommand) => self.parse_dependencies(subcommand),
+            UllarSubcommand::Map => unimplemented!("Map command is not yet implemented"),
+            UllarSubcommand::Deps(subcommand) => self.parse_dependencies(subcommand),
 
-            SubCommand::Utils(util_args) => self.parse_utils(util_args),
+            UllarSubcommand::Utils(util_args) => self.parse_utils(util_args),
         }
         let elapsed = time.elapsed();
         println!();
@@ -76,7 +78,7 @@ impl Cli {
                 let mut deps = DependencyCheck::new();
                 deps.check();
             }
-            _ => unimplemented!("Dependency subcommand is not yet implemented"),
+            _ => unimplemented!("Dependency UllarSubcommand is not yet implemented"),
         }
     }
 
