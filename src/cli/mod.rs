@@ -11,6 +11,7 @@ use self::args::{ScannerSubcommand, SubCommand, UllarCli, UtilSubCommand};
 use crate::{
     core::{
         assembly::Assembly,
+        map::init::InitMappingConfig,
         new::NewExecutor,
         qc::ReadCleaner,
         utils::{checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner},
@@ -71,7 +72,10 @@ impl Cli {
 
     fn parse_map(&self, map_subcommand: &MapSubCommand) {
         match map_subcommand {
-            MapSubCommand::Init(_) => unimplemented!("Map subcommand is not yet implemented"),
+            MapSubCommand::Init(args) => {
+                let init = InitMappingConfig::new(args);
+                init.initialize();
+            }
         }
     }
 
