@@ -5,7 +5,7 @@ use comfy_table::Table;
 use spades::SpadeRunner;
 
 use crate::{
-    cli::args::AssemblyArgs,
+    cli::commands::assembly::AssemblyArgs,
     helper::{common, files::PathCheck, reads::FastqReads, tracker::ProcessingTracker},
     types::Task,
 };

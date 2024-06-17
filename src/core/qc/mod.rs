@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use colored::Colorize;
 use comfy_table::Table;
 
-use crate::cli::args::CleanArgs;
+use crate::cli::commands::clean::CleanArgs;
 use crate::core::configs::ConfigCheck;
 use crate::helper::common;
 use crate::helper::files::PathCheck;

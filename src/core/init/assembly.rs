@@ -5,7 +5,7 @@
 
 use std::path::Path;
 
-use crate::cli::args::InitArgs;
+use crate::cli::commands::init::InitArgs;
 pub struct InitAssemblyConfig<'a> {
     pub input_dir: &'a Path,
     pub output_dir: &'a Path,

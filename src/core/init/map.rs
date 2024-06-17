@@ -4,7 +4,7 @@
 use std::path::Path;
 
 use crate::{
-    cli::args::MapInitArgs,
+    cli::commands::init::MapInitArgs,
     core::{assembly::DEFAULT_ASSEMBLY_OUTPUT_DIR, configs::raw_reads::DEFAULT_CONFIG_DIR},
 };
 
