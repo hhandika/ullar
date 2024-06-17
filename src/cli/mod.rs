@@ -1,7 +1,7 @@
 //! Command-line interface for ULLAR project.
 pub mod args;
 
-use args::DepsSubcommand;
+use args::{DepsSubcommand, MapSubCommand};
 use clap::Parser;
 use segul::helper::utils;
 
@@ -58,6 +58,7 @@ impl Cli {
                 let assembly = Assembly::new(assembly_args);
                 assembly.assemble();
             }
+            SubCommand::Map(subcommand) => self.parse_map(subcommand),
             SubCommand::Deps(subcommand) => self.parse_dependencies(subcommand),
 
             SubCommand::Utils(util_args) => self.parse_utils(util_args),
@@ -66,6 +67,12 @@ impl Cli {
         println!();
         log::info!("{:18}: {}", "Log file", logger.display());
         utils::print_execution_time(elapsed);
+    }
+
+    fn parse_map(&self, map_subcommand: &MapSubCommand) {
+        match map_subcommand {
+            MapSubCommand::Init(_) => unimplemented!("Map subcommand is not yet implemented"),
+        }
     }
 
     fn parse_dependencies(&self, deps_subcommand: &DepsSubcommand) {
