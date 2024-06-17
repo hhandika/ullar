@@ -46,12 +46,22 @@ pub(crate) enum SubCommand {
     /// Assemble cleaned reads
     #[command(name = "assemble", about = "Assemble cleaned reads")]
     Assemble(AssemblyArgs),
+    /// Map contigs to reference
+    #[command(subcommand, name = "map", about = "Map contigs to reference")]
+    Map(MapSubCommand),
     /// For checking dependencies
     #[command(subcommand, name = "deps", about = "Check dependencies")]
     Deps(DepsSubcommand),
     /// Subcommand for utility functions
     #[command(subcommand, name = "utils", about = "Utility functions")]
     Utils(UtilSubCommand),
+}
+
+#[derive(Subcommand)]
+pub(crate) enum MapSubCommand {
+    /// Map contigs to reference
+    #[command(name = "init", about = "Create config file for mapping contigs to reference")]
+    Init(InitMapArgs),
 }
 
 
@@ -230,6 +240,16 @@ pub struct AssemblyArgs {
     /// Rename contigs file to sample name
     #[arg(long, help = "Rename contigs file to sample name")]
     pub rename_contigs: bool,
+}
+
+#[derive(Args)]
+pub struct InitMapArgs {
+    /// Output directory to store the assemblies
+    #[arg(short, long, default_value = DEFAULT_CONFIG_DIR, help = "Output directory to write the config file")]
+    pub output: PathBuf,
+    /// Create symlink for phyluce compatibility
+    #[arg(long, help = "Create symlink for phyluce compatibility")]
+    pub phyluce: bool,
 }
 
 
