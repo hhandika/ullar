@@ -48,11 +48,15 @@ impl<'a> NewExecutor<'a> {
         let format = SupportedFormats::Fastq;
         self.match_sample_name_format();
         let files = FileFinder::new(self.dir, &format).find(self.is_recursive)?;
-        let records = self.assign_reads(&files);
-        let record_count = records.len();
         let file_count = files.len();
         spin.set_message(format!(
-            "Found {} samples of {} files",
+            "Found {} files. Assigning reads and generating hash for matching files...",
+            file_count
+        ));
+        let records = self.assign_reads(&files);
+        let record_count = records.len();
+        spin.set_message(format!(
+            "Found {} samples of {} files. Writing config file...",
             record_count, file_count
         ));
         let output_path = self.write_config(records, files.len())?;

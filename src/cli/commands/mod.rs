@@ -1,5 +1,6 @@
 pub mod assembly;
 pub mod clean;
+mod common;
 pub mod deps;
 pub mod init;
 pub mod utils;
@@ -40,11 +41,15 @@ pub struct UllarCli {
 #[derive(Subcommand)]
 pub(crate) enum UllarSubcommand {
     /// New subcommand to init a new project
-    #[command(name = "new", about = "Initialize a new project")]
+    #[command(name = "new", about = "Start a new project")]
     New(NewArgs),
     /// Initialize config file to allow starting from any step
     /// of the pipeline workflow.
-    #[command(subcommand, name = "init", about = "Initialize config file")]
+    #[command(
+        subcommand,
+        name = "init",
+        about = "Initialize config files. Start from any step of the pipeline workflow."
+    )]
     Init(InitSubCommand),
     /// Clean raw reads
     #[command(name = "clean", about = "Clean raw reads")]
