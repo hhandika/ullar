@@ -47,11 +47,11 @@ impl ReadCleaner<'_> {
     pub fn new(args: &CleanArgs) -> ReadCleaner<'_> {
         ReadCleaner {
             config_path: &args.config,
-            ignore_checksum: args.ignore_checksum,
-            process_samples: args.process_samples,
+            ignore_checksum: args.common.ignore_checksum,
+            process_samples: args.common.process,
             output_dir: &args.output,
-            optional_params: args.optional_params.as_deref(),
-            skip_config_check: args.skip_config_check,
+            optional_params: args.common.override_args.as_deref(),
+            skip_config_check: args.common.skip_config_check,
             task: Task::CleanReads,
         }
     }
