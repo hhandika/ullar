@@ -48,7 +48,7 @@ pub(crate) enum UllarSubcommand {
     #[command(
         subcommand,
         name = "init",
-        about = "Initialize config files. Start from any step of the pipeline workflow."
+        about = "Initialize config files. Start from any step of the workflow."
     )]
     Init(InitSubCommand),
     /// Clean raw reads
@@ -61,7 +61,7 @@ pub(crate) enum UllarSubcommand {
     #[command(name = "map", about = "Map contigs to reference")]
     Map,
     /// For checking dependencies
-    #[command(subcommand, name = "deps", about = "Check dependencies")]
+    #[command(subcommand, name = "deps", about = "Check and manage dependencies")]
     Deps(DepsSubcommand),
     /// Subcommand for utility functions
     #[command(subcommand, name = "utils", about = "Utility functions")]
