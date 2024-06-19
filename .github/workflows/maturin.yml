@@ -20,8 +20,8 @@ permissions:
   id-token: write
 
 defaults:
- run:
-  working-directory: ./py-ullar
+  run:
+    working-directory: ./py-ullar
 
 jobs:
   linux:
