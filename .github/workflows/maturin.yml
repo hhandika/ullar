@@ -19,13 +19,12 @@ permissions:
   contents: read
   id-token: write
 
-defaults:
-  run:
-    working-directory: ./py-ullar
-
 jobs:
   linux:
     runs-on: ${{ matrix.platform.runner }}
+    defaults:
+      run:
+        working-directory: ./py-ullar
     strategy:
       matrix:
         platform:
