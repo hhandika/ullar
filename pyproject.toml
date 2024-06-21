@@ -29,3 +29,4 @@ build-backend = "maturin"
 [tool.maturin]
 manifest-path = "./py-ullar/Cargo.toml"
 features = ["pyo3/extension-module"]
+include = [{ path = "./py-ullar/*", format = "sdist" }]
