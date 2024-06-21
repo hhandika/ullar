@@ -12,4 +12,5 @@ classifiers = [
 ]
 dynamic = ["version"]
 [tool.maturin]
+manifest-path = "./py-ullar/Cargo.toml"
 features = ["pyo3/extension-module"]
