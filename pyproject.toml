@@ -2,7 +2,7 @@
 name = "py-ullar"
 version = "0.1.0"
 description = "Python bindings for the ULLAR high-performance phylogenomic pipeline."
-readme = "README.md"
+readme = "./py-ullar/README.md"
 requires-python = ">=3.8"
 license = { file = "LICENSE" }
 keywords = ["phylogenomics", "bioinformatics", "phylogenetics", "pipeline"]
@@ -29,4 +29,3 @@ build-backend = "maturin"
 [tool.maturin]
 manifest-path = "./py-ullar/Cargo.toml"
 features = ["pyo3/extension-module"]
-include = [{ path = "./py-ullar/*", format = "sdist" }]
