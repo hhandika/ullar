@@ -1,16 +1,31 @@
-[build-system]
-requires = ["maturin>=1.6,<2.0"]
-build-backend = "maturin"
-
 [project]
 name = "py-ullar"
+version = "0.1.0"
+description = "Python bindings for the ULLAR high-performance phylogenomic pipeline."
+readme = "README.md"
 requires-python = ">=3.8"
+license = { file = "LICENSE" }
+keywords = ["phylogenomics", "bioinformatics", "phylogenetics", "pipeline"]
+authors = [
+    { name = "Heru Handika", email = "hhandi1@lsu.edu" },
+    { name = "Jacob A. Esselstyn", email = "esselstyn@lsu.edu" },
+]
 classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dynamic = ["version"]
+
+[build-system]
+requires = ["maturin>=1.6,<2.0"]
+build-backend = "maturin"
+
+
 [tool.maturin]
 manifest-path = "./py-ullar/Cargo.toml"
 features = ["pyo3/extension-module"]
