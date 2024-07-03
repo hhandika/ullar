@@ -42,10 +42,32 @@ pub struct ReadCleaner<'a> {
     task: Task,
 }
 
-impl ReadCleaner<'_> {
+impl<'a> ReadCleaner<'a> {
     /// Initialize a new ReadCleaner instance
-    pub fn new(args: &CleanArgs) -> ReadCleaner<'_> {
-        ReadCleaner {
+    /// with the given parameters
+    pub fn new(
+        config_path: &'a Path,
+        ignore_checksum: bool,
+        process_samples: bool,
+        output_dir: &'a Path,
+        optional_params: Option<&'a str>,
+        skip_config_check: bool,
+    ) -> Self {
+        Self {
+            config_path,
+            ignore_checksum,
+            process_samples,
+            output_dir,
+            optional_params,
+            skip_config_check,
+            task: Task::CleanReads,
+        }
+    }
+
+    /// Initialize a new ReadCleaner instance
+    /// from command line arguments
+    pub fn from_arg(args: &'a CleanArgs) -> Self {
+        Self {
             config_path: &args.config,
             ignore_checksum: args.common.ignore_checksum,
             process_samples: args.common.process,

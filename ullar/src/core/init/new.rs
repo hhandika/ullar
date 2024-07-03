@@ -12,7 +12,7 @@ use crate::helper::files::FileFinder;
 use crate::helper::reads::{FastqReads, ReadAssignment, SampleNameFormat};
 use crate::types::SupportedFormats;
 
-pub struct NewExecutor<'a> {
+pub struct NewProject<'a> {
     dir: &'a Path,
     output: &'a Path,
     extension: Option<&'a str>,
@@ -23,8 +23,8 @@ pub struct NewExecutor<'a> {
     sample_name_format: SampleNameFormat,
 }
 
-impl<'a> NewExecutor<'a> {
-    pub fn new(args: &'a NewArgs) -> Self {
+impl<'a> NewProject<'a> {
+    pub fn from_arg(args: &'a NewArgs) -> Self {
         Self {
             dir: args.dir.as_path(),
             output: args.common.output.as_path(),
