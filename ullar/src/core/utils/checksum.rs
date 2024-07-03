@@ -69,7 +69,25 @@ pub struct Sha256Executor<'a> {
 }
 
 impl<'a> Sha256Executor<'a> {
-    pub fn new(args: &'a Sha256Args) -> Self {
+    pub fn new(
+        dir: &'a Path,
+        output: &'a Path,
+        format: SupportedFormats,
+        is_stdout: bool,
+        is_recursive: bool,
+    ) -> Self {
+        Self {
+            dir,
+            output,
+            format,
+            is_stdout,
+            is_recursive,
+        }
+    }
+
+    /// Initialize a new Sha256Executor instance
+    /// from the command line arguments
+    pub fn from_arg(args: &'a Sha256Args) -> Self {
         Self {
             dir: args.dir.as_path(),
             output: args.output.as_path(),

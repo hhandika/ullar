@@ -23,7 +23,27 @@ pub struct ReadScanner<'a> {
 }
 
 impl<'a> ReadScanner<'a> {
-    pub fn new(args: &'a ReadScanArgs) -> Self {
+    /// Initialize a new ReadScanner instance
+    /// with the given parameters
+    pub fn new(
+        dir: &'a Path,
+        output: &'a Path,
+        is_stdout: bool,
+        is_recursive: bool,
+        sample_name_format: SampleNameFormat,
+    ) -> Self {
+        Self {
+            dir,
+            output,
+            is_stdout,
+            is_recursive,
+            sample_name_format,
+        }
+    }
+
+    /// Initialize a new ReadScanner instance
+    /// from command line arguments
+    pub fn from_arg(args: &'a ReadScanArgs) -> Self {
         Self {
             dir: args.dir.as_path(),
             output: args.output.as_path(),

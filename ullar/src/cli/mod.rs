@@ -13,7 +13,7 @@ use std::time::Instant;
 use crate::{
     core::{
         assembly::Assembly,
-        init::new::NewExecutor,
+        init::new::NewProject,
         qc::ReadCleaner,
         utils::{checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner},
     },
@@ -49,16 +49,16 @@ impl Cli {
         PrettyHeader::new().get_welcome_header();
         match &self.command.sub_cmd {
             UllarSubcommand::New(new_args) => {
-                let mut parser = NewExecutor::new(new_args);
+                let mut parser = NewProject::from_arg(new_args);
                 parser.execute().expect("Failed to execute new command");
             }
             UllarSubcommand::Init(_) => unimplemented!("Init command is not yet implemented"),
             UllarSubcommand::Clean(clean_args) => {
-                let cleaner = ReadCleaner::new(clean_args);
+                let cleaner = ReadCleaner::from_arg(clean_args);
                 cleaner.clean();
             }
             UllarSubcommand::Assemble(assembly_args) => {
-                let assembly = Assembly::new(assembly_args);
+                let assembly = Assembly::from_arg(assembly_args);
                 assembly.assemble();
             }
             UllarSubcommand::Map => unimplemented!("Map command is not yet implemented"),
@@ -85,7 +85,7 @@ impl Cli {
     fn parse_utils(&self, util_args: &UtilSubCommand) {
         match util_args {
             UtilSubCommand::Checksum(sha256_args) => {
-                let parser = Sha256Executor::new(sha256_args);
+                let parser = Sha256Executor::from_arg(sha256_args);
                 parser.execute().expect("Failed to execute sha256 command");
             }
             UtilSubCommand::Scan(scan_subcommand) => self.parse_read_scan(scan_subcommand),
@@ -97,7 +97,7 @@ impl Cli {
     fn parse_read_scan(&self, scan_args: &ScannerSubcommand) {
         match scan_args {
             ScannerSubcommand::ReadSubCommand(read_args) => {
-                let parser = ReadScanner::new(read_args);
+                let parser = ReadScanner::from_arg(read_args);
                 parser.scan().expect("Failed to execute read scan command");
             }
         }

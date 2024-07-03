@@ -45,10 +45,35 @@ pub struct Assembly<'a> {
     task: Task,
 }
 
-impl Assembly<'_> {
+impl<'a> Assembly<'a> {
     /// Initialize a new Assembly instance
-    pub fn new(args: &AssemblyArgs) -> Assembly<'_> {
-        Assembly {
+    /// with the given parameters
+    pub fn new(
+        config_path: &'a Path,
+        ignore_checksum: bool,
+        process_samples: bool,
+        output_dir: &'a Path,
+        optional_params: Option<&'a str>,
+        skip_config_check: bool,
+        keep_intermediates: bool,
+        rename_contigs: bool,
+    ) -> Self {
+        Self {
+            config_path,
+            ignore_checksum,
+            process_samples,
+            output_dir,
+            optional_params,
+            skip_config_check,
+            keep_intermediates,
+            rename_contigs,
+            task: Task::Assembly,
+        }
+    }
+    /// Initialize a new Assembly instance
+    /// from the command line arguments
+    pub fn from_arg(args: &'a AssemblyArgs) -> Self {
+        Self {
             config_path: &args.config,
             ignore_checksum: args.common.ignore_checksum,
             process_samples: args.common.process,
