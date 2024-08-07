@@ -39,6 +39,7 @@ impl ProcessingTracker {
         let mut table = self.print_table();
         table.add_row(vec!["Success rate", &format!("{:.2}%", success_rate)]);
         self.add_mean_runtime(&mut table);
+        self.add_total_runtime(&mut table);
         log::info!("\n{}", "Final Summary".cyan());
         log::info!("{}\n", table);
     }
@@ -53,12 +54,27 @@ impl ProcessingTracker {
         self.add_mean_runtime(&mut table);
         table.add_row(vec![
             "Estimate wait time",
-            &format!("{:.2} s", self.wait_time),
+            &self.parse_duration(self.wait_time),
         ]);
 
         log::info!("\n{}", "Run Summary".green());
         log::info!("{}", table);
         log::info!("\n{}\n", remaining_samples.green());
+    }
+
+    fn parse_duration(&self, duration: f64) -> String {
+        if duration.is_nan() {
+            return "0s".to_string();
+        }
+
+        if duration < 60.0 {
+            return format!("{:.2} s", duration);
+        }
+
+        let seconds = duration % 60.0;
+        let minutes = (duration / 60.0) % 60.0;
+        let hours = duration / 3600.0;
+        format!("{:.0}h {:.0}m {:.0}s", hours, minutes, seconds)
     }
 
     fn print_table(&self) -> Table {
@@ -74,6 +90,16 @@ impl ProcessingTracker {
     }
 
     fn add_mean_runtime(&self, table: &mut Table) {
-        table.add_row(vec!["Mean runtime", &format!("{:.2} s", self.mean_runtime)]);
+        table.add_row(vec![
+            "Mean runtime",
+            &self.parse_duration(self.mean_runtime),
+        ]);
+    }
+
+    fn add_total_runtime(&self, table: &mut Table) {
+        table.add_row(vec![
+            "Total runtime",
+            &self.parse_duration(self.total_runtime),
+        ]);
     }
 }
