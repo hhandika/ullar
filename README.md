@@ -28,7 +28,7 @@ If you have Rust installed, you can install ULLAR using Cargo:
 cargo install ullar
 ```
 
-To install ULLAR, you can download the latest release from the [release page](https://github.com/hhandika/ullar/releases/latest). Available binaries:
+Another option is to install ULLAR pre-compiled binary. You can download the latest release from the [release page](https://github.com/hhandika/ullar/releases/latest). Available binaries:
 
 | OS      |  Download |
 |---------|--------|
