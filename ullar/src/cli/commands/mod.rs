@@ -3,6 +3,7 @@ pub mod clean;
 mod common;
 pub mod deps;
 pub mod init;
+pub mod tree;
 pub mod utils;
 
 use assembly::AssemblyArgs;
@@ -10,6 +11,7 @@ use clap::{crate_authors, crate_description, crate_name, crate_version, Parser, 
 use clean::CleanArgs;
 use deps::DepsSubcommand;
 use init::{InitSubCommand, NewArgs};
+use tree::TreeArgs;
 use utils::UtilSubCommand;
 
 #[derive(Parser)]
@@ -60,6 +62,9 @@ pub(crate) enum UllarSubcommand {
     /// Map contigs to reference
     #[command(name = "map", about = "Map contigs to reference")]
     Map,
+    /// Phylogenetic tree estimation
+    #[command(name = "tree", about = "Phylogenetic tree estimation")]
+    Tree(TreeArgs),
     /// For checking dependencies
     #[command(subcommand, name = "deps", about = "Check and manage dependencies")]
     Deps(DepsSubcommand),

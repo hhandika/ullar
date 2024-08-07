@@ -9,7 +9,7 @@ use crate::cli::commands::init::NewArgs;
 use crate::core::configs::raw_reads::{RawReadConfig, ReadMatching};
 use crate::helper::common;
 use crate::helper::files::FileFinder;
-use crate::helper::reads::{FastqReads, ReadAssignment, SampleNameFormat};
+use crate::types::reads::{FastqReads, ReadAssignment, SampleNameFormat};
 use crate::types::SupportedFormats;
 
 pub struct NewProject<'a> {

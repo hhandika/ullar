@@ -11,11 +11,9 @@ use indicatif::ProgressBar;
 
 use crate::{
     check_read1_exists, create_output_dir,
-    helper::{
-        common::{self, PrettyHeader},
-        reads::FastqReads,
-    },
+    helper::common::{self, PrettyHeader},
     parse_optional_params,
+    types::reads::FastqReads,
 };
 
 use super::reports::CleanReadReport;

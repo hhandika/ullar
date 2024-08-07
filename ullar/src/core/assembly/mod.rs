@@ -6,14 +6,14 @@ use spades::SpadeRunner;
 
 use crate::{
     cli::commands::assembly::AssemblyArgs,
-    helper::{common, files::PathCheck, reads::FastqReads, tracker::ProcessingTracker},
-    types::Task,
+    helper::{common, files::PathCheck, tracker::ProcessingTracker},
+    types::{reads::FastqReads, Task},
 };
 
 use self::reports::SpadeReports;
 
 use super::{
-    configs::{cleaned_reads::CleanReadConfig, ConfigCheck},
+    configs::{cleaned_reads::DeNovoAssemblyConfig, ConfigCheck},
     utils::deps::SpadesMetadata,
 };
 
@@ -120,9 +120,9 @@ impl<'a> Assembly<'a> {
         self.log_output();
     }
 
-    fn parse_config(&self) -> Result<CleanReadConfig, Box<dyn std::error::Error>> {
+    fn parse_config(&self) -> Result<DeNovoAssemblyConfig, Box<dyn std::error::Error>> {
         let config = fs::read_to_string(self.config_path)?;
-        let config: CleanReadConfig = serde_yaml::from_str(&config)?;
+        let config: DeNovoAssemblyConfig = serde_yaml::from_str(&config)?;
         Ok(config)
     }
 
@@ -177,7 +177,7 @@ impl<'a> Assembly<'a> {
         log::info!("\n{}", table);
     }
 
-    fn log_input(&self, config: &CleanReadConfig) {
+    fn log_input(&self, config: &DeNovoAssemblyConfig) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config path", self.config_path.display());
         log::info!("{:18}: {}", "Sample counts", config.sample_counts);

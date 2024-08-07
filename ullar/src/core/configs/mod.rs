@@ -3,10 +3,14 @@ use std::sync::mpsc;
 use colored::Colorize;
 use rayon::prelude::*;
 
-use crate::helper::reads::{FastqReads, ReadChecker};
+use crate::types::reads::{FastqReads, ReadChecker};
 
 pub mod cleaned_reads;
 pub mod raw_reads;
+pub mod trees;
+
+pub const DEFAULT_CONFIG_DIR: &str = "configs";
+pub const CONFIG_EXTENSION: &str = "yaml";
 
 pub struct ConfigCheck {
     /// Total samples input

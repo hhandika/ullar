@@ -15,6 +15,7 @@ use crate::{
         assembly::Assembly,
         init::new::NewProject,
         qc::ReadCleaner,
+        tree::TreeEstimation,
         utils::{checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner},
     },
     helper::{self, common::PrettyHeader},
@@ -62,6 +63,7 @@ impl Cli {
                 assembly.assemble();
             }
             UllarSubcommand::Map => unimplemented!("Map command is not yet implemented"),
+            UllarSubcommand::Tree(tree_args) => TreeEstimation::from_arg(tree_args).run(),
             UllarSubcommand::Deps(subcommand) => self.parse_dependencies(subcommand),
 
             UllarSubcommand::Utils(util_args) => self.parse_utils(util_args),

@@ -5,7 +5,7 @@ use std::path::Path;
 
 use crate::{
     cli::commands::init::MapInitArgs,
-    core::{assembly::DEFAULT_ASSEMBLY_OUTPUT_DIR, configs::raw_reads::DEFAULT_CONFIG_DIR},
+    core::{assembly::DEFAULT_ASSEMBLY_OUTPUT_DIR, configs::DEFAULT_CONFIG_DIR},
 };
 
 #[cfg(target_family = "unix")]

@@ -4,11 +4,11 @@ use std::{error::Error, path::Path};
 
 use serde::{Deserialize, Serialize};
 
-use crate::helper::reads::FastqReads;
+use crate::types::reads::FastqReads;
+
+use super::CONFIG_EXTENSION;
 
 pub const DEFAULT_RAW_READ_PREFIX: &str = "raw_read";
-pub const DEFAULT_CONFIG_DIR: &str = "configs";
-pub const CONFIG_EXTENSION: &str = "yaml";
 
 pub enum FileMatchingStrategy {
     Regex,
