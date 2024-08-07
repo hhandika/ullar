@@ -34,6 +34,7 @@ pub struct TreeEstimation<'a> {
     pub skip_config_check: bool,
     /// Tree inference method
     pub method: TreeInferenceMethod,
+    #[allow(dead_code)]
     task: Task,
 }
 
