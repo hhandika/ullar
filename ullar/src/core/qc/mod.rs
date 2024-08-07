@@ -12,13 +12,13 @@ use crate::cli::commands::clean::CleanArgs;
 use crate::core::configs::ConfigCheck;
 use crate::helper::common;
 use crate::helper::files::PathCheck;
-use crate::helper::reads::FastqReads;
 use crate::helper::tracker::ProcessingTracker;
+use crate::types::reads::FastqReads;
 use crate::types::Task;
 
 use self::reports::CleanReadReport;
 
-use super::configs::cleaned_reads::CleanReadConfig;
+use super::configs::cleaned_reads::DeNovoAssemblyConfig;
 use super::configs::raw_reads::RawReadConfig;
 use super::utils::deps::FastpMetadata;
 
@@ -155,6 +155,7 @@ impl<'a> ReadCleaner<'a> {
         Ok(config)
     }
 
+    // Prepare config for De Novo Assembly
     fn write_output_config(
         &self,
         reports: &[CleanReadReport],
@@ -167,7 +168,7 @@ impl<'a> ReadCleaner<'a> {
         if let Some(fastp) = fastp_dep.metadata {
             metadata.push(fastp);
         }
-        let mut config = CleanReadConfig::new(
+        let mut config = DeNovoAssemblyConfig::new(
             Some(self.config_path.to_path_buf()),
             self.output_dir,
             metadata,

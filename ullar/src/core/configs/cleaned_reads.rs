@@ -9,17 +9,16 @@ use serde::Serialize;
 
 use crate::{
     core::{qc::reports::CleanReadReport, utils::deps::DepMetadata},
-    helper::reads::FastqReads,
-    types::Task,
+    types::{reads::FastqReads, Task},
 };
 
-use super::raw_reads::{CONFIG_EXTENSION, DEFAULT_CONFIG_DIR};
+use super::{CONFIG_EXTENSION, DEFAULT_CONFIG_DIR};
 
-pub const DEFAULT_CLEANED_READ_CONFIG: &str = "cleaned_read";
+pub const DEFAULT_DENOVO_ASSEMBLY_CONFIG: &str = "cleaned_read";
 
 #[derive(Debug, Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct CleanReadConfig {
+pub struct DeNovoAssemblyConfig {
     pub config_path: Option<PathBuf>,
     /// Use clean output directory
     pub input_init_dir: PathBuf,
@@ -32,7 +31,7 @@ pub struct CleanReadConfig {
     pub samples: Vec<FastqReads>,
 }
 
-impl Default for CleanReadConfig {
+impl Default for DeNovoAssemblyConfig {
     fn default() -> Self {
         Self {
             config_path: None,
@@ -47,7 +46,7 @@ impl Default for CleanReadConfig {
     }
 }
 
-impl CleanReadConfig {
+impl DeNovoAssemblyConfig {
     pub fn new(
         config_path: Option<PathBuf>,
         input_init_dir: &Path,
@@ -80,7 +79,7 @@ impl CleanReadConfig {
     }
 
     fn generate_output_dir(&mut self) -> PathBuf {
-        let mut output_dir = Path::new(DEFAULT_CONFIG_DIR).join(DEFAULT_CLEANED_READ_CONFIG);
+        let mut output_dir = Path::new(DEFAULT_CONFIG_DIR).join(DEFAULT_DENOVO_ASSEMBLY_CONFIG);
         output_dir.set_extension(CONFIG_EXTENSION);
         output_dir
     }

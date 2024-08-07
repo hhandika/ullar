@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::{builder, Args, Subcommand};
 
-use crate::core::configs::raw_reads::{DEFAULT_CONFIG_DIR, DEFAULT_RAW_READ_PREFIX};
+use crate::core::configs::{raw_reads::DEFAULT_RAW_READ_PREFIX, DEFAULT_CONFIG_DIR};
 
 #[derive(Subcommand)]
 pub(crate) enum InitSubCommand {

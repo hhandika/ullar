@@ -17,7 +17,7 @@ use crate::{
     re_capture, re_capture_dynamic, re_capture_lazy, re_match,
 };
 
-use super::{checksum::ChecksumType, files::FileMetadata};
+use crate::helper::{checksum::ChecksumType, files::FileMetadata};
 
 #[macro_export]
 macro_rules! check_read1_exists {
