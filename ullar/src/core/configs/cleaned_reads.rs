@@ -14,11 +14,11 @@ use crate::{
 
 use super::{CONFIG_EXTENSION, DEFAULT_CONFIG_DIR};
 
-pub const DEFAULT_DENOVO_ASSEMBLY_CONFIG: &str = "cleaned_read";
+pub const DEFAULT_CLEANED_READ_CONFIG: &str = "cleaned_read";
 
 #[derive(Debug, Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct DeNovoAssemblyConfig {
+pub struct CleanReadConfig {
     pub config_path: Option<PathBuf>,
     /// Use clean output directory
     pub input_init_dir: PathBuf,
@@ -31,7 +31,7 @@ pub struct DeNovoAssemblyConfig {
     pub samples: Vec<FastqReads>,
 }
 
-impl Default for DeNovoAssemblyConfig {
+impl Default for CleanReadConfig {
     fn default() -> Self {
         Self {
             config_path: None,
@@ -46,7 +46,7 @@ impl Default for DeNovoAssemblyConfig {
     }
 }
 
-impl DeNovoAssemblyConfig {
+impl CleanReadConfig {
     pub fn new(
         config_path: Option<PathBuf>,
         input_init_dir: &Path,
@@ -79,7 +79,7 @@ impl DeNovoAssemblyConfig {
     }
 
     fn generate_output_dir(&mut self) -> PathBuf {
-        let mut output_dir = Path::new(DEFAULT_CONFIG_DIR).join(DEFAULT_DENOVO_ASSEMBLY_CONFIG);
+        let mut output_dir = Path::new(DEFAULT_CONFIG_DIR).join(DEFAULT_CLEANED_READ_CONFIG);
         output_dir.set_extension(CONFIG_EXTENSION);
         output_dir
     }
