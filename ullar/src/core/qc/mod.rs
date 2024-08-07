@@ -18,7 +18,7 @@ use crate::types::Task;
 
 use self::reports::CleanReadReport;
 
-use super::configs::cleaned_reads::DeNovoAssemblyConfig;
+use super::configs::cleaned_reads::CleanReadConfig;
 use super::configs::raw_reads::RawReadConfig;
 use super::utils::deps::FastpMetadata;
 
@@ -168,7 +168,7 @@ impl<'a> ReadCleaner<'a> {
         if let Some(fastp) = fastp_dep.metadata {
             metadata.push(fastp);
         }
-        let mut config = DeNovoAssemblyConfig::new(
+        let mut config = CleanReadConfig::new(
             Some(self.config_path.to_path_buf()),
             self.output_dir,
             metadata,

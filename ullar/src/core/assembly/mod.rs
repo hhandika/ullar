@@ -13,7 +13,7 @@ use crate::{
 use self::reports::SpadeReports;
 
 use super::{
-    configs::{cleaned_reads::DeNovoAssemblyConfig, ConfigCheck},
+    configs::{cleaned_reads::CleanReadConfig, ConfigCheck},
     utils::deps::SpadesMetadata,
 };
 
@@ -120,9 +120,9 @@ impl<'a> Assembly<'a> {
         self.log_output();
     }
 
-    fn parse_config(&self) -> Result<DeNovoAssemblyConfig, Box<dyn std::error::Error>> {
+    fn parse_config(&self) -> Result<CleanReadConfig, Box<dyn std::error::Error>> {
         let config = fs::read_to_string(self.config_path)?;
-        let config: DeNovoAssemblyConfig = serde_yaml::from_str(&config)?;
+        let config: CleanReadConfig = serde_yaml::from_str(&config)?;
         Ok(config)
     }
 
@@ -177,7 +177,7 @@ impl<'a> Assembly<'a> {
         log::info!("\n{}", table);
     }
 
-    fn log_input(&self, config: &DeNovoAssemblyConfig) {
+    fn log_input(&self, config: &CleanReadConfig) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config path", self.config_path.display());
         log::info!("{:18}: {}", "Sample counts", config.sample_counts);
