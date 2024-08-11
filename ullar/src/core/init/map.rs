@@ -21,8 +21,8 @@ pub struct InitMappingConfig<'a> {
 impl Default for InitMappingConfig<'_> {
     fn default() -> Self {
         Self {
-            input_dir: Path::new(DEFAULT_ASSEMBLY_OUTPUT_DIR).as_ref(),
-            output_dir: Path::new(DEFAULT_CONFIG_DIR).as_ref(),
+            input_dir: Path::new(DEFAULT_ASSEMBLY_OUTPUT_DIR),
+            output_dir: Path::new(DEFAULT_CONFIG_DIR),
             #[cfg(target_family = "unix")]
             phyluce: false,
         }

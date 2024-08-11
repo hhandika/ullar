@@ -3,6 +3,7 @@ pub mod commands;
 
 use clap::Parser;
 use commands::{
+    clean::CleanSubcommand,
     deps::DepsSubcommand,
     utils::{ScannerSubcommand, UtilSubCommand},
     UllarCli, UllarSubcommand,
@@ -54,10 +55,8 @@ impl Cli {
                 parser.execute().expect("Failed to execute new command");
             }
             UllarSubcommand::Init(_) => unimplemented!("Init command is not yet implemented"),
-            UllarSubcommand::Clean(clean_args) => {
-                let cleaner = ReadCleaner::from_arg(clean_args);
-                cleaner.clean();
-            }
+            UllarSubcommand::Clean(clean) => CleanArgParser::new(clean).parse(),
+
             UllarSubcommand::Assemble(assembly_args) => {
                 let assembly = Assembly::from_arg(assembly_args);
                 assembly.assemble();
@@ -106,16 +105,16 @@ impl Cli {
     }
 }
 
-pub struct CleanArgParser<'a> {
+struct CleanArgParser<'a> {
     subcommand: &'a CleanSubcommand,
 }
 
 impl<'a> CleanArgParser<'a> {
-    pub fn new(subcommand: &'a CleanSubcommand) -> Self {
+    fn new(subcommand: &'a CleanSubcommand) -> Self {
         Self { subcommand }
     }
 
-    pub fn parse(&self) {
+    fn parse(&self) {
         match self.subcommand {
             CleanSubcommand::Clean(clean_args) => {
                 let cleaner = ReadCleaner::from_arg(clean_args);

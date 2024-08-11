@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::Args;
+use clap::{Args, Subcommand};
 
 use crate::core::qc::DEFAULT_CLEAN_READ_OUTPUT_DIR;
 

@@ -8,7 +8,7 @@ pub mod utils;
 
 use assembly::AssemblyArgs;
 use clap::{crate_authors, crate_description, crate_name, crate_version, Parser, Subcommand};
-use clean::{CleanArgs, CleanSubcommand};
+use clean::CleanSubcommand;
 use deps::DepsSubcommand;
 use init::{InitSubCommand, NewArgs};
 use tree::TreeArgs;
