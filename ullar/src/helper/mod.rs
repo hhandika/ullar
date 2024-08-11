@@ -6,3 +6,4 @@ pub mod files;
 pub mod logs;
 pub mod regex;
 pub mod tracker;
+pub mod utils;
