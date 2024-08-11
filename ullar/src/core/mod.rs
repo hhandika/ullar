@@ -1,4 +1,5 @@
 //! The pipeline core functionality.
+pub mod alignment;
 pub mod assembly;
 pub mod configs;
 pub mod map;
