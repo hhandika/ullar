@@ -6,6 +6,13 @@ use crate::core::qc::DEFAULT_CLEAN_READ_OUTPUT_DIR;
 
 use super::common::CommonRunnerOptions;
 
+#[derive(Subcommand)]
+pub(crate) enum CleanSubcommand {
+    /// Clean raw reads
+    #[command(name = "run", about = "Perform read cleaning")]
+    Clean(CleanArgs),
+}
+
 #[derive(Args)]
 pub struct CleanArgs {
     /// Path to the raw read configuration file

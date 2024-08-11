@@ -105,3 +105,22 @@ impl Cli {
         }
     }
 }
+
+pub struct CleanArgParser<'a> {
+    subcommand: &'a CleanSubcommand,
+}
+
+impl<'a> CleanArgParser<'a> {
+    pub fn new(subcommand: &'a CleanSubcommand) -> Self {
+        Self { subcommand }
+    }
+
+    pub fn parse(&self) {
+        match self.subcommand {
+            CleanSubcommand::Clean(clean_args) => {
+                let cleaner = ReadCleaner::from_arg(clean_args);
+                cleaner.clean();
+            }
+        }
+    }
+}

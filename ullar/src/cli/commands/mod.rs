@@ -8,7 +8,7 @@ pub mod utils;
 
 use assembly::AssemblyArgs;
 use clap::{crate_authors, crate_description, crate_name, crate_version, Parser, Subcommand};
-use clean::CleanArgs;
+use clean::{CleanArgs, CleanSubcommand};
 use deps::DepsSubcommand;
 use init::{InitSubCommand, NewArgs};
 use tree::TreeArgs;
@@ -54,8 +54,8 @@ pub(crate) enum UllarSubcommand {
     )]
     Init(InitSubCommand),
     /// Clean raw reads
-    #[command(name = "clean", about = "Clean raw reads")]
-    Clean(CleanArgs),
+    #[command(subcommand, name = "clean", about = "Clean raw reads")]
+    Clean(CleanSubcommand),
     /// Assemble cleaned reads
     #[command(name = "assemble", about = "Assemble cleaned reads")]
     Assemble(AssemblyArgs),
