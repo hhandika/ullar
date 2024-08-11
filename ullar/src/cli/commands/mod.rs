@@ -1,3 +1,4 @@
+pub mod alignment;
 pub mod assembly;
 pub mod clean;
 mod common;
@@ -6,6 +7,7 @@ pub mod new;
 pub mod tree;
 pub mod utils;
 
+use alignment::AlignmentSubcommand;
 use assembly::AssemblySubcommand;
 use clap::{crate_authors, crate_description, crate_name, crate_version, Parser, Subcommand};
 use clean::CleanSubcommand;
@@ -54,6 +56,9 @@ pub(crate) enum UllarSubcommand {
     /// Map contigs to reference
     #[command(name = "map", about = "Map contigs to reference")]
     Map,
+    /// Locus alignment
+    #[command(subcommand, name = "align", about = "Locus alignment")]
+    Alignment(AlignmentSubcommand),
     /// Phylogenetic tree estimation
     #[command(name = "tree", about = "Phylogenetic tree estimation")]
     Tree(TreeArgs),

@@ -19,7 +19,7 @@ impl<'a> AssemblyInit<'a> {
         }
     }
 
-    pub fn execute(&self) {
+    pub fn init(&self) {
         unimplemented!()
     }
 }
