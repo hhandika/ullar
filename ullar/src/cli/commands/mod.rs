@@ -2,15 +2,15 @@ pub mod assembly;
 pub mod clean;
 mod common;
 pub mod deps;
-pub mod init;
+pub mod new;
 pub mod tree;
 pub mod utils;
 
-use assembly::AssemblyArgs;
+use assembly::AssemblySubcommand;
 use clap::{crate_authors, crate_description, crate_name, crate_version, Parser, Subcommand};
 use clean::CleanSubcommand;
 use deps::DepsSubcommand;
-use init::{InitSubCommand, NewArgs};
+use new::NewArgs;
 use tree::TreeArgs;
 use utils::UtilSubCommand;
 
@@ -45,20 +45,12 @@ pub(crate) enum UllarSubcommand {
     /// New subcommand to init a new project
     #[command(name = "new", about = "Start a new project")]
     New(NewArgs),
-    /// Initialize config file to allow starting from any step
-    /// of the pipeline workflow.
-    #[command(
-        subcommand,
-        name = "init",
-        about = "Initialize config files. Start from any step of the workflow."
-    )]
-    Init(InitSubCommand),
     /// Clean raw reads
     #[command(subcommand, name = "clean", about = "Clean raw reads")]
     Clean(CleanSubcommand),
     /// Assemble cleaned reads
-    #[command(name = "assemble", about = "Assemble cleaned reads")]
-    Assemble(AssemblyArgs),
+    #[command(subcommand, name = "assemble", about = "Assemble cleaned reads")]
+    Assemble(AssemblySubcommand),
     /// Map contigs to reference
     #[command(name = "map", about = "Map contigs to reference")]
     Map,

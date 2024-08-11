@@ -1,10 +1,20 @@
 use std::path::PathBuf;
 
-use clap::Args;
+use clap::{Args, Subcommand};
 
 use crate::core::assembly::DEFAULT_ASSEMBLY_OUTPUT_DIR;
 
-use super::common::CommonRunnerOptions;
+use super::common::{CommonInitArgs, CommonRunnerOptions};
+
+#[derive(Subcommand)]
+pub(crate) enum AssemblySubcommand {
+    /// Create assembly configuration file
+    #[command(name = "init", about = "Create assembly configuration file")]
+    Init(AssemblyInitArgs),
+    /// Assemble cleaned reads
+    #[command(name = "run", about = "Assemble cleaned reads")]
+    Assembly(AssemblyArgs),
+}
 
 #[derive(Args)]
 pub struct AssemblyArgs {
@@ -23,4 +33,13 @@ pub struct AssemblyArgs {
     /// Rename contigs file to sample name
     #[arg(long, help = "Rename contigs file to sample name")]
     pub rename_contigs: bool,
+}
+
+#[derive(Args)]
+pub struct AssemblyInitArgs {
+    /// Input directory containing the cleaned reads
+    #[arg(short, long, help = "Input directory containing the cleaned reads")]
+    pub dir: PathBuf,
+    #[command(flatten)]
+    pub common: CommonInitArgs,
 }
