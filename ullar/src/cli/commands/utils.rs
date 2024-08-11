@@ -4,9 +4,6 @@ use clap::{
     builder, Args, Subcommand,
 };
 
-
-
-
 #[derive(Subcommand)]
 pub(crate) enum UtilSubCommand {
     /// Subcommand to hash files

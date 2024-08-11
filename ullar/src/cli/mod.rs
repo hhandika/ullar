@@ -1,20 +1,21 @@
 //! Command-line interface for ULLAR project.
-pub mod commands;
 
 use clap::Parser;
 use commands::{
+    assembly::{AssemblyArgs, AssemblyInitArgs, AssemblySubcommand},
     clean::CleanSubcommand,
     deps::DepsSubcommand,
+    new::NewArgs,
     utils::{ScannerSubcommand, UtilSubCommand},
     UllarCli, UllarSubcommand,
 };
 use segul::helper::utils;
-use std::time::Instant;
+use std::{path::PathBuf, time::Instant};
 
 use crate::{
     core::{
-        assembly::Assembly,
-        init::new::NewProject,
+        assembly::{init::AssemblyInit, Assembly},
+        new::NewProject,
         qc::ReadCleaner,
         tree::TreeEstimation,
         utils::{checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner},
@@ -24,6 +25,8 @@ use crate::{
 
 #[cfg(target_family = "unix")]
 use crate::core::utils::symlinks::Symlinks;
+
+pub mod commands;
 
 pub struct Cli {
     pub command: UllarCli,
@@ -44,33 +47,37 @@ impl Cli {
 
     pub fn parse(&mut self) {
         let time = Instant::now();
-        let logger = helper::logs::init_logger(
-            self.command.log_dir.as_ref(),
-            self.command.log_prefix.as_str(),
-        );
+        let logger = self.init_logger();
         PrettyHeader::new().get_welcome_header();
-        match &self.command.sub_cmd {
-            UllarSubcommand::New(new_args) => {
-                let mut parser = NewProject::from_arg(new_args);
-                parser.execute().expect("Failed to execute new command");
-            }
-            UllarSubcommand::Init(_) => unimplemented!("Init command is not yet implemented"),
-            UllarSubcommand::Clean(clean) => CleanArgParser::new(clean).parse(),
-
-            UllarSubcommand::Assemble(assembly_args) => {
-                let assembly = Assembly::from_arg(assembly_args);
-                assembly.assemble();
-            }
-            UllarSubcommand::Map => unimplemented!("Map command is not yet implemented"),
-            UllarSubcommand::Tree(tree_args) => TreeEstimation::from_arg(tree_args).run(),
-            UllarSubcommand::Deps(subcommand) => self.parse_dependencies(subcommand),
-
-            UllarSubcommand::Utils(util_args) => self.parse_utils(util_args),
-        }
+        self.match_subcommand();
         let elapsed = time.elapsed();
         println!();
         log::info!("{:18}: {}", "Log file", logger.display());
         utils::print_execution_time(elapsed);
+    }
+
+    fn init_logger(&self) -> PathBuf {
+        helper::logs::init_logger(
+            self.command.log_dir.as_ref(),
+            self.command.log_prefix.as_str(),
+        )
+    }
+
+    fn match_subcommand(&self) {
+        match &self.command.sub_cmd {
+            UllarSubcommand::New(new_args) => self.create_project(new_args),
+            UllarSubcommand::Clean(subcommand) => CleanArgParser::new(subcommand).parse(),
+            UllarSubcommand::Assemble(subcommand) => AssemblyArgParser::new(subcommand).parse(),
+            UllarSubcommand::Map => unimplemented!("Map command is not yet implemented"),
+            UllarSubcommand::Tree(tree_args) => TreeEstimation::from_arg(tree_args).run(),
+            UllarSubcommand::Deps(subcommand) => self.parse_dependencies(subcommand),
+            UllarSubcommand::Utils(util_args) => self.parse_utils(util_args),
+        }
+    }
+
+    fn create_project(&self, new_args: &NewArgs) {
+        let mut parser = NewProject::from_arg(new_args);
+        parser.execute().expect("Failed to execute new command");
     }
 
     fn parse_dependencies(&self, deps_subcommand: &DepsSubcommand) {
@@ -121,5 +128,30 @@ impl<'a> CleanArgParser<'a> {
                 cleaner.clean();
             }
         }
+    }
+}
+
+struct AssemblyArgParser<'a> {
+    subcommand: &'a AssemblySubcommand,
+}
+
+impl<'a> AssemblyArgParser<'a> {
+    fn new(subcommand: &'a AssemblySubcommand) -> Self {
+        Self { subcommand }
+    }
+
+    fn parse(&self) {
+        match self.subcommand {
+            AssemblySubcommand::Init(init_args) => self.init(init_args),
+            AssemblySubcommand::Assembly(assembly_args) => self.assemble(assembly_args),
+        }
+    }
+
+    fn init(&self, args: &AssemblyInitArgs) {
+        AssemblyInit::new(args).execute();
+    }
+
+    fn assemble(&self, args: &AssemblyArgs) {
+        Assembly::from_arg(args).assemble();
     }
 }

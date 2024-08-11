@@ -5,7 +5,7 @@ use std::{error::Error, path::Path};
 
 use colored::Colorize;
 
-use crate::cli::commands::init::NewArgs;
+use crate::cli::commands::new::NewArgs;
 use crate::core::configs::raw_reads::{RawReadConfig, ReadMatching};
 use crate::helper::common;
 use crate::helper::files::FileFinder;

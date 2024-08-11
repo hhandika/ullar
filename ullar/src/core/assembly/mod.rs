@@ -17,6 +17,7 @@ use super::{
     utils::deps::SpadesMetadata,
 };
 
+pub mod init;
 pub mod reports;
 pub mod spades;
 
