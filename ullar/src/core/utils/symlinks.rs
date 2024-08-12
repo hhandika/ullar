@@ -37,7 +37,15 @@ impl Default for Symlinks<'_> {
 
 #[cfg(target_family = "unix")]
 impl<'a> Symlinks<'a> {
-    pub fn new(args: &'a SymlinkArgs) -> Self {
+    pub fn new(dir: &'a Path, output_dir: &'a Path, format: SymlinkFileSearchFormat) -> Self {
+        Self {
+            dir,
+            output_dir,
+            format,
+        }
+    }
+
+    pub fn from_arg(args: &'a SymlinkArgs) -> Self {
         Self {
             dir: args.dir.as_path(),
             output_dir: args.output.as_path(),
@@ -50,7 +58,7 @@ impl<'a> Symlinks<'a> {
 
     pub fn create(&self) {
         self.log_input();
-        PathCheck::new(self.output_dir, true).prompt_exists();
+        PathCheck::new(self.output_dir, true).prompt_exists(false);
         let spinner = common::init_spinner();
         spinner.set_message("Finding matching files...");
         let mut files = self.find_files();

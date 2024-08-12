@@ -31,7 +31,7 @@ pub const SIMPLE_NAME_REGEX: &str = r"(^[a-zA-Z0-9]+)";
 /// - genus_species_singleton.fastq
 /// - genus_species_locality_R1.fastq.gz
 /// - genus_species_locality_museumNo12345_1.fastq.xz
-/// etc.
+/// - etc.
 ///
 /// Will match the following sample names:
 /// - genus_species

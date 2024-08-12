@@ -9,9 +9,11 @@ use crate::{
     helper::{
         common,
         files::{FileFinder, CSV_EXT},
-        reads::{FastqReads, ReadAssignment, SampleNameFormat},
     },
-    types::SupportedFormats,
+    types::{
+        reads::{FastqReads, ReadAssignment, SampleNameFormat},
+        SupportedFormats,
+    },
 };
 
 pub struct ReadScanner<'a> {

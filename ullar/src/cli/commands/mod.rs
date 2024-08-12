@@ -1,15 +1,19 @@
+pub mod alignment;
 pub mod assembly;
 pub mod clean;
-mod common;
+pub mod common;
 pub mod deps;
-pub mod init;
+pub mod new;
+pub mod tree;
 pub mod utils;
 
-use assembly::AssemblyArgs;
+use alignment::AlignmentSubcommand;
+use assembly::AssemblySubcommand;
 use clap::{crate_authors, crate_description, crate_name, crate_version, Parser, Subcommand};
-use clean::CleanArgs;
+use clean::CleanSubcommand;
 use deps::DepsSubcommand;
-use init::{InitSubCommand, NewArgs};
+use new::NewArgs;
+use tree::TreeArgs;
 use utils::UtilSubCommand;
 
 #[derive(Parser)]
@@ -43,23 +47,21 @@ pub(crate) enum UllarSubcommand {
     /// New subcommand to init a new project
     #[command(name = "new", about = "Start a new project")]
     New(NewArgs),
-    /// Initialize config file to allow starting from any step
-    /// of the pipeline workflow.
-    #[command(
-        subcommand,
-        name = "init",
-        about = "Initialize config files. Start from any step of the workflow."
-    )]
-    Init(InitSubCommand),
     /// Clean raw reads
-    #[command(name = "clean", about = "Clean raw reads")]
-    Clean(CleanArgs),
+    #[command(subcommand, name = "clean", about = "Clean raw reads")]
+    Clean(CleanSubcommand),
     /// Assemble cleaned reads
-    #[command(name = "assemble", about = "Assemble cleaned reads")]
-    Assemble(AssemblyArgs),
+    #[command(subcommand, name = "assemble", about = "Assemble cleaned reads")]
+    Assemble(AssemblySubcommand),
     /// Map contigs to reference
     #[command(name = "map", about = "Map contigs to reference")]
     Map,
+    /// Locus alignment
+    #[command(subcommand, name = "align", about = "Locus alignment")]
+    Alignment(AlignmentSubcommand),
+    /// Phylogenetic tree estimation
+    #[command(name = "tree", about = "Phylogenetic tree estimation")]
+    Tree(TreeArgs),
     /// For checking dependencies
     #[command(subcommand, name = "deps", about = "Check and manage dependencies")]
     Deps(DepsSubcommand),

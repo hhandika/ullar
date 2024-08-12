@@ -4,12 +4,14 @@
 use std::path::Path;
 
 use crate::{
-    cli::commands::init::MapInitArgs,
-    core::{assembly::DEFAULT_ASSEMBLY_OUTPUT_DIR, configs::raw_reads::DEFAULT_CONFIG_DIR},
+    cli::commands::new::MapInitArgs,
+    core::{assembly::DEFAULT_ASSEMBLY_OUTPUT_DIR, configs::DEFAULT_CONFIG_DIR},
 };
 
 #[cfg(target_family = "unix")]
 use crate::core::utils::symlinks::Symlinks;
+#[cfg(target_family = "unix")]
+use crate::types::SymlinkFileSearchFormat;
 
 pub struct InitMappingConfig<'a> {
     pub input_dir: &'a Path,
@@ -21,8 +23,8 @@ pub struct InitMappingConfig<'a> {
 impl Default for InitMappingConfig<'_> {
     fn default() -> Self {
         Self {
-            input_dir: Path::new(DEFAULT_ASSEMBLY_OUTPUT_DIR).as_ref(),
-            output_dir: Path::new(DEFAULT_CONFIG_DIR).as_ref(),
+            input_dir: Path::new(DEFAULT_ASSEMBLY_OUTPUT_DIR),
+            output_dir: Path::new(DEFAULT_CONFIG_DIR),
             #[cfg(target_family = "unix")]
             phyluce: false,
         }
@@ -59,9 +61,11 @@ impl<'a> InitMappingConfig<'a> {
 
     #[cfg(target_family = "unix")]
     fn generate_phyluce_symlinks(&self) {
-        let mut symlink = Symlinks::default();
-        symlink.dir = self.input_dir;
-        symlink.output_dir = self.output_dir;
+        let symlink = Symlinks::new(
+            self.input_dir,
+            self.output_dir,
+            SymlinkFileSearchFormat::Contigs,
+        );
         symlink.create();
     }
 }

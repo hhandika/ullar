@@ -1,5 +1,9 @@
 //! Global data and feature type definitions
 
+pub mod alignments;
+pub mod reads;
+pub mod runner;
+
 use std::{fmt::Display, str::FromStr};
 
 use serde::{Deserialize, Serialize};
@@ -22,11 +26,11 @@ pub enum Task {
     /// Read mapping task
     /// Maps contigs to a reference sequence
     /// Current implementation uses minimap2
-    ReadMapping,
+    ContigMapping,
     /// Locus alignment task
     /// Performs multiple sequence alignment on mapped loci
     /// Current implementation uses MAFFT
-    Alignment,
+    AligningSequences,
     /// Alignment quality control task
     /// Filters and cleans multiple sequence alignment
     /// Also generates summary statistics for the alignment
@@ -34,7 +38,7 @@ pub enum Task {
     AlignmentQc,
     /// Tree inference task
     /// Infers phylogenetic tree from cleaned alignment
-    /// Current implementation uses IQ-TREE
+    /// Current implementation uses IQ-TREE or M
     TreeInference,
 }
 
@@ -43,8 +47,8 @@ impl Display for Task {
         match self {
             Task::CleanReads => write!(f, "Read Cleaning"),
             Task::Assembly => write!(f, "De Novo Assembly"),
-            Task::ReadMapping => write!(f, "Read Mapping"),
-            Task::Alignment => write!(f, "Alignment"),
+            Task::ContigMapping => write!(f, "Contig Mapping"),
+            Task::AligningSequences => write!(f, "Locus Alignment"),
             Task::AlignmentQc => write!(f, "Alignment Quality Control"),
             Task::TreeInference => write!(f, "Tree Inference"),
         }
@@ -58,8 +62,8 @@ impl FromStr for Task {
         match s {
             "CleanReads" => Ok(Task::CleanReads),
             "Assembly" => Ok(Task::Assembly),
-            "ReadMapping" => Ok(Task::ReadMapping),
-            "Alignment" => Ok(Task::Alignment),
+            "ReadMapping" => Ok(Task::ContigMapping),
+            "AligningSequences" => Ok(Task::AligningSequences),
             "AlignmentQc" => Ok(Task::AlignmentQc),
             "TreeInference" => Ok(Task::TreeInference),
             _ => Err(format!("Unknown task: {}", s)),
@@ -217,6 +221,42 @@ impl FromStr for SymlinkFileSearchFormat {
             "nexus" => Ok(SymlinkFileSearchFormat::Nexus),
             "phylip" => Ok(SymlinkFileSearchFormat::Phylip),
             _ => Err(format!("Unknown symlink file search format: {}", s)),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum TreeInferenceMethod {
+    All,
+    MLSpeciesTree,
+    MLGeneTree,
+    GeneSiteConcordance,
+    MSCSpeciesTree,
+}
+
+impl Display for TreeInferenceMethod {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TreeInferenceMethod::All => write!(f, "ML + MSC"),
+            TreeInferenceMethod::MLSpeciesTree => write!(f, "ML Species Tree"),
+            TreeInferenceMethod::MLGeneTree => write!(f, "ML Gene Tree"),
+            TreeInferenceMethod::GeneSiteConcordance => write!(f, "Gene Site Concordance Factor"),
+            TreeInferenceMethod::MSCSpeciesTree => write!(f, "MSC Species Tree"),
+        }
+    }
+}
+
+impl FromStr for TreeInferenceMethod {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "all" | "All" => Ok(TreeInferenceMethod::All),
+            "ml-species" => Ok(TreeInferenceMethod::MLSpeciesTree),
+            "ml-gene" => Ok(TreeInferenceMethod::MLGeneTree),
+            "gsc" => Ok(TreeInferenceMethod::GeneSiteConcordance),
+            "msc" => Ok(TreeInferenceMethod::MSCSpeciesTree),
+            _ => Err(format!("Unknown tree inference method: {}", s)),
         }
     }
 }

@@ -10,11 +10,9 @@ use sysinfo::System;
 
 use crate::{
     check_read1_exists, create_output_dir,
-    helper::{
-        common::{self, PrettyHeader},
-        reads::FastqReads,
-    },
-    parse_optional_params,
+    helper::common::{self, PrettyHeader},
+    parse_override_args,
+    types::reads::FastqReads,
 };
 
 use super::reports::SpadeReports;
@@ -25,7 +23,7 @@ pub const SPADES_DEFAULT_PARAMS: &str = "--isolate";
 pub struct SpadeRunner<'a> {
     sample: &'a FastqReads,
     pub sample_output_dir: PathBuf,
-    pub optional_params: Option<&'a str>,
+    pub override_args: Option<&'a str>,
     pub keep_intermediates: bool,
     pub rename_contigs: bool,
 }
@@ -34,14 +32,14 @@ impl<'a> SpadeRunner<'a> {
     pub fn new(
         sample: &'a FastqReads,
         output_dir: &Path,
-        optional_params: Option<&'a str>,
+        override_args: Option<&'a str>,
         keep_intermediates: bool,
         rename_contigs: bool,
     ) -> SpadeRunner<'a> {
         SpadeRunner {
             sample,
             sample_output_dir: output_dir.join(&sample.sample_name),
-            optional_params,
+            override_args,
             keep_intermediates,
             rename_contigs,
         }
@@ -63,7 +61,7 @@ impl<'a> SpadeRunner<'a> {
             singleton.as_deref(),
             &self.sample_output_dir,
         );
-        let output = spades.execute(self.optional_params);
+        let output = spades.execute(self.override_args);
         match output {
             Ok(output) => self.create_report(&output, &spinner, &decorator),
             Err(e) => {
@@ -79,7 +77,7 @@ impl<'a> SpadeRunner<'a> {
         spinner: &ProgressBar,
         decorator: &PrettyHeader,
     ) -> Result<SpadeReports, Box<dyn Error>> {
-        let reports = self.check_spades_success(&output, &spinner);
+        let reports = self.check_spades_success(output, spinner);
         match reports {
             Ok(report) => {
                 self.print_output_summary(&report);
@@ -202,7 +200,7 @@ impl<'a> Spades<'a> {
         }
     }
 
-    pub fn execute(&self, optional_params: Option<&'a str>) -> Result<Output, Box<dyn Error>> {
+    pub fn execute(&self, override_args: Option<&'a str>) -> Result<Output, Box<dyn Error>> {
         let mut cmd = Command::new(SPADES_EXE);
         cmd.arg("-1").arg(self.read1);
         if let Some(read2) = self.read2 {
@@ -215,9 +213,9 @@ impl<'a> Spades<'a> {
         cmd.arg("-o").arg(&self.output_dir);
         cmd.arg("-t").arg(Spades::get_thread_count());
 
-        match optional_params {
+        match override_args {
             Some(params) => {
-                parse_optional_params!(cmd, params);
+                parse_override_args!(cmd, params);
             }
             None => {
                 cmd.arg(SPADES_DEFAULT_PARAMS);

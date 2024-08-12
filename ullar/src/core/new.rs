@@ -5,16 +5,15 @@ use std::{error::Error, path::Path};
 
 use colored::Colorize;
 
-use crate::cli::commands::init::NewArgs;
+use crate::cli::commands::new::NewArgs;
 use crate::core::configs::raw_reads::{RawReadConfig, ReadMatching};
 use crate::helper::common;
 use crate::helper::files::FileFinder;
-use crate::helper::reads::{FastqReads, ReadAssignment, SampleNameFormat};
+use crate::types::reads::{FastqReads, ReadAssignment, SampleNameFormat};
 use crate::types::SupportedFormats;
 
 pub struct NewProject<'a> {
     dir: &'a Path,
-    output: &'a Path,
     extension: Option<&'a str>,
     separator: Option<char>,
     length: usize,
@@ -27,7 +26,6 @@ impl<'a> NewProject<'a> {
     pub fn from_arg(args: &'a NewArgs) -> Self {
         Self {
             dir: args.dir.as_path(),
-            output: args.common.output.as_path(),
             extension: args.common.extension.as_deref(),
             separator: args.common.separator,
             length: args.common.length,
@@ -92,7 +90,7 @@ impl<'a> NewProject<'a> {
             strategy,
             records.to_vec(),
         );
-        let output_path = config.to_yaml(self.output)?;
+        let output_path = config.to_yaml()?;
         Ok(output_path)
     }
 
@@ -128,7 +126,14 @@ impl<'a> NewProject<'a> {
             .unwrap_or_default()
             .to_string_lossy();
         log::info!("{}", "\nOutput".cyan());
-        log::info!("{:18}: {}", "Directory", self.output.display());
+        log::info!(
+            "{:18}: {}",
+            "Directory",
+            output_path
+                .parent()
+                .expect("Failed to parse parent directory")
+                .display()
+        );
         log::info!("{:18}: {}", "Config file", config_filename);
         log::info!("{:18}: {}", "Sample counts", record_counts);
         log::info!("{:18}: {}", "File counts", file_counts);

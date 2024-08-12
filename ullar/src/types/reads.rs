@@ -17,7 +17,7 @@ use crate::{
     re_capture, re_capture_dynamic, re_capture_lazy, re_match,
 };
 
-use super::{checksum::ChecksumType, files::FileMetadata};
+use crate::helper::{checksum::ChecksumType, files::FileMetadata};
 
 #[macro_export]
 macro_rules! check_read1_exists {
@@ -53,6 +53,7 @@ pub enum SampleNameFormat {
     /// - sample1_2.fastq,
     /// - sample1_singleton.fastq
     /// - sample2_L001_R1.fastq
+    ///
     /// Use SIMPLE_NAME_REGEX pattern -> r"(^[a-zA-Z0-9]+)"
     Simple,
     /// Capture descriptive sample name with

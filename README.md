@@ -28,13 +28,13 @@ If you have Rust installed, you can install ULLAR using Cargo:
 cargo install ullar
 ```
 
-To install ULLAR, you can download the latest release from the [release page](https://github.com/hhandika/ullar/releases/latest). Available binaries:
+Another option is to install ULLAR pre-compiled binary. You can download the latest release from the [release page](https://github.com/hhandika/ullar/releases/latest). Available binaries:
 
-| OS      |  Download |
-|---------|--------|
+| OS      | Download                                                                                                                                                                                                                             |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Linux   | [Intel/AMD 64-bit](https://github.com/hhandika/ullar/releases/latest/download/ullar-Linux-x86_64.tar.gz) or [Many Linux Intel/AMD 64-bit](https://github.com/hhandika/ullar/releases/latest/download/ullar-Linux-musl-x86_64.tar.gz) |
-| Windows | [Intel/AMD 64-bit](https://github.com/hhandika/ullar/releases/latest/download/ullar-Windows-x86_64.zip) |
-| MacOS   | [Intel](https://github.com/hhandika/ullar/releases/latest/download/ullar-macOS-x86_64.tar.gz) or [M series](https://github.com/hhandika/ullar/releases/latest/download/ullar-macOS-arm64.tar.gz) |
+| Windows | [Intel/AMD 64-bit](https://github.com/hhandika/ullar/releases/latest/download/ullar-Windows-x86_64.zip)                                                                                                                              |
+| MacOS   | [Intel](https://github.com/hhandika/ullar/releases/latest/download/ullar-macOS-x86_64.tar.gz) or [M series](https://github.com/hhandika/ullar/releases/latest/download/ullar-macOS-arm64.tar.gz)                                     |
 
 Install ULLAR like installing any single executable binary. For example, in Linux:
 
@@ -56,10 +56,17 @@ cp ullar ~/bin
 
 SEGUL provide a detailed installation guide on installing a single executable binary in different operating systems. You can find the guide [here](https://www.segul.app/docs/installation/install_binary)
 
-### Dependencies
+### Features & Dependencies
 
-- [SPAdes](http://cab.spbu.ru/software/spades/)
-- [Fastp](https://github.com/OpenGene/fastp)
+| Feature            | Dependencies                                       |
+| ------------------ | -------------------------------------------------- |
+| Raw read cleaning  | [Fastp](https://github.com/OpenGene/fastp)         |
+| De novo assembly   | [SPAdes](http://cab.spbu.ru/software/spades/)      |
+| Reference mapping  | In development                                     |
+| Sequence alignment | [MAFFT](https://mafft.cbrc.jp/alignment/software/) |
+| ML phylogeny       | [IQ-TREE](http://www.iqtree.org/)                  |
+| MSC phylogeny      | [ASTER](https://github.com/chaoszhang/ASTER)       |
+| Summary statistics | [SEGUL](https://www.segul.app/)                    |
 
 You can check if you have the dependencies installed by running the following commands:
 

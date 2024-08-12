@@ -5,21 +5,21 @@
 
 use std::path::Path;
 
-use crate::cli::commands::init::InitArgs;
-pub struct InitAssemblyConfig<'a> {
+use crate::cli::commands::assembly::AssemblyInitArgs;
+pub struct AssemblyInit<'a> {
     pub input_dir: &'a Path,
     pub output_dir: &'a Path,
 }
 
-impl<'a> InitAssemblyConfig<'a> {
-    pub fn new(args: &'a InitArgs) -> Self {
+impl<'a> AssemblyInit<'a> {
+    pub fn new(args: &'a AssemblyInitArgs) -> Self {
         Self {
             input_dir: &args.dir,
             output_dir: &args.common.output,
         }
     }
 
-    pub fn execute(&self) {
+    pub fn init(&self) {
         unimplemented!()
     }
 }
