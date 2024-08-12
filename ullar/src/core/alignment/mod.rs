@@ -72,13 +72,16 @@ impl<'a> Alignment<'a> {
     /// 6. If dry-run, print the summary and exit
     /// 7. Align the sequences
     pub fn align(&self) {
+        let spinner = common::init_spinner();
+        spinner.set_message("Parsing configuration file");
         let config: MappedContigConfig = self.parse_config().expect("Failed to parse config");
+        spinner.finish_with_message(format!(
+            "{} Finished parsing configuration file\n",
+            "✔".green()
+        ));
         self.log_input(&config);
         PathCheck::new(self.output_dir, true).prompt_exists(self.runner.dry_run);
-        let spinner = common::init_spinner();
-        spinner.set_message("Aligning sequences");
         let reports = self.par_align(&config.contigs);
-        spinner.finish_with_message(format!("{} Finished aligning sequences\n", "✔".green()));
         self.write_output_config(reports)
             .expect("Failed to write output config");
         self.log_final_output(self.config_path);
@@ -92,15 +95,18 @@ impl<'a> Alignment<'a> {
     }
 
     fn par_align(&self, input_files: &[FileMetadata]) -> MafftReport {
+        let spinner = common::init_spinner();
+        spinner.set_message("Aligning sequences");
         let (tx, rx) = mpsc::channel();
         input_files.par_iter().for_each_with(tx, |tx, input| {
             let report = self.align_mafft(input);
             tx.send(report).expect("Failed to send report");
         });
-
+        spinner.set_message("Creating alignment report");
         let output_paths: Vec<PathBuf> = rx.iter().collect();
         let mut report = MafftReport::new();
         report.create(&output_paths);
+        spinner.finish_with_message(format!("{} Finished aligning sequences\n", "✔".green()));
         report
     }
 
