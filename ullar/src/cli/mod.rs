@@ -101,7 +101,7 @@ impl Cli {
             }
             UtilSubCommand::Scan(scan_subcommand) => self.parse_read_scan(scan_subcommand),
             #[cfg(target_family = "unix")]
-            UtilSubCommand::Symlink(args) => Symlinks::new(args).create(),
+            UtilSubCommand::Symlink(args) => Symlinks::from_arg(args).create(),
         }
     }
 

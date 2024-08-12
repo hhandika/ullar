@@ -10,6 +10,8 @@ use crate::{
 
 #[cfg(target_family = "unix")]
 use crate::core::utils::symlinks::Symlinks;
+#[cfg(target_family = "unix")]
+use crate::types::SymlinkFileSearchFormat;
 
 pub struct InitMappingConfig<'a> {
     pub input_dir: &'a Path,
@@ -59,9 +61,11 @@ impl<'a> InitMappingConfig<'a> {
 
     #[cfg(target_family = "unix")]
     fn generate_phyluce_symlinks(&self) {
-        let mut symlink = Symlinks::default();
-        symlink.dir = self.input_dir;
-        symlink.output_dir = self.output_dir;
+        let symlink = Symlinks::new(
+            self.input_dir,
+            self.output_dir,
+            SymlinkFileSearchFormat::Contigs,
+        );
         symlink.create();
     }
 }
