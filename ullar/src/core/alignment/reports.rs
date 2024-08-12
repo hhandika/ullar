@@ -18,6 +18,12 @@ pub struct MafftReport {
     pub datatype: DataType,
 }
 
+impl Default for MafftReport {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MafftReport {
     /// Initialize a new MafftReport instance
     pub fn new() -> Self {

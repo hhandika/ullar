@@ -66,7 +66,7 @@ impl<'a> MafftRunner<'a> {
     fn execute_mafft(&self) -> Result<PathBuf, Box<dyn Error>> {
         let output_path = self.create_output_path()?;
         let mut cmd = Command::new(MAFFT_WINDOWS);
-        cmd.arg(&self.get_input_path());
+        cmd.arg(self.get_input_path());
         match self.override_args {
             Some(params) => parse_override_args!(cmd, params),
             None => {

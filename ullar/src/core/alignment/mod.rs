@@ -81,7 +81,7 @@ impl<'a> Alignment<'a> {
         spinner.finish_with_message(format!("{} Finished aligning sequences\n", "✔".green()));
         self.write_output_config(reports)
             .expect("Failed to write output config");
-        self.log_final_output(&self.config_path);
+        self.log_final_output(self.config_path);
     }
 
     fn parse_config(&self) -> Result<MappedContigConfig, Box<dyn Error>> {
@@ -105,9 +105,8 @@ impl<'a> Alignment<'a> {
     }
 
     fn align_mafft(&self, input: &FileMetadata) -> PathBuf {
-        let mafft = MafftRunner::new(input, &self.output_dir, self.runner.override_args);
-        let output_path = mafft.run().expect("Failed to run MAFFT");
-        output_path
+        let mafft = MafftRunner::new(input, self.output_dir, self.runner.override_args);
+        mafft.run().expect("Failed to run MAFFT")
     }
 
     fn log_input(&self, config: &MappedContigConfig) {
