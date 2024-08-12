@@ -43,13 +43,14 @@ impl<'a> MafftRunner<'a> {
     #[cfg(target_family = "unix")]
     fn execute_mafft(&self) -> Result<PathBuf, Box<dyn Error>> {
         let mut cmd = Command::new(MAFFT_EXE);
-        cmd.arg(&self.get_input_path());
         match self.override_args {
             Some(params) => parse_override_args!(cmd, params),
             None => {
                 cmd.arg(DEFAULT_MAFFT_PARAMS);
             }
         };
+
+        cmd.arg(&self.get_input_path());
 
         let output = cmd.output()?;
 

@@ -82,9 +82,10 @@ impl<'a> Alignment<'a> {
         self.log_input(&config);
         PathCheck::new(self.output_dir, true).prompt_exists(self.runner.dry_run);
         let reports = self.par_align(&config.contigs);
-        self.write_output_config(reports)
+        let config_output_path = self
+            .write_output_config(reports)
             .expect("Failed to write output config");
-        self.log_final_output(self.config_path);
+        self.log_final_output(&config_output_path);
     }
 
     fn parse_config(&self) -> Result<MappedContigConfig, Box<dyn Error>> {
@@ -155,8 +156,8 @@ impl<'a> Alignment<'a> {
     fn log_mafft_info(&self) {
         let dep = MafftMetadata::new().get();
         match dep.metadata {
-            Some(mafft) => log::info!("{:18}: {} v{}", "Aligner", "MAFFT", mafft.version),
-            None => log::info!("{:18}: {}", "Aligner", "MAFFT"),
+            Some(mafft) => log::info!("{:18}: {} v{}\n", "Aligner", "MAFFT", mafft.version),
+            None => log::info!("{:18}: {}\n", "Aligner", "MAFFT"),
         }
     }
 }
