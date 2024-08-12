@@ -10,7 +10,7 @@ use std::{
 };
 
 use colored::Colorize;
-use mafft::MafftRunner;
+use mafft::{MafftRunner, DEFAULT_MAFFT_PARAMS};
 use rayon::prelude::*;
 use reports::MafftReport;
 
@@ -156,8 +156,14 @@ impl<'a> Alignment<'a> {
     fn log_mafft_info(&self) {
         let dep = MafftMetadata::new().get();
         match dep.metadata {
-            Some(mafft) => log::info!("{:18}: {} v{}\n", "Aligner", "MAFFT", mafft.version),
-            None => log::info!("{:18}: {}\n", "Aligner", "MAFFT"),
+            Some(mafft) => log::info!("{:18}: {} v{}", "Aligner", "MAFFT", mafft.version),
+            None => log::info!("{:18}: {}", "Aligner", "MAFFT"),
         }
+
+        let params = match self.runner.override_args {
+            Some(ref args) => args,
+            None => DEFAULT_MAFFT_PARAMS,
+        };
+        log::info!("{:18}: {}\n", "Parameters", params);
     }
 }
