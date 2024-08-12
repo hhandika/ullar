@@ -68,7 +68,7 @@ impl<'a> PathCheck<'a> {
             }
             Ok(false) => {
                 log::info!(
-                    "\nAbort deleting the {} directory.\n\
+                    "\nCancel deleting the {} directory.\n\
                     Rename the directory manually to proceed.\n\
                     Exiting program...\n",
                     self.path.display().to_string().red()
