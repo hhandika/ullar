@@ -1,3 +1,4 @@
 //! Map contig to reference sequence.
 pub mod init;
-pub mod map;
+pub mod lastz;
+pub mod minimap;

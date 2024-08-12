@@ -77,7 +77,7 @@ impl<'a> SpadeRunner<'a> {
         spinner: &ProgressBar,
         decorator: &PrettyHeader,
     ) -> Result<SpadeReports, Box<dyn Error>> {
-        let reports = self.check_spades_success(&output, &spinner);
+        let reports = self.check_spades_success(output, spinner);
         match reports {
             Ok(report) => {
                 self.print_output_summary(&report);

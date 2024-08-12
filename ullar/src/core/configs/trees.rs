@@ -35,7 +35,7 @@ impl Default for TreeInferenceConfig {
 
 impl TreeInferenceConfig {
     pub fn new(
-        input_dir: &PathBuf,
+        input_dir: &Path,
         trees: Option<TreeFiles>,
         alignments: Option<AlignmentFiles>,
     ) -> Self {
@@ -57,19 +57,10 @@ impl TreeInferenceConfig {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct TreeFiles {
     pub tip_counts: Option<usize>,
     pub trees: Vec<FileMetadata>,
-}
-
-impl Default for TreeFiles {
-    fn default() -> Self {
-        Self {
-            tip_counts: None,
-            trees: Vec::new(),
-        }
-    }
 }
 
 impl TreeFiles {
