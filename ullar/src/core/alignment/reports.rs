@@ -35,6 +35,7 @@ impl MafftReport {
     }
 
     pub fn create(&mut self, mafft_outputs: &[PathBuf]) {
+        assert!(!mafft_outputs.is_empty(), "No alignment files found");
         let metadata = self.get_metadata(mafft_outputs);
         let sample_counts = self.get_sample_count(&metadata);
         self.alignments.get_raw(metadata, sample_counts);
@@ -42,7 +43,6 @@ impl MafftReport {
 
     fn get_metadata(&self, files: &[PathBuf]) -> Vec<FileMetadata> {
         let mut metadata: Vec<FileMetadata> = Vec::new();
-        assert!(!files.is_empty(), "No alignment files found");
         files.iter().for_each(|f| {
             let mut file = FileMetadata::new();
             file.get(f);
