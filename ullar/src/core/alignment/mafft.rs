@@ -3,6 +3,7 @@
 //! Align multiple sequences using MAFFT.
 //! Requires the `mafft` binary installed.
 use std::error::Error;
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
@@ -88,6 +89,7 @@ impl<'a> MafftRunner<'a> {
     }
 
     fn create_output_path(&self) -> Result<PathBuf, Box<dyn Error>> {
+        fs::create_dir_all(&self.output_dir)?;
         let output_path = self.output_dir.join(&self.input_file.file_name);
         Ok(output_path)
     }
