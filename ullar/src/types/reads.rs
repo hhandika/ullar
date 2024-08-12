@@ -53,6 +53,7 @@ pub enum SampleNameFormat {
     /// - sample1_2.fastq,
     /// - sample1_singleton.fastq
     /// - sample2_L001_R1.fastq
+    ///
     /// Use SIMPLE_NAME_REGEX pattern -> r"(^[a-zA-Z0-9]+)"
     Simple,
     /// Capture descriptive sample name with
