@@ -68,8 +68,8 @@ impl<'a> PathCheck<'a> {
             }
             Ok(false) => {
                 log::info!(
-                    "\nUser chose not to delete the {} directory. \
-                    Rename the directory manually to proceed. \
+                    "\nAbort deleting the {} directory.\n\
+                    Rename the directory manually to proceed.\n\
                     Exiting program...\n",
                     self.path.display().to_string().red()
                 );
