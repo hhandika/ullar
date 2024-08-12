@@ -1,5 +1,13 @@
-use std::{error::Error, fs::File, path::PathBuf};
+use std::{
+    error::Error,
+    fs::File,
+    path::{Path, PathBuf},
+};
 
+use segul::helper::{
+    finder::{IDs, SeqFileFinder},
+    types::{DataType, InputFmt},
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{core::utils::deps::DepMetadata, helper::files::FileMetadata, types::Task};
@@ -50,11 +58,43 @@ impl MappedContigConfig {
         }
     }
 
+    pub fn init(&mut self, input_dir: &Path, dependencies: Vec<DepMetadata>) {
+        let sequence_files = self.find_files(input_dir);
+        self.dependencies = dependencies;
+        self.file_counts = sequence_files.len();
+        self.sample_counts = self.count_samples(&sequence_files);
+        self.contigs = self.get_metadata(&sequence_files);
+    }
+
     /// Get raw loci files
     pub fn to_yaml(&self) -> Result<PathBuf, Box<dyn Error>> {
         let output_path = generate_config_output_path(DEFAULT_LOCUS_CONFIG);
         let writer = File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
         Ok(output_path)
+    }
+
+    fn find_files(&self, input_dir: &Path) -> Vec<PathBuf> {
+        let input_format = InputFmt::Fasta;
+        let sequence_files = SeqFileFinder::new(input_dir).find_recursive_only(&input_format);
+        sequence_files
+    }
+
+    fn count_samples(&self, sequence_files: &[PathBuf]) -> usize {
+        let format = InputFmt::Fasta;
+        let datatype = DataType::Dna;
+        let unique_ids = IDs::new(sequence_files, &format, &datatype).id_unique();
+        unique_ids.len()
+    }
+
+    fn get_metadata(&self, sequence_files: &[PathBuf]) -> Vec<FileMetadata> {
+        sequence_files
+            .iter()
+            .map(|f| {
+                let mut file = FileMetadata::new();
+                file.get(f);
+                file
+            })
+            .collect()
     }
 }

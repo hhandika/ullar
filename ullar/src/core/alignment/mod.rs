@@ -123,16 +123,16 @@ impl<'a> Alignment<'a> {
         let spin = common::init_spinner();
         spin.set_message("Writing output config");
         let mafft_dep = MafftMetadata::new().get();
-        let mut metadat = Vec::new();
+        let mut metadata = Vec::new();
         if let Some(dep) = mafft_dep.metadata {
-            metadat.push(dep);
+            metadata.push(dep);
         }
 
         let config = AlignmentConfig::new(
             Some(self.config_path.to_path_buf()),
             self.output_dir,
             false,
-            metadat,
+            metadata,
             self.runner.override_args.map(|s| s.to_string()),
             report.alignments,
         );
