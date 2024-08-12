@@ -56,7 +56,7 @@ impl<'a> MafftRunner<'a> {
         match self.check_success(&output) {
             Ok(_) => {
                 let output_path = self.create_output_path()?;
-                self.write_output(&output, &output_path)?;
+                self.write_output(&output_path, &output)?;
                 Ok(output_path)
             }
             Err(e) => Err(e),
@@ -70,12 +70,8 @@ impl<'a> MafftRunner<'a> {
         cmd.arg(self.get_input_path());
         match self.override_args {
             Some(params) => parse_override_args!(cmd, params),
-            None => {
-                cmd.arg(DEFAULT_MAFFT_PARAMS);
-            }
+            None => cmd.arg(DEFAULT_MAFFT_PARAMS),
         };
-        let output = format!("> {}", &output_path.display());
-        cmd.arg(output);
 
         let output = cmd.output()?;
 
@@ -83,6 +79,11 @@ impl<'a> MafftRunner<'a> {
             Ok(_) => Ok(output_path),
             Err(e) => Err(e),
         }
+    }
+
+    fn write_output(&self, output_path: &PathBuf, output: &Output) -> Result<(), Box<dyn Error>> {
+        fs::write(output_path, &output.stdout)?;
+        Ok(())
     }
 
     fn create_output_path(&self) -> Result<PathBuf, Box<dyn Error>> {
