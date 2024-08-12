@@ -10,11 +10,14 @@ use crate::{core::utils::deps::DepMetadata, types::alignments::AlignmentFiles};
 
 use super::generate_config_output_path;
 
+/// Default alignment configuration straight from the aligner
 pub const DEFAULT_RAW_ALIGNMENT_CONFIG: &str = "raw_alignment";
+
+/// Default alignment configuration after cleaning
 pub const DEFAULT_CLEANED_ALIGNMENT_CONFIG: &str = "cleaned_alignment";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
-pub struct SequenceAlignments {
+pub struct AlignmentConfig {
     pub config_path: Option<PathBuf>,
     pub input_init_dir: PathBuf,
     pub sample_counts: usize,
@@ -23,17 +26,17 @@ pub struct SequenceAlignments {
     pub dependencies: Vec<DepMetadata>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub override_args: Option<String>,
-    pub alignments: Vec<AlignmentFiles>,
+    pub alignments: AlignmentFiles,
 }
 
-impl SequenceAlignments {
+impl AlignmentConfig {
     pub fn new(
         config_path: Option<PathBuf>,
         input_init_dir: &Path,
         cleaned: bool,
         dependencies: Vec<DepMetadata>,
         override_args: Option<String>,
-        alignments: Vec<AlignmentFiles>,
+        alignments: AlignmentFiles,
     ) -> Self {
         Self {
             config_path,

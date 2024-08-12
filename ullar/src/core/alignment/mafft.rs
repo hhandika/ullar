@@ -6,6 +6,7 @@ use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
+use crate::helper::files::FileMetadata;
 use crate::parse_override_args;
 
 pub const MAFFT_EXE: &str = "mafft";
@@ -13,13 +14,17 @@ pub const DEFAULT_MAFFT_PARAMS: &str = "--auto";
 pub const MAFFT_WINDOWS: &str = "mafft.bat";
 
 pub struct MafftRunner<'a> {
-    pub input_file: &'a Path,
+    pub input_file: &'a FileMetadata,
     pub output_dir: &'a Path,
     pub override_args: Option<&'a str>,
 }
 
 impl<'a> MafftRunner<'a> {
-    pub fn new(input_file: &'a Path, output_dir: &'a Path, override_args: Option<&'a str>) -> Self {
+    pub fn new(
+        input_file: &'a FileMetadata,
+        output_dir: &'a Path,
+        override_args: Option<&'a str>,
+    ) -> Self {
         Self {
             input_file,
             output_dir,
@@ -37,7 +42,7 @@ impl<'a> MafftRunner<'a> {
     #[cfg(target_family = "unix")]
     fn execute_mafft(&self) -> Result<PathBuf, Box<dyn Error>> {
         let mut cmd = Command::new(MAFFT_EXE);
-        cmd.arg(self.input_file);
+        cmd.arg(&self.get_input_path());
         match self.override_args {
             Some(params) => parse_override_args!(cmd, params),
             None => {
@@ -61,7 +66,7 @@ impl<'a> MafftRunner<'a> {
     fn execute_mafft(&self) -> Result<PathBuf, Box<dyn Error>> {
         let output_path = self.create_output_path()?;
         let mut cmd = Command::new(MAFFT_WINDOWS);
-        cmd.arg(self.input_file);
+        cmd.arg(&self.get_input_path());
         match self.override_args {
             Some(params) => parse_override_args!(cmd, params),
             None => {
@@ -83,12 +88,13 @@ impl<'a> MafftRunner<'a> {
     }
 
     fn create_output_path(&self) -> Result<PathBuf, Box<dyn Error>> {
-        let file_name = self
-            .input_file
-            .file_name()
-            .expect("Failed to get file name");
-        let output_path = self.output_dir.join(file_name);
+        let output_path = self.output_dir.join(&self.input_file.file_name);
         Ok(output_path)
+    }
+
+    fn get_input_path(&self) -> PathBuf {
+        let input_path = self.input_file.parent_dir.join(&self.input_file.file_name);
+        input_path.canonicalize().expect("Failed to get input path")
     }
 
     fn check_success(&self, output: &Output) -> Result<(), Box<dyn Error>> {

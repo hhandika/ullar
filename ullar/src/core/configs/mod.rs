@@ -1,5 +1,6 @@
 pub mod alignment;
 pub mod cleaned_reads;
+pub mod mapped_contigs;
 pub mod raw_reads;
 pub mod trees;
 

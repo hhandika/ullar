@@ -26,7 +26,7 @@ pub enum Task {
     /// Read mapping task
     /// Maps contigs to a reference sequence
     /// Current implementation uses minimap2
-    ReadMapping,
+    ContigMapping,
     /// Locus alignment task
     /// Performs multiple sequence alignment on mapped loci
     /// Current implementation uses MAFFT
@@ -47,7 +47,7 @@ impl Display for Task {
         match self {
             Task::CleanReads => write!(f, "Read Cleaning"),
             Task::Assembly => write!(f, "De Novo Assembly"),
-            Task::ReadMapping => write!(f, "Read Mapping"),
+            Task::ContigMapping => write!(f, "Contig Mapping"),
             Task::AligningSequences => write!(f, "Locus Alignment"),
             Task::AlignmentQc => write!(f, "Alignment Quality Control"),
             Task::TreeInference => write!(f, "Tree Inference"),
@@ -62,7 +62,7 @@ impl FromStr for Task {
         match s {
             "CleanReads" => Ok(Task::CleanReads),
             "Assembly" => Ok(Task::Assembly),
-            "ReadMapping" => Ok(Task::ReadMapping),
+            "ReadMapping" => Ok(Task::ContigMapping),
             "AligningSequences" => Ok(Task::AligningSequences),
             "AlignmentQc" => Ok(Task::AlignmentQc),
             "TreeInference" => Ok(Task::TreeInference),
