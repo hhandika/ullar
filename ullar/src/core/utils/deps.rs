@@ -32,14 +32,16 @@ macro_rules! version {
 enum Deps {
     Spades,
     Fastp,
+    Mafft,
     Iqtree,
 }
 
-const DEPENDENCY_LIST: [Deps; 3] = [Deps::Fastp, Deps::Spades, Deps::Iqtree];
+const DEPENDENCY_LIST: [Deps; 4] = [Deps::Fastp, Deps::Spades, Deps::Iqtree, Deps::Mafft];
 
 pub struct DependencyCheck {
     pub spades: Option<DepMetadata>,
     pub fastp: Option<DepMetadata>,
+    pub mafft: Option<DepMetadata>,
     pub iqtree: Option<DepMetadata>,
 }
 
@@ -54,6 +56,7 @@ impl DependencyCheck {
         Self {
             spades: None,
             fastp: None,
+            mafft: None,
             iqtree: None,
         }
     }
@@ -63,6 +66,7 @@ impl DependencyCheck {
         self.check_spades();
         self.check_fastp();
         self.check_iqtree();
+        self.check_mafft();
     }
 
     fn get(&mut self) {
@@ -70,6 +74,7 @@ impl DependencyCheck {
             Deps::Spades => self.spades(),
             Deps::Fastp => self.fastp(),
             Deps::Iqtree => self.iqtree(),
+            Deps::Mafft => self.mafft(),
         });
     }
 
@@ -84,6 +89,13 @@ impl DependencyCheck {
         match &self.fastp {
             Some(fastp) => self.print_ok(&fastp.name, &fastp.version),
             None => self.print_error("fastp"),
+        }
+    }
+
+    fn check_mafft(&self) {
+        match &self.mafft {
+            Some(mafft) => self.print_ok(&mafft.name, &mafft.version),
+            None => self.print_error("MAFFT"),
         }
     }
 
@@ -116,6 +128,11 @@ impl DependencyCheck {
     fn iqtree(&mut self) {
         let iqtree = IqtreeMetadata::new().get();
         self.iqtree = iqtree.metadata;
+    }
+
+    fn mafft(&mut self) {
+        let mafft = MafftMetadata::new().get();
+        self.mafft = mafft.metadata;
     }
 }
 
@@ -252,7 +269,7 @@ impl MafftMetadata {
         match output {
             Err(_) => None,
             Ok(output) => {
-                let version = String::from_utf8_lossy(&output.stdout);
+                let version = String::from_utf8_lossy(&output.stderr);
                 Some(version.to_string())
             }
         }
@@ -269,11 +286,11 @@ impl MafftMetadata {
     }
 
     fn capture_version(&self, version_data: &str) -> String {
-        let re = regex::Regex::new(r"v\d+\.\d+").expect("Failed to compile regex");
+        let re = regex::Regex::new(r"\d+\.\d+").expect("Failed to compile regex");
         let captures = re.captures(version_data);
 
         match captures {
-            None => "Unknown".to_string(),
+            None => "".to_string(),
             Some(captures) => captures
                 .get(0)
                 .expect("Failed to get version")
