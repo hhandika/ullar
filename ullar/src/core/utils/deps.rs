@@ -259,13 +259,27 @@ impl MafftMetadata {
     }
 
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {
-        let version = re_capture_version(version_data);
+        let version = self.capture_version(version_data);
         let executable = "mafft".to_string();
         Some(DepMetadata {
             name: "MAFFT".to_string(),
             version,
             executable,
         })
+    }
+
+    fn capture_version(&self, version_data: &str) -> String {
+        let re = regex::Regex::new(r"v\d+\.\d+").expect("Failed to compile regex");
+        let captures = re.captures(version_data);
+
+        match captures {
+            None => "Unknown".to_string(),
+            Some(captures) => captures
+                .get(0)
+                .expect("Failed to get version")
+                .as_str()
+                .to_string(),
+        }
     }
 }
 
@@ -339,12 +353,16 @@ impl IqtreeMetadata {
 
 fn re_capture_version(version: &str) -> String {
     let re = regex::Regex::new(r"\d+\.\d+\.\d+").expect("Failed to compile regex");
-    let captures = re.captures(version).unwrap();
-    captures
-        .get(0)
-        .expect("Failed to get version")
-        .as_str()
-        .to_string()
+    let captures = re.captures(version);
+
+    match captures {
+        None => "Unknown".to_string(),
+        Some(captures) => captures
+            .get(0)
+            .expect("Failed to get version")
+            .as_str()
+            .to_string(),
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
