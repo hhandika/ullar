@@ -1,4 +1,5 @@
 pub mod init;
+pub mod mafft;
 
 use std::path::Path;
 
