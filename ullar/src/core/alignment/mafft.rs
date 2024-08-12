@@ -74,15 +74,18 @@ impl<'a> MafftRunner<'a> {
                 cmd.arg(DEFAULT_MAFFT_PARAMS);
             }
         };
-        cmd.arg("--out").arg(self.create_output_path()?);
 
         let output = cmd.output()?;
 
-        self.check_success(&output)?;
-        Ok(output_path)
+        match self.check_success(&output) {
+            Ok(_) => {
+                self.write_output(&output, &output_path)?;
+                Ok(output_path)
+            }
+            Err(e) => Err(e),
+        }
     }
 
-    #[cfg(target_family = "unix")]
     fn write_output(&self, output: &Output, output_path: &Path) -> Result<(), Box<dyn Error>> {
         std::fs::write(&output_path, &output.stdout)?;
         Ok(())
