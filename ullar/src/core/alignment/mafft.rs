@@ -11,7 +11,7 @@ use crate::helper::files::FileMetadata;
 use crate::parse_override_args;
 
 pub const MAFFT_EXE: &str = "mafft";
-pub const DEFAULT_MAFFT_PARAMS: &str = "--auto";
+pub const DEFAULT_MAFFT_PARAMS: &str = "--auto --maxiterate 1000";
 pub const MAFFT_WINDOWS: &str = "mafft.bat";
 
 pub struct MafftRunner<'a> {
@@ -45,9 +45,7 @@ impl<'a> MafftRunner<'a> {
         let mut cmd = Command::new(MAFFT_EXE);
         match self.override_args {
             Some(params) => parse_override_args!(cmd, params),
-            None => {
-                cmd.arg(DEFAULT_MAFFT_PARAMS);
-            }
+            None => parse_override_args!(cmd, DEFAULT_MAFFT_PARAMS),
         };
 
         cmd.arg(&self.get_input_path());
