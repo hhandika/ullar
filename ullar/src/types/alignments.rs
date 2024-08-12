@@ -8,6 +8,7 @@ pub struct AlignmentFiles {
     pub file_counts: usize,
     pub concatenated: bool,
     pub alignments: Vec<FileMetadata>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub partition: Option<FileMetadata>,
 }
 
