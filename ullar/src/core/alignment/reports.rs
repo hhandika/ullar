@@ -42,7 +42,7 @@ impl MafftReport {
 
     fn get_metadata(&self, files: &[PathBuf]) -> Vec<FileMetadata> {
         let mut metadata: Vec<FileMetadata> = Vec::new();
-
+        assert!(!files.is_empty(), "No alignment files found");
         files.iter().for_each(|f| {
             let mut file = FileMetadata::new();
             file.get(f);
