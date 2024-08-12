@@ -1,4 +1,8 @@
-use std::{error::Error, fs::File, path::PathBuf};
+use std::{
+    error::Error,
+    fs::File,
+    path::{Path, PathBuf},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -25,7 +29,7 @@ pub struct SequenceAlignments {
 impl SequenceAlignments {
     pub fn new(
         config_path: Option<PathBuf>,
-        input_init_dir: &PathBuf,
+        input_init_dir: &Path,
         cleaned: bool,
         dependencies: Vec<DepMetadata>,
         override_args: Option<String>,

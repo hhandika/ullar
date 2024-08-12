@@ -74,7 +74,7 @@ impl<'a> FastpRunner<'a> {
         spinner: &ProgressBar,
         decorator: &PrettyHeader,
     ) -> Result<CleanReadReport, Box<dyn Error>> {
-        let reports = self.check_success(&output, fastp_data, &spinner);
+        let reports = self.check_success(output, fastp_data, spinner);
         match reports {
             Ok(report) => {
                 self.print_output_summary(&report);
