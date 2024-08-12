@@ -6,59 +6,74 @@ use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use crate::parse_optional_params;
+use crate::parse_override_args;
 
 pub const MAFFT_EXE: &str = "mafft";
 pub const DEFAULT_MAFFT_PARAMS: &str = "--auto";
+pub const MAFFT_WINDOWS: &str = "mafft.bat";
 
 pub struct MafftRunner<'a> {
     pub input_file: &'a Path,
     pub output_dir: &'a Path,
-    pub optional_params: Option<&'a str>,
+    pub override_args: Option<&'a str>,
 }
 
 impl<'a> MafftRunner<'a> {
-    pub fn new(
-        input_file: &'a Path,
-        output_dir: &'a Path,
-        optional_params: Option<&'a str>,
-    ) -> Self {
+    pub fn new(input_file: &'a Path, output_dir: &'a Path, override_args: Option<&'a str>) -> Self {
         Self {
             input_file,
             output_dir,
-            optional_params,
+            override_args,
         }
     }
 
     /// Execute the MAFFT alignment
     /// Return the output path if successful
     pub fn run(&self) -> Result<PathBuf, Box<dyn Error>> {
-        let output = self.execute_mafft().expect("Failed to run MAFFT");
-        let output_path = self.create_output_path()?;
+        self.execute_mafft().expect("Failed to run MAFFT");
+        self.execute_mafft()
+    }
+
+    #[cfg(target_family = "unix")]
+    fn execute_mafft(&self) -> Result<PathBuf, Box<dyn Error>> {
+        let mut cmd = Command::new(MAFFT_EXE);
+        cmd.arg(self.input_file);
+        match self.override_args {
+            Some(params) => parse_override_args!(cmd, params),
+            None => {
+                cmd.arg(DEFAULT_MAFFT_PARAMS);
+            }
+        };
+
         match self.check_success(&output) {
             Ok(_) => {
-                self.write_output(&output)?;
+                let output_path = self.create_output_path()?;
+                self.write_output(&output, output_path)?;
                 Ok(output_path)
             }
             Err(e) => Err(e),
         }
     }
 
-    fn execute_mafft(&self) -> Result<Output, Box<dyn Error>> {
-        let mut cmd = Command::new(MAFFT_EXE);
+    #[cfg(target_family = "windows")]
+    fn execute_mafft(&self) -> Result<PathBuf, Box<dyn Error>> {
+        let output_path = self.create_output_path()?;
+        let mut cmd = Command::new(MAFFT_WINDOWS);
         cmd.arg(self.input_file);
-        match self.optional_params {
-            Some(params) => parse_optional_params!(cmd, params),
+        match self.override_args {
+            Some(params) => parse_override_args!(cmd, params),
             None => {
                 cmd.arg(DEFAULT_MAFFT_PARAMS);
             }
         };
+        cmd.arg("--out").arg(self.create_output_path()?);
 
-        Ok(cmd.output()?)
+        self.check_success(&cmd.output()?)?;
+        Ok(output_path)
     }
 
-    fn write_output(&self, output: &Output) -> Result<(), Box<dyn Error>> {
-        let output_path = self.create_output_path()?;
+    #[cfg(target_family = "unix")]
+    fn write_output(&self, output: &Output, output_path: &Path) -> Result<(), Box<dyn Error>> {
         std::fs::write(&output_path, &output.stdout)?;
         Ok(())
     }

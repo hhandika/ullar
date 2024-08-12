@@ -2,9 +2,9 @@ use std::path::PathBuf;
 
 use clap::{Args, Subcommand};
 
-use crate::core::qc::DEFAULT_CLEAN_READ_OUTPUT_DIR;
+use crate::core::clean::DEFAULT_CLEAN_READ_OUTPUT_DIR;
 
-use super::common::CommonRunnerOptions;
+use super::common::CommonRunnerArgs;
 
 #[derive(Subcommand)]
 pub(crate) enum CleanSubcommand {
@@ -20,7 +20,7 @@ pub struct CleanArgs {
     pub config: PathBuf,
     /// Share command across features
     #[command(flatten)]
-    pub common: CommonRunnerOptions,
+    pub common: CommonRunnerArgs,
     /// Output directory to store the cleaned reads
     /// Default used 'cleaned_reads'
     #[arg(

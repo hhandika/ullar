@@ -14,6 +14,7 @@ use crate::helper::common;
 use crate::helper::files::PathCheck;
 use crate::helper::tracker::ProcessingTracker;
 use crate::types::reads::FastqReads;
+use crate::types::runner::RunnerOptions;
 use crate::types::Task;
 
 use self::reports::CleanReadReport;
@@ -27,39 +28,21 @@ pub const DEFAULT_CLEAN_READ_OUTPUT_DIR: &str = "cleaned_reads";
 pub struct ReadCleaner<'a> {
     /// Path to the raw read configuration file
     pub config_path: &'a Path,
-    /// Should the SHA256 checksum be checked
-    /// before cleaning the files
-    pub ignore_checksum: bool,
-    /// Process samples if true
-    /// else check the config file only
-    pub process_samples: bool,
     /// Output directory to store the cleaned reads
     pub output_dir: &'a Path,
-    /// Optional parameters for the cleaning process
-    pub optional_params: Option<&'a str>,
-    /// Check config for errors
-    pub skip_config_check: bool,
+    /// Runner options
+    pub runner: RunnerOptions<'a>,
     task: Task,
 }
 
 impl<'a> ReadCleaner<'a> {
     /// Initialize a new ReadCleaner instance
     /// with the given parameters
-    pub fn new(
-        config_path: &'a Path,
-        ignore_checksum: bool,
-        process_samples: bool,
-        output_dir: &'a Path,
-        optional_params: Option<&'a str>,
-        skip_config_check: bool,
-    ) -> Self {
+    pub fn new(config_path: &'a Path, output_dir: &'a Path) -> Self {
         Self {
             config_path,
-            ignore_checksum,
-            process_samples,
             output_dir,
-            optional_params,
-            skip_config_check,
+            runner: RunnerOptions::default(),
             task: Task::CleanReads,
         }
     }
@@ -69,11 +52,8 @@ impl<'a> ReadCleaner<'a> {
     pub fn from_arg(args: &'a CleanArgs) -> Self {
         Self {
             config_path: &args.config,
-            ignore_checksum: args.common.ignore_checksum,
-            process_samples: args.common.process,
             output_dir: &args.output,
-            optional_params: args.common.override_args.as_deref(),
-            skip_config_check: args.common.skip_config_check,
+            runner: RunnerOptions::from_arg(&args.common),
             task: Task::CleanReads,
         }
     }
@@ -82,26 +62,25 @@ impl<'a> ReadCleaner<'a> {
     pub fn clean(&self) {
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
-        if self.process_samples {
-            PathCheck::new(self.output_dir, true).prompt_exists();
-        }
+        PathCheck::new(self.output_dir, true).prompt_exists(self.runner.dry_run);
+
         let spinner = common::init_spinner();
         let mut check = FastqConfigCheck::new(config.sample_counts);
-        if self.skip_config_check {
+        if self.runner.skip_config_check {
             spinner.finish_with_message("Skipping config data check\n");
         } else {
             spinner.set_message("Checking config data for errors");
-            check.check_fastq(&config.samples, self.ignore_checksum);
+            check.check_fastq(&config.samples, self.runner.ignore_checksum);
             spinner.finish_with_message(format!("{} Finished checking config data\n", "✔".green()));
         }
 
-        if !self.process_samples {
+        if self.runner.dry_run {
             check.log_status();
             self.log_unprocessed();
             return;
         }
 
-        if !check.is_config_ok() && !self.skip_config_check {
+        if !check.is_config_ok() && !self.runner.skip_config_check {
             check.log_status();
             log::error!("\n{}\n", "Config check failed".red());
             return;
@@ -119,7 +98,8 @@ impl<'a> ReadCleaner<'a> {
         let time = std::time::Instant::now();
         let mut reports = Vec::new();
         samples.iter().enumerate().for_each(|(i, sample)| {
-            let mut runner = fastp::FastpRunner::new(sample, self.output_dir, self.optional_params);
+            let mut runner =
+                fastp::FastpRunner::new(sample, self.output_dir, self.runner.override_args);
             let results = runner.run();
 
             match results {
@@ -172,7 +152,7 @@ impl<'a> ReadCleaner<'a> {
             Some(self.config_path.to_path_buf()),
             self.output_dir,
             metadata,
-            self.optional_params.map(|s| s.to_string()),
+            self.runner.override_args.map(|s| s.to_string()),
         );
 
         let output = config.to_yaml(reports);

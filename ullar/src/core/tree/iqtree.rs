@@ -6,7 +6,7 @@ pub struct IQTreeRunner<'a> {
     alignments: &'a [PathBuf],
     output_dir: &'a PathBuf,
     threads: usize,
-    optional_params: Option<&'a str>,
+    override_args: Option<&'a str>,
 }
 
 impl<'a> IQTreeRunner<'a> {
@@ -14,13 +14,13 @@ impl<'a> IQTreeRunner<'a> {
         alignments: &'a [PathBuf],
         output_dir: &'a PathBuf,
         threads: usize,
-        optional_params: Option<&'a str>,
+        override_args: Option<&'a str>,
     ) -> Self {
         Self {
             alignments,
             output_dir,
             threads,
-            optional_params,
+            override_args,
         }
     }
 
@@ -28,6 +28,6 @@ impl<'a> IQTreeRunner<'a> {
         log::info!("Running IQ-TREE for {} alignment(s)", self.alignments.len());
         log::info!("Output directory: {}", self.output_dir.display());
         log::info!("Threads: {}", self.threads);
-        log::info!("Optional parameters: {:?}", self.optional_params);
+        log::info!("Optional parameters: {:?}", self.override_args);
     }
 }

@@ -8,11 +8,11 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 use crate::{
-    core::{qc::reports::CleanReadReport, utils::deps::DepMetadata},
+    core::{clean::reports::CleanReadReport, utils::deps::DepMetadata},
     types::{reads::FastqReads, Task},
 };
 
-use super::{CONFIG_EXTENSION, DEFAULT_CONFIG_DIR};
+use super::generate_config_output_path;
 
 pub const DEFAULT_CLEANED_READ_CONFIG: &str = "cleaned_read";
 
@@ -27,7 +27,7 @@ pub struct CleanReadConfig {
     pub dependencies: Vec<DepMetadata>,
     pub task: Task,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub optional_params: Option<String>,
+    pub override_args: Option<String>,
     pub samples: Vec<FastqReads>,
 }
 
@@ -40,7 +40,7 @@ impl Default for CleanReadConfig {
             file_counts: 0,
             dependencies: Vec::new(),
             task: Task::CleanReads,
-            optional_params: None,
+            override_args: None,
             samples: Vec::new(),
         }
     }
@@ -51,7 +51,7 @@ impl CleanReadConfig {
         config_path: Option<PathBuf>,
         input_init_dir: &Path,
         dependencies: Vec<DepMetadata>,
-        optional_params: Option<String>,
+        override_args: Option<String>,
     ) -> Self {
         Self {
             config_path,
@@ -60,7 +60,7 @@ impl CleanReadConfig {
             file_counts: 0,
             dependencies,
             task: Task::CleanReads,
-            optional_params,
+            override_args,
             samples: Vec::new(),
         }
     }
@@ -69,19 +69,13 @@ impl CleanReadConfig {
         &mut self,
         reports: &[CleanReadReport],
     ) -> Result<PathBuf, Box<dyn std::error::Error>> {
-        let output_dir = self.generate_output_dir();
+        let output_dir = generate_config_output_path(DEFAULT_CLEANED_READ_CONFIG);
         self.samples = self.parse_fastp_report(reports);
         self.get_sample_counts();
         self.get_file_counts();
         let writer = fs::File::create(&output_dir)?;
         serde_yaml::to_writer(&writer, self)?;
         Ok(output_dir)
-    }
-
-    fn generate_output_dir(&mut self) -> PathBuf {
-        let mut output_dir = Path::new(DEFAULT_CONFIG_DIR).join(DEFAULT_CLEANED_READ_CONFIG);
-        output_dir.set_extension(CONFIG_EXTENSION);
-        output_dir
     }
 
     fn parse_fastp_report(&self, reports: &[CleanReadReport]) -> Vec<FastqReads> {

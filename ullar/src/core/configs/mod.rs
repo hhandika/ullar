@@ -1,18 +1,32 @@
-use std::sync::mpsc;
+pub mod alignment;
+pub mod cleaned_reads;
+pub mod raw_reads;
+pub mod trees;
+
+use std::{
+    fs::create_dir_all,
+    path::{Path, PathBuf},
+    sync::mpsc,
+};
 
 use colored::Colorize;
 use rayon::prelude::*;
 
 use crate::types::reads::{FastqReads, ReadChecker};
 
-pub mod cleaned_reads;
-pub mod raw_reads;
-pub mod trees;
-
 pub const DEFAULT_CONFIG_DIR: &str = "configs";
 pub const CONFIG_EXTENSION: &str = "yaml";
 
-pub struct ConfigCheck {
+pub fn generate_config_output_path(config_path: &str) -> PathBuf {
+    let output_dir = Path::new(DEFAULT_CONFIG_DIR);
+    create_dir_all(&output_dir).expect("Failed to create output directory");
+    let mut output_path = output_dir.join(config_path);
+    output_path.set_extension(CONFIG_EXTENSION);
+
+    output_path
+}
+
+pub struct FastqConfigCheck {
     /// Total samples input
     pub total_samples: usize,
     /// Samples passed the check
@@ -23,10 +37,10 @@ pub struct ConfigCheck {
     pub failed_samples: usize,
 }
 
-impl ConfigCheck {
+impl FastqConfigCheck {
     /// Initialize a new ConfigCheck instance
-    pub fn new(total_samples: usize) -> ConfigCheck {
-        ConfigCheck {
+    pub fn new(total_samples: usize) -> Self {
+        Self {
             total_samples,
             passed_samples: 0,
             warning_samples: 0,
