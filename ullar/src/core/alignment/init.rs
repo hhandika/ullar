@@ -22,6 +22,11 @@ impl<'a> AlignmentInit<'a> {
         }
     }
 
+    /// Initialize the alignment configuration
+    ///
+    /// Steps:
+    /// 1. Write the alignment configuration to the output directory
+    /// 2. Log the input and output directories
     pub fn init(&self) {
         let spin = common::init_spinner();
         self.log_input();
