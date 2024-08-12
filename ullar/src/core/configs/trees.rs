@@ -6,9 +6,9 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    core::configs::CONFIG_EXTENSION, helper::files::FileMetadata, types::alignments::AlignmentFiles,
-};
+use crate::{core::configs::CONFIG_EXTENSION, helper::files::FileMetadata};
+
+use super::alignment::SequenceAlignments;
 
 pub const DEFAULT_TREE_PREFIX: &str = "tree";
 
@@ -20,7 +20,7 @@ pub struct TreeInferenceConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub trees: Option<TreeFiles>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub alignments: Option<AlignmentFiles>,
+    pub alignments: Option<SequenceAlignments>,
 }
 
 impl Default for TreeInferenceConfig {
@@ -37,7 +37,7 @@ impl TreeInferenceConfig {
     pub fn new(
         input_dir: &Path,
         trees: Option<TreeFiles>,
-        alignments: Option<AlignmentFiles>,
+        alignments: Option<SequenceAlignments>,
     ) -> Self {
         Self {
             input_dir: input_dir.to_path_buf(),

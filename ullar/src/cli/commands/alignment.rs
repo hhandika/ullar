@@ -4,7 +4,7 @@ use clap::{Args, Subcommand};
 
 use crate::core::alignment::DEFAULT_ALIGNMENT_OUTPUT_DIR;
 
-use super::common::{CommonInitArgs, CommonRunnerOptions};
+use super::common::{CommonInitArgs, CommonRunnerArgs};
 
 #[derive(Subcommand)]
 pub(crate) enum AlignmentSubcommand {
@@ -30,7 +30,7 @@ pub struct AlignmentArgs {
     )]
     pub output: PathBuf,
     #[command(flatten)]
-    pub common: CommonRunnerOptions,
+    pub common: CommonRunnerArgs,
 }
 
 #[derive(Args)]

@@ -12,7 +12,7 @@ use indicatif::ProgressBar;
 use crate::{
     check_read1_exists, create_output_dir,
     helper::common::{self, PrettyHeader},
-    parse_optional_params,
+    parse_override_args,
     types::reads::FastqReads,
 };
 
@@ -28,7 +28,7 @@ pub struct FastpRunner<'a> {
     pub sample_output_dir: PathBuf,
     /// User specified fastp parameters
     /// Input as space separated string
-    pub optional_params: Option<&'a str>,
+    pub override_args: Option<&'a str>,
 }
 
 impl<'a> FastpRunner<'a> {
@@ -36,12 +36,12 @@ impl<'a> FastpRunner<'a> {
     pub fn new(
         sample: &'a FastqReads,
         output_dir: &'a Path,
-        optional_params: Option<&'a str>,
+        override_args: Option<&'a str>,
     ) -> Self {
         FastpRunner {
             sample,
             sample_output_dir: output_dir.join(&sample.sample_name),
-            optional_params,
+            override_args,
         }
     }
 
@@ -56,7 +56,7 @@ impl<'a> FastpRunner<'a> {
         let spinner = common::init_spinner();
         spinner.set_message("Cleaning reads");
         let mut fastp = Fastp::new(&self.sample_output_dir);
-        let output = fastp.execute(&read1, read2.as_deref(), self.optional_params);
+        let output = fastp.execute(&read1, read2.as_deref(), self.override_args);
 
         match output {
             Ok(output) => self.create_report(&output, fastp, &spinner, &decorator),
@@ -167,7 +167,7 @@ impl Fastp {
         &mut self,
         input_read1: &Path,
         input_read2: Option<&Path>,
-        optional_params: Option<&str>,
+        override_args: Option<&str>,
     ) -> Result<Output, Box<dyn Error>> {
         self.get_read1_filename(input_read1);
         let output_read1 = self.output_dir.join(self.read1_filename.as_str());
@@ -186,7 +186,7 @@ impl Fastp {
         }
         cmd.arg("-o").arg(&output_read1);
 
-        if let Some(params) = optional_params {
+        if let Some(params) = override_args {
             self.build_custom_params(&mut cmd, params);
         }
 
@@ -212,6 +212,6 @@ impl Fastp {
     }
 
     fn build_custom_params(&self, cmd: &mut Command, params: &str) {
-        parse_optional_params!(cmd, params);
+        parse_override_args!(cmd, params);
     }
 }

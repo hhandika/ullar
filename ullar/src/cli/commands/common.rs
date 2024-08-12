@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 
-use crate::core::configs::{raw_reads::DEFAULT_RAW_READ_PREFIX, DEFAULT_CONFIG_DIR};
+use crate::core::configs::DEFAULT_CONFIG_DIR;
 use clap::{builder, Args};
 
 #[derive(Args)]
-pub struct CommonRunnerOptions {
+pub struct CommonRunnerArgs {
     /// Should the SHA256 checksum be checked
     /// before assembling the files
     #[arg(long, help = "Process samples without checking SHA256 checksum")]
@@ -12,10 +12,10 @@ pub struct CommonRunnerOptions {
     /// Process samples if true
     /// else check the config file only
     #[arg(
-        long = "process",
-        help = "Process samples if true else check for errors only"
+        long = "dry-run",
+        help = "Check the config file without processing samples"
     )]
-    pub process: bool,
+    pub dry_run: bool,
     /// Optional parameters for the assembly process
     #[arg(
         long,
@@ -85,12 +85,4 @@ pub struct CommonInitArgs {
     /// Search recursively for files
     #[arg(long, help = "Search recursively for files")]
     pub recursive: bool,
-    /// Optional prefix for the output files
-    #[arg(
-        short,
-        long,
-        default_value = DEFAULT_RAW_READ_PREFIX,
-        help = "Prefix for the output files"
-    )]
-    pub output_prefix: String,
 }

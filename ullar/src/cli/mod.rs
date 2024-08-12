@@ -18,7 +18,7 @@ use crate::{
         alignment::{init::AlignmentInit, Alignment},
         assembly::{init::AssemblyInit, Assembly},
         new::NewProject,
-        qc::ReadCleaner,
+        clean::ReadCleaner,
         tree::TreeEstimation,
         utils::{checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner},
     },

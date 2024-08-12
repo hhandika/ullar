@@ -1,7 +1,7 @@
 pub mod alignment;
 pub mod assembly;
 pub mod clean;
-mod common;
+pub mod common;
 pub mod deps;
 pub mod new;
 pub mod tree;

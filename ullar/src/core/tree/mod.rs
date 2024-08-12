@@ -5,7 +5,7 @@ use colored::Colorize;
 use crate::{
     cli::commands::tree::TreeArgs,
     helper::common,
-    types::{Task, TreeInferenceMethod},
+    types::{runner::RunnerOptions, Task, TreeInferenceMethod},
 };
 
 use super::configs::trees::TreeInferenceConfig;
@@ -23,17 +23,12 @@ pub struct TreeEstimation<'a> {
     pub config_path: &'a Path,
     /// Checksum verification flag
     pub ignore_checksum: bool,
-    /// Process samples flag
-    pub process_samples: bool,
     /// Parent output directory
     pub output_dir: &'a Path,
-    /// Optional parameters
-    /// for the phylogenetic estimation
-    pub optional_params: Option<&'a str>,
-    /// Skip config check flag  
-    pub skip_config_check: bool,
     /// Tree inference method
     pub method: TreeInferenceMethod,
+    /// Runner options
+    pub runner: RunnerOptions<'a>,
     #[allow(dead_code)]
     task: Task,
 }
@@ -44,20 +39,15 @@ impl<'a> TreeEstimation<'a> {
     pub fn new(
         config_path: &'a Path,
         ignore_checksum: bool,
-        process_samples: bool,
         output_dir: &'a Path,
-        optional_params: Option<&'a str>,
-        skip_config_check: bool,
         method: TreeInferenceMethod,
     ) -> Self {
         Self {
             config_path,
             ignore_checksum,
-            process_samples,
             output_dir,
-            optional_params,
-            skip_config_check,
             method,
+            runner: RunnerOptions::default(),
             task: Task::TreeInference,
         }
     }
@@ -68,14 +58,12 @@ impl<'a> TreeEstimation<'a> {
         Self {
             config_path: &args.config,
             ignore_checksum: args.common.ignore_checksum,
-            process_samples: args.common.process,
             output_dir: &args.output,
-            optional_params: args.common.override_args.as_deref(),
-            skip_config_check: args.common.skip_config_check,
             method: args
                 .method
                 .parse()
                 .expect("Failed to parse tree inference method. Supported methods: all, ml, msc"),
+            runner: RunnerOptions::from_arg(&args.common),
             task: Task::TreeInference,
         }
     }
@@ -83,9 +71,7 @@ impl<'a> TreeEstimation<'a> {
     pub fn run(&self) {
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
-        if self.process_samples {
-            self.run_tree_inference();
-        }
+        self.run_tree_inference();
     }
 
     fn parse_config(&self) -> Result<TreeInferenceConfig, Box<dyn Error>> {

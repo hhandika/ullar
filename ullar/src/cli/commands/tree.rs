@@ -4,7 +4,7 @@ use clap::Args;
 
 use crate::core::tree::DEFAULT_PHYLO_OUTPUT_DIR;
 
-use super::common::CommonRunnerOptions;
+use super::common::CommonRunnerArgs;
 
 #[derive(Args)]
 pub struct TreeArgs {
@@ -20,7 +20,7 @@ pub struct TreeArgs {
         help = "Output directory to store the phylogenetic trees")]
     pub output: PathBuf,
     #[command(flatten)]
-    pub common: CommonRunnerOptions,
+    pub common: CommonRunnerArgs,
     /// Phylogenetic tree inference method
     #[arg(
         short,

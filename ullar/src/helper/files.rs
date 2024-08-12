@@ -34,9 +34,23 @@ impl<'a> PathCheck<'a> {
         Self { path, is_dir }
     }
 
-    pub fn prompt_exists(&self) {
+    pub fn prompt_exists(&self, dry_run: bool) {
+        let message = format!(
+            "Path {} already exists. Do you want to delete it?",
+            self.path.display().to_string().red()
+        );
+
+        if dry_run && self.path.exists() {
+            log::warn!(
+                "\nPath {} already exists. \
+                Skipping deletion for dry run...\n",
+                self.path.display().to_string().red()
+            );
+            return;
+        }
+
         if self.path.exists() {
-            self.prompt_users("Path already exists. Do you want to delete it?");
+            self.prompt_users(&message);
         }
     }
 

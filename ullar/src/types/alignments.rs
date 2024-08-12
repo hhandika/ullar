@@ -2,29 +2,26 @@ use serde::{Deserialize, Serialize};
 
 use crate::helper::files::FileMetadata;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AlignmentFiles {
     pub sample_counts: usize,
     pub concatenated: bool,
     pub alignments: Vec<FileMetadata>,
-}
-
-impl Default for AlignmentFiles {
-    fn default() -> Self {
-        Self {
-            sample_counts: 0,
-            concatenated: false,
-            alignments: Vec::new(),
-        }
-    }
+    pub partition: Option<FileMetadata>,
 }
 
 impl AlignmentFiles {
-    pub fn new(sample_counts: usize, concatenated: bool, alignments: Vec<FileMetadata>) -> Self {
+    pub fn new(
+        sample_counts: usize,
+        concatenated: bool,
+        alignments: Vec<FileMetadata>,
+        partition: Option<FileMetadata>,
+    ) -> Self {
         Self {
             sample_counts,
             concatenated,
             alignments,
+            partition,
         }
     }
 }

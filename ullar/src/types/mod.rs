@@ -2,6 +2,7 @@
 
 pub mod alignments;
 pub mod reads;
+pub mod runner;
 
 use std::{fmt::Display, str::FromStr};
 
@@ -29,7 +30,7 @@ pub enum Task {
     /// Locus alignment task
     /// Performs multiple sequence alignment on mapped loci
     /// Current implementation uses MAFFT
-    Alignment,
+    AligningSequences,
     /// Alignment quality control task
     /// Filters and cleans multiple sequence alignment
     /// Also generates summary statistics for the alignment
@@ -47,7 +48,7 @@ impl Display for Task {
             Task::CleanReads => write!(f, "Read Cleaning"),
             Task::Assembly => write!(f, "De Novo Assembly"),
             Task::ReadMapping => write!(f, "Read Mapping"),
-            Task::Alignment => write!(f, "Alignment"),
+            Task::AligningSequences => write!(f, "Locus Alignment"),
             Task::AlignmentQc => write!(f, "Alignment Quality Control"),
             Task::TreeInference => write!(f, "Tree Inference"),
         }
@@ -62,7 +63,7 @@ impl FromStr for Task {
             "CleanReads" => Ok(Task::CleanReads),
             "Assembly" => Ok(Task::Assembly),
             "ReadMapping" => Ok(Task::ReadMapping),
-            "Alignment" => Ok(Task::Alignment),
+            "AligningSequences" => Ok(Task::AligningSequences),
             "AlignmentQc" => Ok(Task::AlignmentQc),
             "TreeInference" => Ok(Task::TreeInference),
             _ => Err(format!("Unknown task: {}", s)),

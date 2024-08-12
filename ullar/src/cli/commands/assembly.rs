@@ -4,7 +4,7 @@ use clap::{Args, Subcommand};
 
 use crate::core::assembly::DEFAULT_ASSEMBLY_OUTPUT_DIR;
 
-use super::common::{CommonInitArgs, CommonRunnerOptions};
+use super::common::{CommonInitArgs, CommonRunnerArgs};
 
 #[derive(Subcommand)]
 pub(crate) enum AssemblySubcommand {
@@ -26,7 +26,7 @@ pub struct AssemblyArgs {
         help = "Output directory to store the assemblies")]
     pub output: PathBuf,
     #[command(flatten)]
-    pub common: CommonRunnerOptions,
+    pub common: CommonRunnerArgs,
     /// Remove SPAdes intermediate files
     #[arg(long, help = "Remove SPAdes intermediate files")]
     pub keep_intermediates: bool,

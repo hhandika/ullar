@@ -1,4 +1,4 @@
-use std::{fs, path::Path, time::Instant};
+use std::{error::Error, fs, path::Path, time::Instant};
 
 use colored::Colorize;
 use comfy_table::Table;
@@ -7,13 +7,13 @@ use spades::SpadeRunner;
 use crate::{
     cli::commands::assembly::AssemblyArgs,
     helper::{common, files::PathCheck, tracker::ProcessingTracker},
-    types::{reads::FastqReads, Task},
+    types::{reads::FastqReads, runner::RunnerOptions, Task},
 };
 
 use self::reports::SpadeReports;
 
 use super::{
-    configs::{cleaned_reads::CleanReadConfig, ConfigCheck},
+    configs::{cleaned_reads::CleanReadConfig, FastqConfigCheck},
     utils::deps::SpadesMetadata,
 };
 
@@ -29,20 +29,15 @@ pub struct Assembly<'a> {
     /// Should the SHA256 checksum be checked
     /// before assembling the files
     pub ignore_checksum: bool,
-    /// Process samples if true
-    /// else check the config file only
-    pub process_samples: bool,
     /// Output directory to store the assemblies
     pub output_dir: &'a Path,
-    /// Optional parameters for the assembly process
-    pub optional_params: Option<&'a str>,
-    /// Check config for errors
-    pub skip_config_check: bool,
     /// Remove SPAdes intermediate files
     /// by default
     pub keep_intermediates: bool,
     /// Rename contigs file to sample name
     pub rename_contigs: bool,
+    /// Runner options
+    pub runner: RunnerOptions<'a>,
     task: Task,
 }
 
@@ -52,22 +47,17 @@ impl<'a> Assembly<'a> {
     pub fn new(
         config_path: &'a Path,
         ignore_checksum: bool,
-        process_samples: bool,
         output_dir: &'a Path,
-        optional_params: Option<&'a str>,
-        skip_config_check: bool,
         keep_intermediates: bool,
         rename_contigs: bool,
     ) -> Self {
         Self {
             config_path,
             ignore_checksum,
-            process_samples,
             output_dir,
-            optional_params,
-            skip_config_check,
             keep_intermediates,
             rename_contigs,
+            runner: RunnerOptions::default(),
             task: Task::Assembly,
         }
     }
@@ -77,12 +67,10 @@ impl<'a> Assembly<'a> {
         Self {
             config_path: &args.config,
             ignore_checksum: args.common.ignore_checksum,
-            process_samples: args.common.process,
             output_dir: &args.output,
-            optional_params: args.common.override_args.as_deref(),
-            skip_config_check: args.common.skip_config_check,
             keep_intermediates: args.keep_intermediates,
             rename_contigs: args.rename_contigs,
+            runner: RunnerOptions::from_arg(&args.common),
             task: Task::Assembly,
         }
     }
@@ -91,13 +79,12 @@ impl<'a> Assembly<'a> {
     pub fn assemble(&self) {
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
-        if self.process_samples {
-            PathCheck::new(self.output_dir, true).prompt_exists();
-        }
-        let spinner = common::init_spinner();
-        let mut check = ConfigCheck::new(config.sample_counts);
+        PathCheck::new(self.output_dir, true).prompt_exists(self.runner.dry_run);
 
-        if self.skip_config_check {
+        let spinner = common::init_spinner();
+        let mut check = FastqConfigCheck::new(config.sample_counts);
+
+        if self.runner.skip_config_check {
             spinner.finish_with_message("Skipping config data check\n");
         } else {
             spinner.set_message("Checking config data for errors");
@@ -105,13 +92,13 @@ impl<'a> Assembly<'a> {
             spinner.finish_with_message(format!("{} Finished checking config data\n", "✔".green()));
         }
 
-        if !self.process_samples {
+        if self.runner.dry_run {
             check.log_status();
             self.log_unprocessed();
             return;
         }
 
-        if !check.is_config_ok() && !self.skip_config_check {
+        if !check.is_config_ok() && !self.runner.skip_config_check {
             check.log_status();
             log::error!("\n{}\n", "Config check failed".red());
             return;
@@ -121,9 +108,9 @@ impl<'a> Assembly<'a> {
         self.log_output();
     }
 
-    fn parse_config(&self) -> Result<CleanReadConfig, Box<dyn std::error::Error>> {
-        let config = fs::read_to_string(self.config_path)?;
-        let config: CleanReadConfig = serde_yaml::from_str(&config)?;
+    fn parse_config(&self) -> Result<CleanReadConfig, Box<dyn Error>> {
+        let content = fs::read_to_string(self.config_path)?;
+        let config: CleanReadConfig = serde_yaml::from_str(&content)?;
         Ok(config)
     }
 
@@ -136,7 +123,7 @@ impl<'a> Assembly<'a> {
             let results = SpadeRunner::new(
                 sample,
                 self.output_dir,
-                self.optional_params,
+                self.runner.override_args,
                 self.keep_intermediates,
                 self.rename_contigs,
             )

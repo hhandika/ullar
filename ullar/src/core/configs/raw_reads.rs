@@ -1,4 +1,3 @@
-use std::fs;
 use std::path::PathBuf;
 use std::{error::Error, path::Path};
 
@@ -6,9 +5,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::types::reads::FastqReads;
 
-use super::CONFIG_EXTENSION;
+use super::generate_config_output_path;
 
-pub const DEFAULT_RAW_READ_PREFIX: &str = "raw_read";
+pub const DEFAULT_RAW_READ_CONFIG: &str = "raw_read";
 
 pub enum FileMatchingStrategy {
     Regex,
@@ -60,13 +59,11 @@ impl RawReadConfig {
         }
     }
 
-    pub fn to_yaml(&self, output_dir: &Path) -> Result<PathBuf, Box<dyn Error>> {
-        fs::create_dir_all(output_dir)?;
-        let mut output = output_dir.join(DEFAULT_RAW_READ_PREFIX);
-        output.set_extension(CONFIG_EXTENSION);
-        let writer = std::fs::File::create(&output)?;
+    pub fn to_yaml(&self) -> Result<PathBuf, Box<dyn Error>> {
+        let output_path = generate_config_output_path(DEFAULT_RAW_READ_CONFIG);
+        let writer = std::fs::File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
-        Ok(output)
+        Ok(output_path)
     }
 }
 

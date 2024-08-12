@@ -5,7 +5,7 @@ use std::process::Command;
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{assembly::spades::SPADES_EXE, qc::fastp::FASTP_EXE};
+use crate::core::{assembly::spades::SPADES_EXE, clean::fastp::FASTP_EXE};
 
 const IQTREE2_EXE: &str = "iqtree2";
 const IQTREE_EXE: &str = "iqtree";
@@ -277,12 +277,9 @@ fn re_capture_version(version: &str) -> String {
         .to_string()
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct DepMetadata {
     pub name: String,
     pub version: String,
     pub executable: String,
 }
-
-
