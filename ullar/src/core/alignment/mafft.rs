@@ -45,10 +45,12 @@ impl<'a> MafftRunner<'a> {
             }
         };
 
+        let output = cmd.output()?;
+
         match self.check_success(&output) {
             Ok(_) => {
                 let output_path = self.create_output_path()?;
-                self.write_output(&output, output_path)?;
+                self.write_output(&output, &output_path)?;
                 Ok(output_path)
             }
             Err(e) => Err(e),
@@ -68,7 +70,9 @@ impl<'a> MafftRunner<'a> {
         };
         cmd.arg("--out").arg(self.create_output_path()?);
 
-        self.check_success(&cmd.output()?)?;
+        let output = cmd.output()?;
+
+        self.check_success(&output)?;
         Ok(output_path)
     }
 
