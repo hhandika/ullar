@@ -40,8 +40,10 @@ impl<'a> MafftRunner<'a> {
         self.execute_mafft()
     }
 
-    #[cfg(target_family = "unix")]
     fn execute_mafft(&self) -> Result<PathBuf, Box<dyn Error>> {
+        #[cfg(target_family = "windows")]
+        let mut cmd = Command::new(MAFFT_WINDOWS);
+        #[cfg(target_family = "unix")]
         let mut cmd = Command::new(MAFFT_EXE);
         match self.override_args {
             Some(params) => parse_override_args!(cmd, params),
@@ -58,24 +60,6 @@ impl<'a> MafftRunner<'a> {
                 self.write_output(&output_path, &output)?;
                 Ok(output_path)
             }
-            Err(e) => Err(e),
-        }
-    }
-
-    #[cfg(target_family = "windows")]
-    fn execute_mafft(&self) -> Result<PathBuf, Box<dyn Error>> {
-        let output_path = self.create_output_path()?;
-        let mut cmd = Command::new(MAFFT_WINDOWS);
-        cmd.arg(self.get_input_path());
-        match self.override_args {
-            Some(params) => parse_override_args!(cmd, params),
-            None => cmd.arg(DEFAULT_MAFFT_PARAMS),
-        };
-
-        let output = cmd.output()?;
-
-        match self.check_success(&output) {
-            Ok(_) => Ok(output_path),
             Err(e) => Err(e),
         }
     }
