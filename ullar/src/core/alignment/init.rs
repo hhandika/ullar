@@ -39,6 +39,11 @@ impl<'a> AlignmentInit<'a> {
     fn write_config(&self) -> Result<PathBuf, Box<dyn Error>> {
         let mut config = MappedContigConfig::default();
         config.init(self.input_dir, Vec::new());
+        if config.contigs.is_empty() {
+            return Err(
+                "No sequence found in the input directory. Please, check input is FASTA".into(),
+            );
+        }
         let output_path = config.to_yaml()?;
         Ok(output_path)
     }
