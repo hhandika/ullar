@@ -96,18 +96,21 @@ impl<'a> Alignment<'a> {
     }
 
     fn par_align(&self, input_files: &[FileMetadata]) -> MafftReport {
-        let spinner = common::init_spinner();
-        spinner.set_message("Aligning sequences");
+        let progress_bar = common::init_progress_bar(input_files.len() as u64);
+        progress_bar.set_message("Aligned sequences");
         let (tx, rx) = mpsc::channel();
-        input_files.par_iter().for_each_with(tx, |tx, input| {
-            let report = self.align_mafft(input);
-            tx.send(report).expect("Failed to send report");
+
+        input_files.par_iter().for_each_with(tx, |tx, file| {
+            let output = self.align_mafft(file);
+            tx.send(output).expect("Failed to send output path");
+            progress_bar.inc(1);
         });
-        spinner.set_message("Creating alignment report");
+
         let output_paths: Vec<PathBuf> = rx.iter().collect();
+
         let mut report = MafftReport::new();
         report.create(&output_paths);
-        spinner.finish_with_message(format!("{} Finished aligning sequences\n", "✔".green()));
+
         report
     }
 

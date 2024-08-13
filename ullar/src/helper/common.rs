@@ -26,6 +26,17 @@ pub fn init_spinner() -> ProgressBar {
     spin
 }
 
+#[cfg(not(tarpaulin_include))]
+pub fn init_progress_bar(len: u64) -> ProgressBar {
+    let progress_bar = ProgressBar::new(len);
+    progress_bar.set_style(
+        ProgressStyle::default_bar()
+            .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} {msg}")
+            .expect("Failed to set progress bar style"),
+    );
+    progress_bar
+}
+
 pub struct PrettyHeader {
     len: usize,
     symbol_counts: usize,
