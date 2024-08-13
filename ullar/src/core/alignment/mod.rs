@@ -35,8 +35,8 @@ pub struct Alignment<'a> {
     pub config_path: &'a Path,
     /// Output directory to store the alignments
     pub output_dir: &'a Path,
+    /// Runner options for the alignment
     pub runner: RunnerOptions<'a>,
-    #[allow(dead_code)]
     task: Task,
 }
 
@@ -161,7 +161,7 @@ impl<'a> Alignment<'a> {
         }
 
         let params = match self.runner.override_args {
-            Some(ref args) => args,
+            Some(args) => args,
             None => DEFAULT_MAFFT_PARAMS,
         };
         log::info!("{:18}: {}\n", "Parameters", params);

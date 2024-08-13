@@ -1,7 +1,4 @@
-//! Align loci using MAFFT
-//!
 //! Align multiple sequences using MAFFT.
-//! Requires the `mafft` binary installed.
 use std::error::Error;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -14,9 +11,20 @@ pub const MAFFT_EXE: &str = "mafft";
 pub const DEFAULT_MAFFT_PARAMS: &str = "--auto --maxiterate 1000";
 pub const MAFFT_WINDOWS: &str = "mafft.bat";
 
+/// MAFFT runner struct
+/// Handle the execution of MAFFT
 pub struct MafftRunner<'a> {
+    /// Input file formatted as FileMetadata
+    /// Contains the file name, parent directory,
+    /// and SHA256 hash of the file
     pub input_file: &'a FileMetadata,
+    /// Output directory. The alignment will be
+    ///     named the same as the input file
     pub output_dir: &'a Path,
+    /// Override arguments for MAFFT
+    ///    If None, use DEFAULT_MAFFT_PARAMS
+    ///   If Some, the string will be split  by whitespace
+    ///     into individual arguments
     pub override_args: Option<&'a str>,
 }
 
