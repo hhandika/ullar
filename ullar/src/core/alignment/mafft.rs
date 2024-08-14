@@ -7,9 +7,25 @@ use std::process::{Command, Output};
 use crate::helper::files::FileMetadata;
 use crate::parse_override_args;
 
+/// Default MAFFT executable for Unix systems
 pub const MAFFT_EXE: &str = "mafft";
-pub const DEFAULT_MAFFT_PARAMS: &str = "--auto --maxiterate 1000";
+
+/// Default MAFFT executable for Windows systems
 pub const MAFFT_WINDOWS: &str = "mafft.bat";
+
+/// Default MAFFT parameters. We use --adjustdirection
+///     and --maxiterate 1000 by default. The user can
+///    override these parameters using the CLI arguments
+///   --override-args.
+///
+/// Several possible parameters are:
+/// 1. --auto to automatically selects the best strategy
+/// 2. --maxiterate to set the maximum number of iterative refinement
+/// 3. --adjustdirection to adjust the direction of the input sequences.
+///     This is fast using 6 mer counting.
+/// 4. --adjustdirectionaccurately to adjust the direction of the input sequences.
+///     More accurate but slower than --adjustdirection. Using dynamic programming.
+pub const DEFAULT_MAFFT_PARAMS: &str = "--adjustdirection --maxiterate 1000";
 
 /// MAFFT runner struct
 /// Handle the execution of MAFFT
