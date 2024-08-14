@@ -80,7 +80,7 @@ impl<'a> Alignment<'a> {
             "✔".green()
         ));
         self.log_input(&config);
-        PathCheck::new(self.output_dir, true).prompt_exists(self.runner.dry_run);
+        PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
         let reports = self.par_align(&config.contigs);
         let config_output_path = self
             .write_output_config(reports)
