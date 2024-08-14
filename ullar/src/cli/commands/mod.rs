@@ -57,15 +57,19 @@ pub(crate) enum UllarSubcommand {
     #[command(name = "map", about = "Map contigs to reference")]
     Map,
     /// Locus alignment
-    #[command(subcommand, name = "align", about = "Locus alignment")]
+    #[command(subcommand, name = "align", about = "Align sequences")]
     Alignment(AlignmentSubcommand),
     /// Phylogenetic tree estimation
-    #[command(name = "tree", about = "Phylogenetic tree estimation")]
+    #[command(name = "tree", about = "Estimate phylogenetic tree")]
     Tree(TreeArgs),
     /// For checking dependencies
     #[command(subcommand, name = "deps", about = "Check and manage dependencies")]
     Deps(DepsSubcommand),
     /// Subcommand for utility functions
-    #[command(subcommand, name = "utils", about = "Utility functions")]
+    #[command(
+        subcommand,
+        name = "utils",
+        about = "Generate SHA256 checksums, scan directories, and create symlinks"
+    )]
     Utils(UtilSubCommand),
 }
