@@ -58,7 +58,8 @@ impl<'a> Symlinks<'a> {
 
     pub fn create(&self) {
         self.log_input();
-        PathCheck::new(self.output_dir, true).prompt_exists(false);
+        let force_overwrite = false;
+        PathCheck::new(self.output_dir, true, force_overwrite).prompt_exists(false);
         let spinner = common::init_spinner();
         spinner.set_message("Finding matching files...");
         let mut files = self.find_files();

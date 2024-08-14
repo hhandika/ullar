@@ -29,6 +29,9 @@ pub struct CommonRunnerArgs {
         help = "Continue processing samples without checking the config file"
     )]
     pub skip_config_check: bool,
+    /// Force overwrite of existing files
+    #[arg(long, help = "Force overwrite of existing files")]
+    pub force: bool,
 }
 
 #[derive(Args)]

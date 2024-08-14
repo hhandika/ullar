@@ -24,16 +24,27 @@ use super::checksum::ChecksumType;
 
 pub const CSV_EXT: &str = "csv";
 
+/// Path checking utility
 pub struct PathCheck<'a> {
+    /// Path to check
     path: &'a Path,
+    /// Is the path a directory
     is_dir: bool,
+    /// Force overwrite of existing files
+    force: bool,
 }
 
 impl<'a> PathCheck<'a> {
-    pub fn new(path: &'a Path, is_dir: bool) -> Self {
-        Self { path, is_dir }
+    /// Initialize a new PathCheck instance
+    pub fn new(path: &'a Path, is_dir: bool, force: bool) -> Self {
+        Self {
+            path,
+            is_dir,
+            force,
+        }
     }
 
+    /// Check if the path exists and prompt the user to delete it
     pub fn prompt_exists(&self, dry_run: bool) {
         let message = format!(
             "Path {} already exists. Do you want to delete it?",
@@ -49,7 +60,9 @@ impl<'a> PathCheck<'a> {
             return;
         }
 
-        if self.path.exists() {
+        if self.path.exists() && self.force {
+            self.delete();
+        } else {
             self.prompt_users(&message);
         }
     }
@@ -59,13 +72,7 @@ impl<'a> PathCheck<'a> {
             .with_prompt(message)
             .interact();
         match selection {
-            Ok(true) => {
-                if self.is_dir {
-                    self.delete_dir();
-                } else {
-                    self.delete_file();
-                }
-            }
+            Ok(true) => self.delete(),
             Ok(false) => {
                 log::info!(
                     "\nCancel deleting the {} directory.\n\
@@ -81,6 +88,14 @@ impl<'a> PathCheck<'a> {
                 log::info!("");
                 std::process::exit(1);
             }
+        }
+    }
+
+    fn delete(&self) {
+        if self.is_dir {
+            self.delete_dir();
+        } else {
+            self.delete_file();
         }
     }
 

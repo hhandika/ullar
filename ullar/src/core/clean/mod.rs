@@ -62,7 +62,7 @@ impl<'a> ReadCleaner<'a> {
     pub fn clean(&self) {
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
-        PathCheck::new(self.output_dir, true).prompt_exists(self.runner.dry_run);
+        PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
 
         let spinner = common::init_spinner();
         let mut check = FastqConfigCheck::new(config.sample_counts);

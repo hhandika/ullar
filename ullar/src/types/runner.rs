@@ -6,6 +6,7 @@ pub struct RunnerOptions<'a> {
     pub dry_run: bool,
     pub override_args: Option<&'a str>,
     pub skip_config_check: bool,
+    pub force: bool,
 }
 
 impl<'a> RunnerOptions<'a> {
@@ -14,12 +15,14 @@ impl<'a> RunnerOptions<'a> {
         dry_run: bool,
         override_args: Option<&'a str>,
         skip_config_check: bool,
+        force: bool,
     ) -> Self {
         Self {
             ignore_checksum,
             dry_run,
             override_args,
             skip_config_check,
+            force,
         }
     }
 
@@ -29,6 +32,7 @@ impl<'a> RunnerOptions<'a> {
             dry_run: args.dry_run,
             override_args: args.override_args.as_deref(),
             skip_config_check: args.skip_config_check,
+            force: args.force,
         }
     }
 }
