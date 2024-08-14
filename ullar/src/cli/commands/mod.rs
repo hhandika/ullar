@@ -69,7 +69,7 @@ pub(crate) enum UllarSubcommand {
     #[command(
         subcommand,
         name = "utils",
-        about = "Generate SHA256 checksums, scan directories, and create symlinks"
+        about = "Generate SHA256, scan directories, and create symlinks"
     )]
     Utils(UtilSubCommand),
 }
