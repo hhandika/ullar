@@ -125,7 +125,7 @@ pub struct SystemInfo {
     pub cores: usize,
     pub threads: usize,
     pub total_memory: String,
-    pub date: String,
+    pub timestamp: String,
 }
 
 impl Default for SystemInfo {
@@ -149,7 +149,7 @@ impl SystemInfo {
         let threads = info.cpus().len();
         let cores = info.physical_core_count().unwrap_or_default();
         let total_memory = info.total_memory() / BYTE_TO_GB;
-        let date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+        let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
         Self {
             os,
@@ -159,7 +159,7 @@ impl SystemInfo {
             cores,
             threads,
             total_memory: format!("{} GB", total_memory),
-            date,
+            timestamp,
         }
     }
 
@@ -173,6 +173,6 @@ impl SystemInfo {
         log::info!("{:18}: {}", "Physical cores", self.cores);
         log::info!("{:18}: {}", "Threads", self.threads);
         log::info!("{:18}: {}", "Total Memory", self.total_memory);
-        log::info!("{:18}: {}\n", "Date", self.date);
+        log::info!("{:18}: {}\n", "Timestamp", self.timestamp);
     }
 }
