@@ -4,11 +4,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use segul::helper::{
-    finder::{IDs, SeqFileFinder},
-    types::{DataType, InputFmt},
-};
+use once_cell::sync::Lazy;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
+use walkdir::WalkDir;
 
 use crate::{
     core::utils::deps::DepMetadata,
@@ -21,55 +20,60 @@ use crate::{
 
 pub const DEFAULT_LOCUS_CONFIG: &str = "mapped_contig";
 
+pub const CONTIG_REGEX: &str = r"(?i)(contig*)";
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MappedContigConfig {
-    pub sample_counts: usize,
-    pub file_counts: usize,
+    /// Total number of contig files
+    pub contig_file_counts: usize,
     pub previous_step: PreviousStep,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub override_args: Option<String>,
-    pub contigs: Vec<FileMetadata>,
+    pub contig_files: Vec<FileMetadata>,
+    pub reference_file: FileMetadata,
 }
 
 impl Default for MappedContigConfig {
     fn default() -> Self {
         Self {
-            sample_counts: 0,
-            file_counts: 0,
+            contig_file_counts: 0,
             previous_step: PreviousStep::default(),
             override_args: None,
-            contigs: Vec::new(),
+            contig_files: Vec::new(),
+            reference_file: FileMetadata::new(),
         }
     }
 }
 
 impl MappedContigConfig {
     pub fn new(
-        sample_counts: usize,
         file_counts: usize,
         task: Task,
         dependencies: Vec<DepMetadata>,
         override_args: Option<String>,
-        contigs: Vec<FileMetadata>,
     ) -> Self {
         Self {
-            sample_counts,
-            file_counts,
+            contig_file_counts: file_counts,
             previous_step: PreviousStep::with_dependencies(task, dependencies),
             override_args,
-            contigs,
+            contig_files: Vec::new(),
+            reference_file: FileMetadata::new(),
         }
     }
 
-    pub fn init(&mut self, input_dir: &Path, previous_step: Option<PreviousStep>) {
-        let sequence_files = self.find_files(input_dir);
+    pub fn init(
+        &mut self,
+        contig_dir: &Path,
+        reference_dir: &Path,
+        previous_step: Option<PreviousStep>,
+    ) {
+        let sequence_files = self.find_contig_files(contig_dir);
         match previous_step {
             Some(step) => self.previous_step = step,
             None => self.previous_step = PreviousStep::new(Task::Unknown),
         }
-        self.file_counts = sequence_files.len();
-        self.sample_counts = self.count_samples(&sequence_files);
-        self.contigs = self.get_metadata(&sequence_files);
+        self.contig_files = self.get_metadata(&sequence_files);
+        self.reference_file.get(reference_dir);
     }
 
     /// Get raw loci files
@@ -80,17 +84,14 @@ impl MappedContigConfig {
         Ok(output_path)
     }
 
-    fn find_files(&self, input_dir: &Path) -> Vec<PathBuf> {
-        let input_format = InputFmt::Fasta;
-        let sequence_files = SeqFileFinder::new(input_dir).find_recursive_only(&input_format);
-        sequence_files
-    }
-
-    fn count_samples(&self, sequence_files: &[PathBuf]) -> usize {
-        let format = InputFmt::Fasta;
-        let datatype = DataType::Dna;
-        let unique_ids = IDs::new(sequence_files, &format, &datatype).id_unique();
-        unique_ids.len()
+    fn find_contig_files(&self, input_dir: &Path) -> Vec<PathBuf> {
+        WalkDir::new(input_dir)
+            .into_iter()
+            .filter_map(|e| e.ok())
+            .map(|e| e.path().to_path_buf())
+            .filter(|e| e.is_file())
+            .filter(|e| re_matches_contigs(e))
+            .collect::<Vec<PathBuf>>()
     }
 
     fn get_metadata(&self, sequence_files: &[PathBuf]) -> Vec<FileMetadata> {
@@ -102,5 +103,31 @@ impl MappedContigConfig {
                 file
             })
             .collect()
+    }
+}
+
+fn re_matches_contigs(path: &Path) -> bool {
+    static RE: Lazy<Regex> =
+        Lazy::new(|| Regex::new(CONTIG_REGEX).expect("Failed to compile regex"));
+    let file_name = path.file_name().expect("Failed to get file name");
+    RE.is_match(
+        file_name
+            .to_str()
+            .expect("Failed to convert file name to string"),
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::Path;
+
+    use super::*;
+
+    #[test]
+    fn test_mapped_contig_config() {
+        let config = MappedContigConfig::default();
+        let contig_dir = Path::new("tests/contigs");
+        config.find_contig_files(contig_dir);
+        assert_eq!(config.contig_files.len(), 1);
     }
 }
