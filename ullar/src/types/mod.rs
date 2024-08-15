@@ -1,6 +1,7 @@
 //! Global data and feature type definitions
 
 pub mod alignments;
+pub mod lastz;
 pub mod reads;
 pub mod runner;
 

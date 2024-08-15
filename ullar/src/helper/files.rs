@@ -24,6 +24,18 @@ use super::checksum::ChecksumType;
 
 pub const CSV_EXT: &str = "csv";
 
+#[macro_export]
+macro_rules! get_file_stem {
+    ($self:ident, $path:ident) => {
+        $self
+            .$path
+            .file_stem()
+            .unwrap_or_else(|| $self.$path.file_name().expect("Failed to get file name"))
+            .to_string_lossy()
+            .to_string()
+    };
+}
+
 /// Path checking utility
 pub struct PathCheck<'a> {
     /// Path to check
