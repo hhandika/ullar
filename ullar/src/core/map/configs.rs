@@ -12,7 +12,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::utils::deps::DepMetadata,
-    helper::{configs::generate_config_output_path, files::FileMetadata},
+    helper::{
+        configs::{generate_config_output_path, PreviousStep},
+        files::FileMetadata,
+    },
     types::Task,
 };
 
@@ -22,8 +25,7 @@ pub const DEFAULT_LOCUS_CONFIG: &str = "mapped_contig";
 pub struct MappedContigConfig {
     pub sample_counts: usize,
     pub file_counts: usize,
-    pub dependencies: Vec<DepMetadata>,
-    pub task: Task,
+    pub previous_step: PreviousStep,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub override_args: Option<String>,
     pub contigs: Vec<FileMetadata>,
@@ -34,8 +36,7 @@ impl Default for MappedContigConfig {
         Self {
             sample_counts: 0,
             file_counts: 0,
-            dependencies: Vec::new(),
-            task: Task::ContigMapping,
+            previous_step: PreviousStep::default(),
             override_args: None,
             contigs: Vec::new(),
         }
@@ -46,6 +47,7 @@ impl MappedContigConfig {
     pub fn new(
         sample_counts: usize,
         file_counts: usize,
+        task: Task,
         dependencies: Vec<DepMetadata>,
         override_args: Option<String>,
         contigs: Vec<FileMetadata>,
@@ -53,16 +55,18 @@ impl MappedContigConfig {
         Self {
             sample_counts,
             file_counts,
-            dependencies,
-            task: Task::ContigMapping,
+            previous_step: PreviousStep::with_dependencies(task, dependencies),
             override_args,
             contigs,
         }
     }
 
-    pub fn init(&mut self, input_dir: &Path, dependencies: Vec<DepMetadata>) {
+    pub fn init(&mut self, input_dir: &Path, previous_step: Option<PreviousStep>) {
         let sequence_files = self.find_files(input_dir);
-        self.dependencies = dependencies;
+        match previous_step {
+            Some(step) => self.previous_step = step,
+            None => self.previous_step = PreviousStep::new(Task::Unknown),
+        }
         self.file_counts = sequence_files.len();
         self.sample_counts = self.count_samples(&sequence_files);
         self.contigs = self.get_metadata(&sequence_files);

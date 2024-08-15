@@ -22,6 +22,7 @@ pub fn generate_config_output_path(config_path: &str) -> PathBuf {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PreviousStep {
     pub task: Task,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub dependencies: Vec<DepMetadata>,
 }
 

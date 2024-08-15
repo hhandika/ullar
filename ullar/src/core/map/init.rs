@@ -53,7 +53,7 @@ impl<'a> InitMappingConfig<'a> {
         match self.query_format {
             MappingQueryFormat::Fasta => {
                 let mut config = MappedContigConfig::default();
-                config.init(self.target_path, Vec::new());
+                config.init(self.target_path, None);
                 if config.contigs.is_empty() {
                     return Err(
                         "No sequence found in the input directory. Please, check input is FASTA"

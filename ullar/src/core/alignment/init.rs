@@ -5,8 +5,9 @@ use std::error::Error;
 use colored::Colorize;
 
 use crate::cli::commands::alignment::AlignmentInitArgs;
-use crate::core::map::configs::MappedContigConfig;
 use crate::helper::common;
+
+use super::configs::AlignmentConfig;
 
 pub struct AlignmentInit<'a> {
     pub input_dir: &'a Path,
@@ -36,8 +37,8 @@ impl<'a> AlignmentInit<'a> {
     }
 
     fn write_config(&self) -> Result<PathBuf, Box<dyn Error>> {
-        let mut config = MappedContigConfig::default();
-        config.init(self.input_dir, Vec::new());
+        let mut config = AlignmentConfig::default();
+        config.init(self.input_dir, None);
         if config.contigs.is_empty() {
             return Err(
                 "No sequence found in the input directory. Please, check input is FASTA".into(),
