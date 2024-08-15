@@ -9,7 +9,7 @@ use serde::Serialize;
 
 use crate::{
     core::{clean::reports::CleanReadReport, utils::deps::DepMetadata},
-    helper::configs::generate_config_output_path,
+    helper::configs::{generate_config_output_path, PreviousStep},
     types::{reads::FastqReads, Task},
 };
 
@@ -23,8 +23,7 @@ pub struct AssemblyConfig {
     pub input_init_dir: PathBuf,
     pub sample_counts: usize,
     pub file_counts: usize,
-    pub dependencies: Vec<DepMetadata>,
-    pub previous_task: Task,
+    pub previous_step: PreviousStep,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub override_args: Option<String>,
     pub samples: Vec<FastqReads>,
@@ -37,8 +36,7 @@ impl Default for AssemblyConfig {
             input_init_dir: PathBuf::new(),
             sample_counts: 0,
             file_counts: 0,
-            dependencies: Vec::new(),
-            previous_task: Task::CleanReads,
+            previous_step: PreviousStep::default(),
             override_args: None,
             samples: Vec::new(),
         }
@@ -49,6 +47,7 @@ impl AssemblyConfig {
     pub fn new(
         config_path: Option<PathBuf>,
         input_init_dir: &Path,
+        task: Task,
         dependencies: Vec<DepMetadata>,
         override_args: Option<String>,
     ) -> Self {
@@ -57,8 +56,7 @@ impl AssemblyConfig {
             input_init_dir: input_init_dir.to_path_buf(),
             sample_counts: 0,
             file_counts: 0,
-            dependencies,
-            previous_task: Task::CleanReads,
+            previous_step: PreviousStep::with_dependencies(task, dependencies),
             override_args,
             samples: Vec::new(),
         }

@@ -152,6 +152,7 @@ impl<'a> ReadCleaner<'a> {
         let mut config = AssemblyConfig::new(
             Some(self.config_path.to_path_buf()),
             self.output_dir,
+            self.task,
             metadata,
             self.runner.override_args.map(|s| s.to_string()),
         );

@@ -5,7 +5,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::types::Task;
+use crate::{core::utils::deps::DepMetadata, types::Task};
 
 pub const DEFAULT_CONFIG_DIR: &str = "configs";
 pub const CONFIG_EXTENSION: &str = "yaml";
@@ -19,8 +19,30 @@ pub fn generate_config_output_path(config_path: &str) -> PathBuf {
     output_path
 }
 
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PreviousStep {
     pub task: Task,
-    pub dependencies: Vec<Task>,
+    pub dependencies: Vec<DepMetadata>,
+}
+
+impl Default for PreviousStep {
+    fn default() -> Self {
+        Self {
+            task: Task::Unknown,
+            dependencies: Vec::new(),
+        }
+    }
+}
+
+impl PreviousStep {
+    pub fn new(task: Task) -> Self {
+        Self {
+            task,
+            dependencies: Vec::new(),
+        }
+    }
+
+    pub fn with_dependencies(task: Task, dependencies: Vec<DepMetadata>) -> Self {
+        Self { task, dependencies }
+    }
 }

@@ -74,7 +74,7 @@ impl<'a> MafftRunner<'a> {
             None => parse_override_args!(cmd, DEFAULT_MAFFT_PARAMS),
         };
 
-        cmd.arg(&self.get_input_path());
+        cmd.arg(self.get_input_path());
 
         let output = cmd.output()?;
 
@@ -94,7 +94,7 @@ impl<'a> MafftRunner<'a> {
     }
 
     fn create_output_path(&self) -> Result<PathBuf, Box<dyn Error>> {
-        fs::create_dir_all(&self.output_dir)?;
+        fs::create_dir_all(self.output_dir)?;
         let output_path = self.output_dir.join(&self.input_file.file_name);
         Ok(output_path)
     }

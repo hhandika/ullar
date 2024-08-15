@@ -41,6 +41,10 @@ pub enum Task {
     /// Infers phylogenetic tree from cleaned alignment
     /// Current implementation uses IQ-TREE or M
     TreeInference,
+    /// If no task is specified
+    None,
+    /// Unknown task
+    Unknown,
 }
 
 impl Display for Task {
@@ -52,6 +56,8 @@ impl Display for Task {
             Task::AligningSequences => write!(f, "Locus Alignment"),
             Task::AlignmentQc => write!(f, "Alignment Quality Control"),
             Task::TreeInference => write!(f, "Tree Inference"),
+            Task::Unknown => write!(f, "Unknown"),
+            Task::None => write!(f, "None"),
         }
     }
 }
@@ -67,6 +73,8 @@ impl FromStr for Task {
             "AligningSequences" => Ok(Task::AligningSequences),
             "AlignmentQc" => Ok(Task::AlignmentQc),
             "TreeInference" => Ok(Task::TreeInference),
+            "Unknown" => Ok(Task::Unknown),
+            "None" => Ok(Task::None),
             _ => Err(format!("Unknown task: {}", s)),
         }
     }

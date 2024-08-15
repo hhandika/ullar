@@ -2,15 +2,11 @@ use std::{fmt::Display, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MappingQueryFormat {
+    #[default]
     Fasta,
     Fastq,
-}
-
-impl Default for MappingQueryFormat {
-    fn default() -> Self {
-        MappingQueryFormat::Fasta
-    }
 }
 
 impl Display for MappingQueryFormat {
