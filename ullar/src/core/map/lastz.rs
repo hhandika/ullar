@@ -110,7 +110,7 @@ impl<'a> LastzRunner<'a> {
     }
 
     fn create_output_path(&self) -> Result<PathBuf, Box<dyn Error>> {
-        fs::create_dir_all(&self.output_dir)?;
+        fs::create_dir_all(self.output_dir)?;
         let output_filename = format!("{}_lastz", self.query.get_file_stem());
         let output_path = self
             .output_dir
@@ -155,7 +155,7 @@ impl LastzTarget {
         Self {
             target_path,
             multiple_targets,
-            nameparse: nameparse,
+            nameparse,
         }
     }
 
@@ -263,6 +263,12 @@ pub struct LastzOutput {
     ///    the same as coverage but in percentage
     #[serde(rename = "covPct")]
     pub cov_pct: f64,
+}
+
+impl Default for LastzOutput {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl LastzOutput {
