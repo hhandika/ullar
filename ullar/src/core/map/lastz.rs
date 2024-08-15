@@ -11,7 +11,7 @@ use std::process::{Command, Output};
 use csv::ReaderBuilder;
 use serde::{Deserialize, Serialize};
 
-use crate::types::lastz::{LastzNameParse, LastzOutputFormat};
+use crate::types::map::{LastzNameParse, LastzOutputFormat};
 use crate::{get_file_stem, parse_override_args};
 
 use super::reports::LastzReport;

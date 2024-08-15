@@ -7,7 +7,8 @@ use std::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    core::configs::CONFIG_EXTENSION, helper::files::FileMetadata, types::alignments::AlignmentFiles,
+    helper::{configs::CONFIG_EXTENSION, files::FileMetadata},
+    types::alignments::AlignmentFiles,
 };
 
 pub const DEFAULT_TREE_PREFIX: &str = "tree";

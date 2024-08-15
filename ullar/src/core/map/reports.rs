@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use super::lastz::LastzOutput;
-use crate::types::lastz::LastzOutputFormat;
+use crate::types::map::LastzOutputFormat;
 
 pub struct LastzReport {
     pub output_dir: PathBuf,

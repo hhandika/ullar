@@ -1,71 +1,76 @@
 //! Initialize config file for mapping contigs to reference sequence.
 //!
 //! Include support for phyluce for UCE analysis workflow.
-use std::path::Path;
-
-use crate::{
-    cli::commands::new::MapInitArgs,
-    core::{assembly::DEFAULT_ASSEMBLY_OUTPUT_DIR, configs::DEFAULT_CONFIG_DIR},
+use std::{
+    error::Error,
+    path::{Path, PathBuf},
 };
 
-#[cfg(target_family = "unix")]
-use crate::core::utils::symlinks::Symlinks;
-#[cfg(target_family = "unix")]
-use crate::types::SymlinkFileSearchFormat;
+use colored::Colorize;
+
+use crate::{
+    cli::commands::map::MapInitArgs, core::assembly::DEFAULT_ASSEMBLY_OUTPUT_DIR, helper::common,
+    types::map::MappingQueryFormat,
+};
+
+use super::configs::MappedContigConfig;
 
 pub struct InitMappingConfig<'a> {
-    pub input_dir: &'a Path,
-    pub output_dir: &'a Path,
-    #[cfg(target_family = "unix")]
-    pub phyluce: bool,
+    /// Target directory containing target reference sequences
+    pub target_path: &'a Path,
+    /// Query directory containing query sequences
+    pub query_dir: &'a Path,
+    /// Input query format
+    pub query_format: MappingQueryFormat,
 }
 
 impl Default for InitMappingConfig<'_> {
     fn default() -> Self {
         Self {
-            input_dir: Path::new(DEFAULT_ASSEMBLY_OUTPUT_DIR),
-            output_dir: Path::new(DEFAULT_CONFIG_DIR),
-            #[cfg(target_family = "unix")]
-            phyluce: false,
+            target_path: Path::new(DEFAULT_ASSEMBLY_OUTPUT_DIR),
+            query_dir: Path::new(DEFAULT_ASSEMBLY_OUTPUT_DIR),
+            query_format: MappingQueryFormat::Fasta,
         }
     }
 }
 
 impl<'a> InitMappingConfig<'a> {
-    pub fn new(args: &'a MapInitArgs) -> Self {
+    pub fn from_arg(args: &'a MapInitArgs) -> Self {
         Self {
-            input_dir: &args.dir,
-            output_dir: &args.common.output,
-            #[cfg(target_family = "unix")]
-            phyluce: args.phyluce,
+            target_path: &args.target_dir,
+            query_dir: &args.query_dir,
+            query_format: args.query_format.parse().expect("Invalid query format"),
         }
     }
 
-    pub fn initialize(&self) {
-        if cfg!(target_family = "unix") {
-            #[cfg(target_family = "unix")]
-            self.execute_unix();
-        } else {
-            unimplemented!("Mapping contigs to reference sequence");
+    pub fn init(&self) {
+        let spinner = common::init_spinner();
+        self.log_input();
+        spinner.set_message("Initializing mapping configuration");
+    }
+
+    pub fn write_config(&self) -> Result<PathBuf, Box<dyn Error>> {
+        match self.query_format {
+            MappingQueryFormat::Fasta => {
+                let mut config = MappedContigConfig::default();
+                config.init(self.target_path, Vec::new());
+                if config.contigs.is_empty() {
+                    return Err(
+                        "No sequence found in the input directory. Please, check input is FASTA"
+                            .into(),
+                    );
+                }
+                let output_path = config.to_yaml()?;
+                Ok(output_path)
+            }
+            MappingQueryFormat::Fastq => Err("Fastq format is not supported yet".into()),
         }
     }
 
-    #[cfg(target_family = "unix")]
-    fn execute_unix(&self) {
-        if self.phyluce {
-            self.generate_phyluce_symlinks();
-        } else {
-            unimplemented!("Mapping contigs to reference sequence");
-        }
-    }
-
-    #[cfg(target_family = "unix")]
-    fn generate_phyluce_symlinks(&self) {
-        let symlink = Symlinks::new(
-            self.input_dir,
-            self.output_dir,
-            SymlinkFileSearchFormat::Contigs,
-        );
-        symlink.create();
+    fn log_input(&self) {
+        log::info!("{}", "Input".cyan());
+        log::info!("{:18}: {}", "Target path", self.target_path.display());
+        log::info!("{:18}: {}", "Query directory", self.query_dir.display());
+        log::info!("{:18}: {}", "Task", "Initialize mapping config");
     }
 }

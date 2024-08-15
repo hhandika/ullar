@@ -4,10 +4,9 @@ use std::error::Error;
 
 use colored::Colorize;
 
+use crate::cli::commands::alignment::AlignmentInitArgs;
+use crate::core::map::configs::MappedContigConfig;
 use crate::helper::common;
-use crate::{
-    cli::commands::alignment::AlignmentInitArgs, core::configs::mapped_contigs::MappedContigConfig,
-};
 
 pub struct AlignmentInit<'a> {
     pub input_dir: &'a Path,

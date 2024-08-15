@@ -2,6 +2,8 @@
 pub mod checksum;
 pub mod command;
 pub mod common;
+pub mod configs;
+pub mod fastq;
 pub mod files;
 pub mod logs;
 pub mod regex;

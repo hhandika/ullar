@@ -1,31 +1,9 @@
-pub mod alignment;
-pub mod cleaned_reads;
-pub mod mapped_contigs;
-pub mod raw_reads;
-pub mod trees;
-
-use std::{
-    fs::create_dir_all,
-    path::{Path, PathBuf},
-    sync::mpsc,
-};
+use std::sync::mpsc;
 
 use colored::Colorize;
 use rayon::prelude::*;
 
 use crate::types::reads::{FastqReads, ReadChecker};
-
-pub const DEFAULT_CONFIG_DIR: &str = "configs";
-pub const CONFIG_EXTENSION: &str = "yaml";
-
-pub fn generate_config_output_path(config_path: &str) -> PathBuf {
-    let output_dir = Path::new(DEFAULT_CONFIG_DIR);
-    create_dir_all(output_dir).expect("Failed to create output directory");
-    let mut output_path = output_dir.join(config_path);
-    output_path.set_extension(CONFIG_EXTENSION);
-
-    output_path
-}
 
 pub struct FastqConfigCheck {
     /// Total samples input

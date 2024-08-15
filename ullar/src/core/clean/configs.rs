@@ -3,9 +3,8 @@ use std::{error::Error, path::Path};
 
 use serde::{Deserialize, Serialize};
 
+use crate::helper::configs::generate_config_output_path;
 use crate::types::reads::FastqReads;
-
-use super::generate_config_output_path;
 
 pub const DEFAULT_RAW_READ_CONFIG: &str = "raw_read";
 
@@ -15,7 +14,7 @@ pub enum FileMatchingStrategy {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct RawReadConfig {
+pub struct CleanReadConfig {
     pub input_dir: PathBuf,
     pub file_extension: String,
     pub sample_counts: usize,
@@ -24,7 +23,7 @@ pub struct RawReadConfig {
     pub samples: Vec<FastqReads>,
 }
 
-impl Default for RawReadConfig {
+impl Default for CleanReadConfig {
     fn default() -> Self {
         Self {
             input_dir: PathBuf::new(),
@@ -40,7 +39,7 @@ impl Default for RawReadConfig {
     }
 }
 
-impl RawReadConfig {
+impl CleanReadConfig {
     pub fn new(
         input_dir: &Path,
         file_extension: String,

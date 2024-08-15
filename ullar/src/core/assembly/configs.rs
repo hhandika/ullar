@@ -9,29 +9,28 @@ use serde::Serialize;
 
 use crate::{
     core::{clean::reports::CleanReadReport, utils::deps::DepMetadata},
+    helper::configs::generate_config_output_path,
     types::{reads::FastqReads, Task},
 };
-
-use super::generate_config_output_path;
 
 pub const DEFAULT_CLEANED_READ_CONFIG: &str = "cleaned_read";
 
 #[derive(Debug, Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct CleanReadConfig {
+pub struct AssemblyConfig {
     pub config_path: Option<PathBuf>,
     /// Use clean output directory
     pub input_init_dir: PathBuf,
     pub sample_counts: usize,
     pub file_counts: usize,
     pub dependencies: Vec<DepMetadata>,
-    pub task: Task,
+    pub previous_task: Task,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub override_args: Option<String>,
     pub samples: Vec<FastqReads>,
 }
 
-impl Default for CleanReadConfig {
+impl Default for AssemblyConfig {
     fn default() -> Self {
         Self {
             config_path: None,
@@ -39,14 +38,14 @@ impl Default for CleanReadConfig {
             sample_counts: 0,
             file_counts: 0,
             dependencies: Vec::new(),
-            task: Task::CleanReads,
+            previous_task: Task::CleanReads,
             override_args: None,
             samples: Vec::new(),
         }
     }
 }
 
-impl CleanReadConfig {
+impl AssemblyConfig {
     pub fn new(
         config_path: Option<PathBuf>,
         input_init_dir: &Path,
@@ -59,7 +58,7 @@ impl CleanReadConfig {
             sample_counts: 0,
             file_counts: 0,
             dependencies,
-            task: Task::CleanReads,
+            previous_task: Task::CleanReads,
             override_args,
             samples: Vec::new(),
         }

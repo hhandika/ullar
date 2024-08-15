@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::{Args, Subcommand};
 
-use crate::core::configs::DEFAULT_CONFIG_DIR;
+use crate::helper::configs::DEFAULT_CONFIG_DIR;
 
 use super::common::CommonInitArgs;
 
