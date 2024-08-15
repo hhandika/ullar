@@ -2,6 +2,38 @@ use std::{fmt::Display, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 
+pub enum MappingQueryFormat {
+    Fasta,
+    Fastq,
+}
+
+impl Default for MappingQueryFormat {
+    fn default() -> Self {
+        MappingQueryFormat::Fasta
+    }
+}
+
+impl Display for MappingQueryFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MappingQueryFormat::Fasta => write!(f, "fasta"),
+            MappingQueryFormat::Fastq => write!(f, "fastq"),
+        }
+    }
+}
+
+impl FromStr for MappingQueryFormat {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "fasta" => Ok(MappingQueryFormat::Fasta),
+            "fastq" => Ok(MappingQueryFormat::Fastq),
+            _ => Err(format!("Unknown mapping query format: {}", s)),
+        }
+    }
+}
+
 /// Lastz support many output formats.
 /// We only support the most commoly used formats.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

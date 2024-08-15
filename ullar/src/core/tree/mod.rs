@@ -1,6 +1,7 @@
 use std::{error::Error, fs, path::Path};
 
 use colored::Colorize;
+use configs::TreeInferenceConfig;
 
 use crate::{
     cli::commands::tree::TreeArgs,
@@ -8,8 +9,7 @@ use crate::{
     types::{runner::RunnerOptions, Task, TreeInferenceMethod},
 };
 
-use super::configs::trees::TreeInferenceConfig;
-
+pub mod configs;
 pub mod iqtree;
 
 pub const DEFAULT_PHYLO_OUTPUT_DIR: &str = "phylogenetic_tree";

@@ -1,3 +1,4 @@
+pub mod configs;
 pub mod init;
 pub mod mafft;
 pub mod reports;
@@ -10,6 +11,7 @@ use std::{
 };
 
 use colored::Colorize;
+use configs::AlignmentConfig;
 use mafft::{MafftRunner, DEFAULT_MAFFT_PARAMS};
 use rayon::prelude::*;
 use reports::MafftReport;
@@ -23,10 +25,7 @@ use crate::{
     types::{runner::RunnerOptions, Task},
 };
 
-use super::{
-    configs::{alignment::AlignmentConfig, mapped_contigs::MappedContigConfig},
-    utils::deps::MafftMetadata,
-};
+use super::{map::configs::MappedContigConfig, utils::deps::MafftMetadata};
 
 pub const DEFAULT_ALIGNMENT_OUTPUT_DIR: &str = "alignments";
 

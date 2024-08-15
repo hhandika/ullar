@@ -1,4 +1,5 @@
 //! Clean raw read files using Fastp
+pub mod configs;
 pub mod fastp;
 pub mod reports;
 
@@ -7,10 +8,11 @@ use std::path::{Path, PathBuf};
 
 use colored::Colorize;
 use comfy_table::Table;
+use configs::CleanReadConfig;
 
 use crate::cli::commands::clean::CleanArgs;
-use crate::core::configs::FastqConfigCheck;
 use crate::helper::common;
+use crate::helper::fastq::FastqConfigCheck;
 use crate::helper::files::PathCheck;
 use crate::helper::tracker::ProcessingTracker;
 use crate::types::reads::FastqReads;
@@ -19,8 +21,7 @@ use crate::types::Task;
 
 use self::reports::CleanReadReport;
 
-use super::configs::cleaned_reads::CleanReadConfig;
-use super::configs::raw_reads::RawReadConfig;
+use super::assembly::configs::AssemblyConfig;
 use super::utils::deps::FastpMetadata;
 
 pub const DEFAULT_CLEAN_READ_OUTPUT_DIR: &str = "cleaned_reads";
@@ -124,9 +125,9 @@ impl<'a> ReadCleaner<'a> {
         reports
     }
 
-    fn parse_config(&self) -> Result<RawReadConfig, Box<dyn std::error::Error>> {
+    fn parse_config(&self) -> Result<CleanReadConfig, Box<dyn std::error::Error>> {
         let content = fs::read_to_string(self.config_path)?;
-        let config: RawReadConfig = serde_yaml::from_str(&content)?;
+        let config: CleanReadConfig = serde_yaml::from_str(&content)?;
 
         if config.sample_counts != config.samples.len() {
             return Err("Sample counts do not match the number of samples".into());
@@ -148,7 +149,7 @@ impl<'a> ReadCleaner<'a> {
         if let Some(fastp) = fastp_dep.metadata {
             metadata.push(fastp);
         }
-        let mut config = CleanReadConfig::new(
+        let mut config = AssemblyConfig::new(
             Some(self.config_path.to_path_buf()),
             self.output_dir,
             metadata,
@@ -174,7 +175,7 @@ impl<'a> ReadCleaner<'a> {
         log::info!("\n{}", table);
     }
 
-    fn log_input(&self, config: &RawReadConfig) {
+    fn log_input(&self, config: &CleanReadConfig) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config file", self.config_path.display());
         log::info!("{:18}: {}", "Sample counts", config.sample_counts);

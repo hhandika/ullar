@@ -10,9 +10,11 @@ use segul::helper::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{core::utils::deps::DepMetadata, helper::files::FileMetadata, types::Task};
-
-use super::generate_config_output_path;
+use crate::{
+    core::utils::deps::DepMetadata,
+    helper::{configs::generate_config_output_path, files::FileMetadata},
+    types::Task,
+};
 
 pub const DEFAULT_LOCUS_CONFIG: &str = "mapped_contig";
 

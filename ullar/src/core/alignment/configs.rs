@@ -6,9 +6,10 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{core::utils::deps::DepMetadata, types::alignments::AlignmentFiles};
-
-use super::generate_config_output_path;
+use crate::{
+    core::utils::deps::DepMetadata, helper::configs::generate_config_output_path,
+    types::alignments::AlignmentFiles,
+};
 
 /// Default alignment configuration straight from the aligner
 pub const DEFAULT_RAW_ALIGNMENT_CONFIG: &str = "raw_alignment";

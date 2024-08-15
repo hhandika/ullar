@@ -2,21 +2,20 @@ use std::{error::Error, fs, path::Path, time::Instant};
 
 use colored::Colorize;
 use comfy_table::Table;
+use configs::AssemblyConfig;
 use spades::SpadeRunner;
 
 use crate::{
     cli::commands::assembly::AssemblyArgs,
-    helper::{common, files::PathCheck, tracker::ProcessingTracker},
+    helper::{common, fastq::FastqConfigCheck, files::PathCheck, tracker::ProcessingTracker},
     types::{reads::FastqReads, runner::RunnerOptions, Task},
 };
 
 use self::reports::SpadeReports;
 
-use super::{
-    configs::{cleaned_reads::CleanReadConfig, FastqConfigCheck},
-    utils::deps::SpadesMetadata,
-};
+use super::utils::deps::SpadesMetadata;
 
+pub mod configs;
 pub mod init;
 pub mod reports;
 pub mod spades;
@@ -108,9 +107,9 @@ impl<'a> Assembly<'a> {
         self.log_output();
     }
 
-    fn parse_config(&self) -> Result<CleanReadConfig, Box<dyn Error>> {
+    fn parse_config(&self) -> Result<AssemblyConfig, Box<dyn Error>> {
         let content = fs::read_to_string(self.config_path)?;
-        let config: CleanReadConfig = serde_yaml::from_str(&content)?;
+        let config: AssemblyConfig = serde_yaml::from_str(&content)?;
         Ok(config)
     }
 
@@ -165,7 +164,7 @@ impl<'a> Assembly<'a> {
         log::info!("\n{}", table);
     }
 
-    fn log_input(&self, config: &CleanReadConfig) {
+    fn log_input(&self, config: &AssemblyConfig) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config path", self.config_path.display());
         log::info!("{:18}: {}", "Sample counts", config.sample_counts);
