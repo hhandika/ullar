@@ -25,7 +25,7 @@ use crate::{
     types::{runner::RunnerOptions, Task},
 };
 
-use super::{map::configs::MappedContigConfig, utils::deps::MafftMetadata};
+use super::{tree::configs::TreeInferenceConfig, utils::deps::MafftMetadata};
 
 pub const DEFAULT_ALIGNMENT_OUTPUT_DIR: &str = "alignments";
 
@@ -73,7 +73,7 @@ impl<'a> Alignment<'a> {
     pub fn align(&self) {
         let spinner = common::init_spinner();
         spinner.set_message("Parsing configuration file");
-        let config: MappedContigConfig = self.parse_config().expect("Failed to parse config");
+        let config = self.parse_config().expect("Failed to parse config");
         spinner.finish_with_message(format!(
             "{} Finished parsing configuration file\n",
             "✔".green()
@@ -87,9 +87,9 @@ impl<'a> Alignment<'a> {
         self.log_final_output(&config_output_path);
     }
 
-    fn parse_config(&self) -> Result<MappedContigConfig, Box<dyn Error>> {
+    fn parse_config(&self) -> Result<AlignmentConfig, Box<dyn Error>> {
         let content = fs::read_to_string(self.config_path)?;
-        let config: MappedContigConfig = serde_yaml::from_str(&content)?;
+        let config: AlignmentConfig = serde_yaml::from_str(&content)?;
 
         Ok(config)
     }
@@ -118,7 +118,7 @@ impl<'a> Alignment<'a> {
         mafft.run().expect("Failed to run MAFFT")
     }
 
-    fn log_input(&self, config: &MappedContigConfig) {
+    fn log_input(&self, config: &AlignmentConfig) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config path", self.config_path.display());
         log::info!("{:18}: {}", "Sample counts", config.sample_counts);
@@ -136,7 +136,7 @@ impl<'a> Alignment<'a> {
             metadata.push(dep);
         }
 
-        let config = AlignmentConfig::new(
+        let config = TreeInferenceConfig::new(
             Some(self.config_path.to_path_buf()),
             self.output_dir,
             false,

@@ -13,9 +13,7 @@ pub mod configs;
 pub mod iqtree;
 
 pub const DEFAULT_PHYLO_OUTPUT_DIR: &str = "phylogenetic_tree";
-
 pub const DEFAULT_ML_OUTPUT_DIR: &str = "ml_iqtree";
-
 pub const DEFAULT_MSC_OUTPUT_DIR: &str = "msc_aster";
 
 pub struct TreeEstimation<'a> {
@@ -83,22 +81,8 @@ impl<'a> TreeEstimation<'a> {
     fn log_input(&self, config: &TreeInferenceConfig) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config file", self.config_path.display());
-        match &config.alignments {
-            Some(file) => {
-                log::info!("{:18}: {}", "Alignment counts", file.alignments.len());
-            }
-            None => {
-                log::info!("{:18}: {}", "Alignments", "Not provided");
-            }
-        }
-        match &config.trees {
-            Some(file) => {
-                log::info!("{:18}: {}", "Tree counts", file.trees.len());
-            }
-            None => {
-                log::info!("{:18}: {}", "Trees", "Not provided");
-            }
-        }
+        log::info!("{:18}: {}", "Sample counts", config.sample_counts);
+        log::info!("{:18}: {}", "File counts", config.file_counts);
     }
 
     fn run_tree_inference(&self) {

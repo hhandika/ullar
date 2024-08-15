@@ -1,62 +1,114 @@
 use std::{
     error::Error,
-    fs::{self, File},
+    fs::File,
     path::{Path, PathBuf},
 };
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    helper::{configs::CONFIG_EXTENSION, files::FileMetadata},
-    types::alignments::AlignmentFiles,
-};
+use crate::{helper::files::FileMetadata, types::alignments::AlignmentFiles};
+
+use crate::{core::utils::deps::DepMetadata, helper::configs::generate_config_output_path};
 
 pub const DEFAULT_TREE_PREFIX: &str = "tree";
-
 pub const DEFAULT_TREE_CONFIG_DIR: &str = "configs";
+/// Default alignment configuration straight from the aligner
+pub const DEFAULT_RAW_ALIGNMENT_CONFIG: &str = "raw_alignment";
+/// Default alignment configuration after cleaning
+pub const DEFAULT_CLEANED_ALIGNMENT_CONFIG: &str = "cleaned_alignment";
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct TreeInferenceConfig {
-    pub input_dir: PathBuf,
+    pub config_path: Option<PathBuf>,
+    pub input_init_dir: PathBuf,
+    pub sample_counts: usize,
+    pub file_counts: usize,
+    pub cleaned: bool,
+    pub dependencies: Vec<DepMetadata>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub trees: Option<TreeFiles>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub alignments: Option<AlignmentFiles>,
-}
-
-impl Default for TreeInferenceConfig {
-    fn default() -> Self {
-        Self {
-            input_dir: PathBuf::new(),
-            trees: None,
-            alignments: None,
-        }
-    }
+    pub override_args: Option<String>,
+    pub alignments: AlignmentFiles,
 }
 
 impl TreeInferenceConfig {
     pub fn new(
-        input_dir: &Path,
-        trees: Option<TreeFiles>,
-        alignments: Option<AlignmentFiles>,
+        config_path: Option<PathBuf>,
+        input_init_dir: &Path,
+        cleaned: bool,
+        dependencies: Vec<DepMetadata>,
+        override_args: Option<String>,
+        alignments: AlignmentFiles,
     ) -> Self {
         Self {
-            input_dir: input_dir.to_path_buf(),
-            trees,
+            config_path,
+            input_init_dir: input_init_dir.to_path_buf(),
+            sample_counts: 0,
+            file_counts: 0,
+            cleaned,
+            dependencies,
+            override_args,
             alignments,
         }
     }
 
-    /// Serialize the configuration to a YAML file.
-    pub fn to_yaml(&self, output_dir: &Path) -> Result<PathBuf, Box<dyn Error>> {
-        fs::create_dir_all(output_dir)?;
-        let mut output = output_dir.join("tree_inference_config");
-        output.set_extension(CONFIG_EXTENSION);
-        let writer = File::create(&output)?;
+    pub fn to_yaml(&self) -> Result<PathBuf, Box<dyn Error>> {
+        let output_path = generate_config_output_path(self.get_config_filename());
+        let writer = File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
-        Ok(output)
+        Ok(output_path)
+    }
+
+    fn get_config_filename(&self) -> &str {
+        if self.cleaned {
+            DEFAULT_CLEANED_ALIGNMENT_CONFIG
+        } else {
+            DEFAULT_RAW_ALIGNMENT_CONFIG
+        }
     }
 }
+
+// #[derive(Debug, Serialize, Deserialize)]
+// pub struct TreeInferenceConfig {
+//     pub input_dir: PathBuf,
+//     #[serde(skip_serializing_if = "Option::is_none")]
+//     pub trees: Option<TreeFiles>,
+//     #[serde(skip_serializing_if = "Option::is_none")]
+//     pub alignments: Option<AlignmentFiles>,
+// }
+
+// impl Default for TreeInferenceConfig {
+//     fn default() -> Self {
+//         Self {
+//             input_dir: PathBuf::new(),
+//             trees: None,
+//             alignments: None,
+//         }
+//     }
+// }
+
+// impl TreeInferenceConfig {
+//     pub fn new(
+//         input_dir: &Path,
+//         trees: Option<TreeFiles>,
+//         alignments: Option<AlignmentFiles>,
+//     ) -> Self {
+//         Self {
+//             input_dir: input_dir.to_path_buf(),
+//             trees,
+//             alignments,
+//         }
+//     }
+
+//     /// Serialize the configuration to a YAML file.
+//     pub fn to_yaml(&self, output_dir: &Path) -> Result<PathBuf, Box<dyn Error>> {
+//         fs::create_dir_all(output_dir)?;
+//         let mut output = output_dir.join("tree_inference_config");
+//         output.set_extension(CONFIG_EXTENSION);
+//         let writer = File::create(&output)?;
+//         serde_yaml::to_writer(&writer, self)?;
+//         Ok(output)
+//     }
+// }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct TreeFiles {
