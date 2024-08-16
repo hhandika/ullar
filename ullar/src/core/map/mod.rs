@@ -99,6 +99,11 @@ impl<'a> ContigMapping<'a> {
         log::info!("{}", "Input".cyan());
         log::info!("{:18} {}", "Config:", self.config_path.display());
         log::info!("{:18} {}", "Reference:", self.reference.display());
+        log::info!("{:18}: {}", "Task", self.task);
+        self.log_aligner_info();
+    }
+
+    fn log_aligner_info(&self) {
         match self.aligner {
             Aligner::Lastz => log::info!("{:18} {}", "Aligner:", "Lastz"),
             Aligner::Exonerate => log::info!("{:18} {}", "Aligner:", "Exonerate"),
