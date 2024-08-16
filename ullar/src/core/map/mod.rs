@@ -1,13 +1,20 @@
 //! Map contig to reference sequence
-use std::{error::Error, path::Path};
+use std::{error::Error, path::Path, sync::mpsc};
 
 use colored::Colorize;
 use configs::MappedContigConfig;
+use lastz::{LastzQuery, LastzRunner, LastzTarget};
+use rayon::prelude::*;
+use reports::{ContigMappingResult, LastzReport};
 
 use crate::{
     cli::commands::map::MapContigArgs,
-    helper::common,
-    types::{runner::RunnerOptions, Task},
+    helper::{common, files::FileMetadata},
+    types::{
+        map::{LastzNameParse, LastzOutputFormat},
+        runner::RunnerOptions,
+        Task,
+    },
 };
 
 pub mod configs;
@@ -72,5 +79,21 @@ impl<'a> ContigMapping<'a> {
         Ok(config)
     }
 
-    fn run_lastz(&self, config: &MappedContigConfig) {}
+    fn run_lastz(&self, contigs: &[FileMetadata]) -> Vec<ContigMappingResult> {
+        let progress_bar = common::init_progress_bar(contigs.len() as u64);
+        log::info!("Mapping contigs to reference sequence");
+        progress_bar.set_message("Contigs");
+        let (tx, rx) = mpsc::channel();
+        contigs.par_iter().for_each_with(tx, |tx, contig| {
+            let runner = LastzRunner::new(contig, &self.reference, &self.output_dir);
+            let report = runner
+                .run(self.runner.override_args)
+                .expect("Failed to run Lastz");
+            tx.send(report).unwrap();
+            progress_bar.inc(1);
+        });
+        let reports = rx.iter().collect::<Vec<ContigMappingResult>>();
+        progress_bar.finish_with_message(format!("{} Contigs\n", "✔".green()));
+        reports
+    }
 }
