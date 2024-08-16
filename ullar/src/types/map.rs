@@ -47,6 +47,23 @@ pub enum LastzOutputFormat {
     None,
 }
 
+impl Display for LastzOutputFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LastzOutputFormat::General(fields) => {
+                if fields.is_empty() {
+                    write!(f, "general")
+                } else {
+                    write!(f, "general:{}", fields)
+                }
+            }
+            LastzOutputFormat::Maf => write!(f, "maf"),
+            LastzOutputFormat::Sam => write!(f, "sam"),
+            LastzOutputFormat::None => write!(f, "none"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum LastzNameParse {
     Full,
