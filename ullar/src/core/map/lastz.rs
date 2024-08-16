@@ -18,7 +18,7 @@ use crate::helper::files::FileMetadata;
 use crate::types::map::{LastzNameParse, LastzOutputFormat};
 use crate::{get_file_stem, parse_override_args};
 
-use super::reports::LastzReport;
+use super::reports::MappingData;
 
 /// Default lastz parameters. We use the following parameters by default:
 /// 1. --nogfextend to disable gapped extension
@@ -69,22 +69,22 @@ impl<'a> LastzMapping<'a> {
     ///   multiple reference sequences or vice versa.
     /// It is just the way genomic sequences behave.
     /// We don't want those duplicates. We will only keep the best match.
-    pub fn run(&self, contigs: &[FileMetadata]) -> Result<Vec<LastzReport>, Box<dyn Error>> {
+    pub fn run(&self, contigs: &[FileMetadata]) -> Result<Vec<MappingData>, Box<dyn Error>> {
         let progress_bar = common::init_progress_bar(contigs.len() as u64);
         log::info!("Mapping contigs to reference sequence");
         progress_bar.set_message("Contigs");
         let (tx, rx) = mpsc::channel();
         contigs.par_iter().for_each_with(tx, |tx, contig| {
-            let report = self.run_lastz(contig).expect("Failed to run Lastz");
-            tx.send(report).unwrap();
+            let data = self.run_lastz(contig).expect("Failed to run Lastz");
+            tx.send(data).unwrap();
             progress_bar.inc(1);
         });
-        let reports = rx.iter().collect::<Vec<LastzReport>>();
+        let data = rx.iter().collect::<Vec<MappingData>>();
         progress_bar.finish_with_message(format!("{} Contigs\n", "✔".green()));
-        Ok(reports)
+        Ok(data)
     }
 
-    fn run_lastz(&self, contig: &FileMetadata) -> Result<LastzReport, Box<dyn Error>> {
+    fn run_lastz(&self, contig: &FileMetadata) -> Result<MappingData, Box<dyn Error>> {
         let target = self.get_target();
         let query = self.get_query(contig);
         let runner = Lastz::new(
@@ -158,7 +158,7 @@ impl<'a> Lastz<'a> {
     /// Execute the Lastz alignment
     /// Return the lastz output
     /// Else return an error
-    pub fn run(&self) -> Result<LastzReport, Box<dyn Error>> {
+    pub fn run(&self) -> Result<MappingData, Box<dyn Error>> {
         // datasets/contigs/Bunomys_chrysocomus_LSUMZ39568/contigs.fasta[multiple,nameparse=full]
         self.execute_lastz().expect("Failed to run Lastz");
         let parsed_output = self.execute_lastz();
@@ -166,9 +166,10 @@ impl<'a> Lastz<'a> {
             Ok(data) => {
                 let output_path = self.write_output(&data)?;
                 let refname_regex = self.get_refname_regex();
-                let mut report = LastzReport::new(output_path, &refname_regex);
-                report.create(&data);
-                Ok(report)
+                let mut results =
+                    MappingData::new(&self.query.query_path, output_path, &refname_regex);
+                results.summarize(&data);
+                Ok(results)
             }
             Err(e) => Err(format!("Failed to parse Lastz output: {}", e).into()),
         }
@@ -308,13 +309,13 @@ impl LastzOutput {
     }
 
     pub fn parse(&self, content: &[u8]) -> Result<Vec<Self>, Box<dyn Error>> {
-        let mut reports = Vec::new();
+        let mut results = Vec::new();
         let mut reader = ReaderBuilder::new().delimiter(b'\t').from_reader(content);
         for result in reader.deserialize() {
             let record: LastzOutput = result?;
-            reports.push(record);
+            results.push(record);
         }
-        Ok(reports)
+        Ok(results)
     }
 }
 
