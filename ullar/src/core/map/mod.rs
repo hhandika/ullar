@@ -9,7 +9,10 @@ use sequences::MappedContigs;
 
 use crate::{
     cli::commands::map::MapContigArgs,
-    helper::{common, files::FileMetadata},
+    helper::{
+        common,
+        files::{FileMetadata, PathCheck},
+    },
     types::{runner::RunnerOptions, Task},
 };
 
@@ -69,6 +72,7 @@ impl<'a> ContigMapping<'a> {
         let config = self.parse_config().expect("Failed to parse config");
         spinner.finish_with_message(format!("{} Finished parsing config\n", "✔".green()));
         self.log_input();
+        PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
         let results = self.run_lastz(&config.contig_files);
         self.generate_mapped_contig(&results);
         self.log_output(&results);
