@@ -1,6 +1,6 @@
 use std::{
     collections::{BTreeMap, HashMap},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use crate::types::map::LastzOutputFormat;
@@ -25,7 +25,8 @@ impl MappingReport {
     }
 }
 
-pub struct LastzReport {
+pub struct MappingData {
+    pub contig_path: PathBuf,
     pub output_path: PathBuf,
     pub refname_regex: String,
     /// Mapping data containing the best contig mapping
@@ -35,16 +36,17 @@ pub struct LastzReport {
     pub data: ContigMapping,
 }
 
-impl LastzReport {
-    pub fn new(output_path: PathBuf, refname_regex: &str) -> Self {
+impl MappingData {
+    pub fn new(contig_path: &Path, output_path: PathBuf, refname_regex: &str) -> Self {
         Self {
+            contig_path: contig_path.to_path_buf(),
             output_path,
             refname_regex: refname_regex.to_string(),
             data: BTreeMap::new(),
         }
     }
 
-    pub fn create(&mut self, lastz_output: &[LastzOutput]) {
+    pub fn summarize(&mut self, lastz_output: &[LastzOutput]) {
         self.data = self.find_best_contigs(lastz_output);
     }
 
@@ -276,7 +278,11 @@ mod tests {
             cov_pct: 8.0,
         };
         let lastz_output = vec![lastz_output, lastz_output2, lastz_output3, lastz_output4];
-        let report = LastzReport::new(PathBuf::from("test"), DEFAULT_REFNAME_REGEX);
+        let report = MappingData::new(
+            Path::new("test"),
+            PathBuf::from("test"),
+            DEFAULT_REFNAME_REGEX,
+        );
         let best_contigs = report.find_best_contigs(&lastz_output);
         assert_eq!(best_contigs.len(), 2);
         let regex = report.clean_reference_name("ref1_p1");
