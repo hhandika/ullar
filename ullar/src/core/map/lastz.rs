@@ -99,12 +99,16 @@ impl<'a> LastzMapping<'a> {
 
     fn get_target(&self) -> LastzTarget {
         let reference = self.reference.to_path_buf();
-        LastzTarget::new(reference, self.multiple_targets, LastzNameParse::None)
+        let target = LastzTarget::new(reference, self.multiple_targets, LastzNameParse::None);
+        target.get_path();
+        target
     }
 
     fn get_query(&self, contig: &FileMetadata) -> LastzQuery {
         let contig_path = contig.parent_dir.join(&contig.file_name);
-        LastzQuery::new(contig_path, LastzNameParse::None)
+        let query = LastzQuery::new(contig_path, LastzNameParse::None);
+        query.get_path();
+        query
     }
 }
 
@@ -350,7 +354,14 @@ impl LastzTarget {
 
     pub fn get_path(&self) -> String {
         match &self.nameparse {
-            LastzNameParse::None => self.target_path.display().to_string(),
+            LastzNameParse::None => {
+                let target_path = self.target_path.to_string_lossy();
+                if self.multiple_targets {
+                    format!("{}[multiple]", target_path)
+                } else {
+                    target_path.to_string()
+                }
+            }
             _ => {
                 let nameparse = self.nameparse.to_string();
                 if self.multiple_targets {
