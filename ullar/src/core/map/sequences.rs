@@ -1,5 +1,6 @@
 use std::{collections::HashMap, path::Path, sync::mpsc};
 
+use colored::Colorize;
 use indexmap::IndexMap;
 use rayon::prelude::*;
 use regex::Regex;
@@ -10,6 +11,8 @@ use segul::{
     },
     writer::sequences::SeqWriter,
 };
+
+use crate::helper::common;
 
 use super::reports::MappingData;
 
@@ -35,15 +38,17 @@ impl<'a> MappedContigs<'a> {
     }
 
     pub fn generate(&self) {
+        log::info!("Filtering paralogs...");
         let unaligned_contigs = self.map_contigs();
+        log::info!("Writing contigs to file...");
         self.write_sequences(unaligned_contigs);
     }
 
     fn map_contigs(&self) -> HashMap<String, SeqMatrix> {
         let mut unaligned_contigs: HashMap<String, SeqMatrix> = HashMap::new();
-
+        let progress_bar = common::init_progress_bar(self.mapping_data.len() as u64);
+        progress_bar.set_message("Mapped contigs");
         let (tx, rx) = mpsc::channel();
-
         self.mapping_data.par_iter().for_each(|data| {
             let sample_name = self.get_sample_name(&data.contig_path);
             let mut new_seq: SeqMatrix = IndexMap::new();
@@ -54,6 +59,7 @@ impl<'a> MappedContigs<'a> {
                 new_seq.insert(refname.to_string(), contig_seq.to_string());
             });
             tx.send((sample_name, new_seq)).unwrap();
+            progress_bar.inc(1);
         });
 
         rx.iter().for_each(|(refname, contig_seq)| {
@@ -64,11 +70,13 @@ impl<'a> MappedContigs<'a> {
                 unaligned_contigs.insert(refname, contig_seq.clone());
             }
         });
-
+        progress_bar.finish_with_message(format!("{} Contigs\n", "✔".green()));
         unaligned_contigs
     }
 
     fn write_sequences(&self, unaligned_contigs: HashMap<String, SeqMatrix>) {
+        let progress_bar = common::init_progress_bar(unaligned_contigs.len() as u64);
+        progress_bar.set_message("Contigs");
         unaligned_contigs.par_iter().for_each(|(refname, contigs)| {
             let output_dir = self.output_dir.join(DEFAULT_MAPPED_CONTIG_OUTPUT_DIR);
             let file_name = format!("{}", refname);
@@ -79,6 +87,7 @@ impl<'a> MappedContigs<'a> {
                 .write_sequence(&types::OutputFmt::Fasta)
                 .expect("Failed to write sequences");
         });
+        progress_bar.finish_with_message(format!("{} Contigs\n", "✔".green()));
     }
 
     fn get_header(&self, matrix: SeqMatrix) -> Header {
