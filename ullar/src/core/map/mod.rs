@@ -68,6 +68,7 @@ impl<'a> ContigMapping<'a> {
         spinner.set_message("Mapping contigs to reference sequence");
         let config = self.parse_config().expect("Failed to parse config");
         spinner.finish_with_message(format!("{} Finished parsing config\n", "✔".green()));
+        self.log_input();
         let results = self.run_lastz(&config.contig_files);
         self.generate_mapped_contig(&results);
         self.log_output(&results);
@@ -90,9 +91,20 @@ impl<'a> ContigMapping<'a> {
         MappedContigs::new(data, self.output_dir, self.reference).generate();
     }
 
+    fn log_input(&self) {
+        log::info!("{}", "Input".cyan());
+        log::info!("{:18} {}", "Config:", self.config_path.display());
+        log::info!("{:18} {}", "Reference:", self.reference.display());
+        match self.aligner {
+            Aligner::Lastz => log::info!("{:18} {}", "Aligner:", "Lastz"),
+            Aligner::Exonerate => log::info!("{:18} {}", "Aligner:", "Exonerate"),
+            Aligner::Minimap => log::info!("{:18} {}", "Aligner:", "Minimap"),
+        }
+    }
+
     fn log_output(&self, report: &[MappingData]) {
-        report.iter().for_each(|r| {
-            println!("Output path: {}", r.output_path.display());
-        });
+        log::info!("{}", "Output".cyan());
+        log::info!("{:18} {}", "Total contigs:", report.len());
+        log::info!("{:18} {}", "Output dir:", self.output_dir.display());
     }
 }
