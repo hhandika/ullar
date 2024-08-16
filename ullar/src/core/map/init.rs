@@ -102,6 +102,22 @@ impl<'a> InitMappingConfig<'a> {
 
     fn log_output(&self, output_path: &Path) {
         log::info!("{}", "Output".cyan());
-        log::info!("{:18}: {}\n", "Config file", output_path.display());
+        log::info!(
+            "{:18}: {}",
+            "Directory",
+            output_path
+                .parent()
+                .expect("Failed parsing parent dir")
+                .display()
+        );
+        log::info!(
+            "{:18}: {}",
+            "File",
+            output_path
+                .file_name()
+                .expect("Failed parsing file")
+                .to_str()
+                .expect("Failed parsing file")
+        );
     }
 }
