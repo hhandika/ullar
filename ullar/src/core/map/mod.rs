@@ -3,7 +3,7 @@ use std::{error::Error, path::Path};
 
 use colored::Colorize;
 use configs::MappedContigConfig;
-use lastz::LastzRunner;
+use lastz::LastzMapping;
 use reports::LastzReport;
 
 use crate::{
@@ -77,7 +77,8 @@ impl<'a> ContigMapping<'a> {
     }
 
     fn run_lastz(&self, contigs: &[FileMetadata]) -> Vec<LastzReport> {
-        let runner = LastzRunner::new(&self.reference, &self.output_dir, self.runner.override_args);
+        let runner =
+            LastzMapping::new(&self.reference, &self.output_dir, self.runner.override_args);
         let report = runner.run(contigs).expect("Failed to run Lastz");
         report
     }
