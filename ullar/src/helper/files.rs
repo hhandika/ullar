@@ -74,10 +74,12 @@ impl<'a> PathCheck<'a> {
             return;
         }
 
-        if self.path.exists() && self.force {
-            self.delete();
-        } else {
-            self.prompt_users(&message);
+        if self.path.exists() {
+            if self.force {
+                self.delete();
+            } else {
+                self.prompt_users(&message);
+            }
         }
     }
 
