@@ -6,6 +6,7 @@ use commands::{
     assembly::{AssemblyArgs, AssemblyInitArgs, AssemblySubcommand},
     clean::CleanSubcommand,
     deps::DepsSubcommand,
+    map::MapSubcommand,
     new::NewArgs,
     utils::{ScannerSubcommand, UtilSubCommand},
     UllarCli, UllarSubcommand,
@@ -17,8 +18,9 @@ use crate::{
     core::{
         alignment::{init::AlignmentInit, Alignment},
         assembly::{init::AssemblyInit, Assembly},
-        new::NewProject,
         clean::ReadCleaner,
+        map::{init::InitMappingConfig, ContigMapping},
+        new::NewProject,
         tree::TreeEstimation,
         utils::{checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner},
     },
@@ -70,7 +72,7 @@ impl Cli {
             UllarSubcommand::New(new_args) => self.create_project(new_args),
             UllarSubcommand::Clean(subcommand) => CleanArgParser::new(subcommand).parse(),
             UllarSubcommand::Assemble(subcommand) => AssemblyArgParser::new(subcommand).parse(),
-            UllarSubcommand::Map => unimplemented!("Map command is not yet implemented"),
+            UllarSubcommand::Map(subcommand) => MapArgParser::new(subcommand).parse(),
             UllarSubcommand::Alignment(subcommand) => AlignmentArgParser::new(subcommand).parse(),
             UllarSubcommand::Tree(tree_args) => TreeEstimation::from_arg(tree_args).run(),
             UllarSubcommand::Deps(subcommand) => self.parse_dependencies(subcommand),
@@ -156,6 +158,26 @@ impl<'a> AssemblyArgParser<'a> {
 
     fn assemble(&self, args: &AssemblyArgs) {
         Assembly::from_arg(args).assemble();
+    }
+}
+
+struct MapArgParser<'a> {
+    subcommand: &'a MapSubcommand,
+}
+
+impl<'a> MapArgParser<'a> {
+    fn new(subcommand: &'a MapSubcommand) -> Self {
+        Self { subcommand }
+    }
+
+    fn parse(&self) {
+        match self.subcommand {
+            MapSubcommand::Init(args) => InitMappingConfig::from_arg(args).init(),
+            MapSubcommand::Contig(args) => ContigMapping::from_arg(args).map(),
+            MapSubcommand::Read(_) => {
+                unimplemented!("Map read command is not yet implemented")
+            }
+        }
     }
 }
 

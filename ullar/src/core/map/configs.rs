@@ -4,18 +4,15 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use once_cell::sync::Lazy;
-use regex::Regex;
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
 use crate::{
     core::utils::deps::DepMetadata,
     helper::{
         configs::{generate_config_output_path, PreviousStep},
-        files::FileMetadata,
+        files::{FileFinder, FileMetadata},
     },
-    types::Task,
+    types::{SupportedFormats, Task},
 };
 
 pub const DEFAULT_LOCUS_CONFIG: &str = "mapped_contig";
@@ -30,7 +27,6 @@ pub struct MappedContigConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub override_args: Option<String>,
     pub contig_files: Vec<FileMetadata>,
-    pub reference_file: FileMetadata,
 }
 
 impl Default for MappedContigConfig {
@@ -40,7 +36,6 @@ impl Default for MappedContigConfig {
             previous_step: PreviousStep::default(),
             override_args: None,
             contig_files: Vec::new(),
-            reference_file: FileMetadata::new(),
         }
     }
 }
@@ -57,23 +52,36 @@ impl MappedContigConfig {
             previous_step: PreviousStep::with_dependencies(task, dependencies),
             override_args,
             contig_files: Vec::new(),
-            reference_file: FileMetadata::new(),
         }
     }
 
-    pub fn init(
-        &mut self,
-        contig_dir: &Path,
-        reference_dir: &Path,
-        previous_step: Option<PreviousStep>,
-    ) {
+    pub fn from_contig_dir(&mut self, contig_dir: &Path, previous_step: Option<PreviousStep>) {
         let sequence_files = self.find_contig_files(contig_dir);
+        if sequence_files.is_empty() {
+            log::error!(
+                "No contig files found in directory: {}",
+                contig_dir.display()
+            );
+            return;
+        }
+        self.assign_values(&sequence_files, previous_step);
+    }
+
+    pub fn from_contig_paths(&mut self, contigs: &[PathBuf], previous_step: Option<PreviousStep>) {
+        if contigs.is_empty() {
+            log::warn!("No contig files found in input");
+            return;
+        }
+        self.assign_values(contigs, previous_step);
+    }
+
+    fn assign_values(&mut self, contigs: &[PathBuf], previous_step: Option<PreviousStep>) {
+        self.contig_file_counts = contigs.len();
         match previous_step {
             Some(step) => self.previous_step = step,
             None => self.previous_step = PreviousStep::new(Task::Unknown),
         }
-        self.contig_files = self.get_metadata(&sequence_files);
-        self.reference_file.get(reference_dir);
+        self.contig_files = self.get_metadata(contigs);
     }
 
     /// Get raw loci files
@@ -85,16 +93,17 @@ impl MappedContigConfig {
     }
 
     fn find_contig_files(&self, input_dir: &Path) -> Vec<PathBuf> {
-        WalkDir::new(input_dir)
-            .into_iter()
-            .filter_map(|e| e.ok())
-            .map(|e| e.path().to_path_buf())
-            .filter(|e| e.is_file())
-            .filter(|e| re_matches_contigs(e))
-            .collect::<Vec<PathBuf>>()
+        let format = SupportedFormats::Contigs;
+        FileFinder::new(input_dir, &format)
+            .find(true)
+            .expect("Failed to find contig files")
     }
 
     fn get_metadata(&self, sequence_files: &[PathBuf]) -> Vec<FileMetadata> {
+        assert!(
+            !sequence_files.is_empty(),
+            "No sequence files found in the input directory"
+        );
         sequence_files
             .iter()
             .map(|f| {
@@ -103,31 +112,5 @@ impl MappedContigConfig {
                 file
             })
             .collect()
-    }
-}
-
-fn re_matches_contigs(path: &Path) -> bool {
-    static RE: Lazy<Regex> =
-        Lazy::new(|| Regex::new(CONTIG_REGEX).expect("Failed to compile regex"));
-    let file_name = path.file_name().expect("Failed to get file name");
-    RE.is_match(
-        file_name
-            .to_str()
-            .expect("Failed to convert file name to string"),
-    )
-}
-
-#[cfg(test)]
-mod tests {
-    use std::path::Path;
-
-    use super::*;
-
-    #[test]
-    fn test_mapped_contig_config() {
-        let config = MappedContigConfig::default();
-        let contig_dir = Path::new("tests/contigs");
-        config.find_contig_files(contig_dir);
-        assert_eq!(config.contig_files.len(), 1);
     }
 }

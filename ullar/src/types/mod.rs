@@ -129,6 +129,8 @@ pub enum SupportedFormats {
     /// reference sequences, and alignments
     Fasta,
     /// Nexus file format for alignments
+    Contigs,
+    /// Nexus file format for alignments
     Nexus,
     /// Phylip file format for alignments
     Phylip,
@@ -142,6 +144,7 @@ impl Display for SupportedFormats {
         match self {
             SupportedFormats::Fastq => write!(f, "fastq"),
             SupportedFormats::Fasta => write!(f, "fasta"),
+            SupportedFormats::Contigs => write!(f, "contigs"),
             SupportedFormats::Nexus => write!(f, "nexus"),
             SupportedFormats::Phylip => write!(f, "phylip"),
             SupportedFormats::PlainText => write!(f, "text"),
@@ -156,6 +159,7 @@ impl FromStr for SupportedFormats {
         match s {
             "fastq" => Ok(SupportedFormats::Fastq),
             "fasta" => Ok(SupportedFormats::Fasta),
+            "contigs" => Ok(SupportedFormats::Contigs),
             "nexus" => Ok(SupportedFormats::Nexus),
             "phylip" => Ok(SupportedFormats::Phylip),
             "text" => Ok(SupportedFormats::PlainText),

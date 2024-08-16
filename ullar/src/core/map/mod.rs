@@ -1,7 +1,10 @@
 //! Map contig to reference sequence
 use std::path::Path;
 
-use crate::types::{runner::RunnerOptions, Task};
+use crate::{
+    cli::commands::map::MapContigArgs,
+    types::{runner::RunnerOptions, Task},
+};
 
 pub mod configs;
 pub mod exonerate;
@@ -38,4 +41,16 @@ impl<'a> ContigMapping<'a> {
             task: Task::ContigMapping,
         }
     }
+
+    pub fn from_arg(args: &'a MapContigArgs) -> Self {
+        Self {
+            config_path: &args.config,
+            output_dir: &args.output,
+            aligner: Aligner::Lastz,
+            runner: RunnerOptions::from_arg(&args.common),
+            task: Task::ContigMapping,
+        }
+    }
+
+    pub fn map(&self) {}
 }

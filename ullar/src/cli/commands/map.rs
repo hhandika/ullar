@@ -13,10 +13,10 @@ pub(crate) enum MapSubcommand {
     Init(MapInitArgs),
     /// Perform contig mapping
     #[command(name = "contig", about = "Map contigs to reference sequences")]
-    MapContig(MapContigArgs),
+    Contig(MapContigArgs),
     /// Perform read mapping
     #[command(name = "read", about = "Map reads to reference sequences")]
-    MapRead(MapReadArgs),
+    Read(MapReadArgs),
 }
 
 #[derive(Args)]
@@ -38,30 +38,28 @@ pub struct MapContigArgs {
 
 #[derive(Args)]
 pub struct MapInitArgs {
-    /// Input directory containing the target reference sequences
-    #[arg(short = 't', long = "target", help = "Input directory containing the target reference sequences")]
-    pub target_dir: PathBuf,
     /// Input directory containing query sequences
-    #[arg(short = 'q', long = "query", help = "Input directory containing query sequences")]
-    pub query_dir: PathBuf,
-    /// Input format. Possible values: Fasta, Fastq
+    #[arg(short, long, required_unless_present = "input", help = "Path to the directory containing query sequences")]
+    pub dir: Option<PathBuf>,
+    /// Input query path.
     #[arg(
-        short = 'Q',
-        long = "query-format",
+        short,
+        long,
         default_value = "fasta",
+        conflicts_with = "query-dir",
+        num_args(0..),
+        help = "Input query path using stdin.",
+    )]
+    pub input: Option<Vec<PathBuf>>,
+
+    #[arg(
+        short = 'f',
+        long = "format",
+        default_value = "contig",
         help = "Input query format.",
-        value_parser = builder::PossibleValuesParser::new(["fasta", "fastq"])
+        value_parser = builder::PossibleValuesParser::new(["contig", "read"])
     )]
     pub query_format: String,
-    /// Target format. Possible values: Fasta, Fastq
-    #[arg(
-        short = 'T',
-        long = "target-format",
-        default_value = "fasta",
-        help = "Input target format.",
-        value_parser = builder::PossibleValuesParser::new(["fasta", "fastq"])
-    )]
-    pub target_format: String,
     #[command(flatten)]
     pub common: CommonRunnerArgs,
 }

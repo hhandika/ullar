@@ -7,6 +7,7 @@ pub const FASTA_REGEX: &str = r"(?i)(.fa|.fasta|.fna|.fsa|.fas)(?:.*)";
 pub const NEXUS_REGEX: &str = r"(\.nexus|\.nex|\.nxs)$";
 pub const PHYLIP_REGEX: &str = r"(\.phylip|\.phy|\.ph)$";
 pub const PLAIN_TEXT_REGEX: &str = r"(\.txt|\.text|\.log)$";
+pub const CONTIG_REGEX: &str = r"(?i)(contig*)";
 
 /// Regular expression for matching sample names
 /// Matches a simple name with a given pattern
