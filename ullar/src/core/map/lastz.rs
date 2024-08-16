@@ -2,20 +2,23 @@
 //!
 //!
 //! Documentation for Lastz can be found [here](https://www.bx.psu.edu/~rsharris/lastz/README.lastz-1.04.15.html).
-
 use std::error::Error;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
+use std::sync::mpsc;
 
+use colored::Colorize;
 use csv::ReaderBuilder;
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::helper::common;
 use crate::helper::files::FileMetadata;
 use crate::types::map::{LastzNameParse, LastzOutputFormat};
 use crate::{get_file_stem, parse_override_args};
 
-use super::reports::{LastzResults, LastzSummary};
+use super::reports::LastzReport;
 
 /// Default lastz parameters. We use the following parameters by default:
 /// 1. --nogfextend to disable gapped extension
@@ -23,28 +26,36 @@ pub const DEFAULT_LASTZ_PARAMS: &str =
     "--strand=both --transition --nogfextend --step=20 --gap=400,30 --format=maf > results.maf";
 /// Lastz executable.
 pub const LASTZ_EXE: &str = "lastz";
-
 /// Default output to CSV for easy reading
 pub const DEFAULT_OUTPUT_EXT: &str = "csv";
+
+/// Default regex pattern to reference sequence name
+pub const DEFAULT_REFNAME_REGEX: &str = r"(?i)_p\d+$";
+
+pub enum RefNameRegex {
+    Default,
+    Custom(String),
+    None,
+}
 
 /// Lastz runner
 /// Handle IO parsing and execution of Lastz
 pub struct LastzRunner<'a> {
-    /// Contig query sequence
-    pub contigs: &'a FileMetadata,
     /// Reference sequence to align against
     pub reference: &'a Path,
     pub output_dir: &'a Path,
     /// Is reference contains multiple sequences
     pub multiple_targets: bool,
+    /// Override arguments for Lastz
+    pub override_args: Option<&'a str>,
 }
 
 impl<'a> LastzRunner<'a> {
-    pub fn new(contigs: &'a FileMetadata, reference: &'a Path, output_dir: &'a Path) -> Self {
+    pub fn new(reference: &'a Path, output_dir: &'a Path, override_args: Option<&'a str>) -> Self {
         Self {
-            contigs,
             reference,
             output_dir,
+            override_args,
             multiple_targets: true,
         }
     }
@@ -58,28 +69,32 @@ impl<'a> LastzRunner<'a> {
     ///   multiple reference sequences or vice versa.
     /// It is just the way genomic sequences behave.
     /// We don't want those duplicates. We will only keep the best match.
-    pub fn run(&self, override_args: Option<&'a str>) -> Result<LastzSummary, Box<dyn Error>> {
-        let results = self.run_lastz()?;
-        let reports = self.parse_report(results);
+    pub fn run(&self, contigs: &[FileMetadata]) -> Result<Vec<LastzReport>, Box<dyn Error>> {
+        let progress_bar = common::init_progress_bar(contigs.len() as u64);
+        log::info!("Mapping contigs to reference sequence");
+        progress_bar.set_message("Contigs");
+        let (tx, rx) = mpsc::channel();
+        contigs.par_iter().for_each_with(tx, |tx, contig| {
+            let report = self.run_lastz(contig).expect("Failed to run Lastz");
+            tx.send(report).unwrap();
+            progress_bar.inc(1);
+        });
+        let reports = rx.iter().collect::<Vec<LastzReport>>();
+        progress_bar.finish_with_message(format!("{} Contigs\n", "✔".green()));
         Ok(reports)
     }
 
-    fn run_lastz(&self) -> Result<LastzResults, Box<dyn Error>> {
+    fn run_lastz(&self, contig: &FileMetadata) -> Result<LastzReport, Box<dyn Error>> {
         let target = self.get_target();
-        let query = self.get_query();
+        let query = self.get_query(contig);
         let runner = Lastz::new(
             &target,
             &query,
             self.output_dir,
             &LastzOutputFormat::None,
-            None,
+            self.override_args,
         );
         runner.run()
-    }
-
-    fn parse_report(&self, results: LastzResults) -> LastzSummary {
-        let report = LastzSummary::new(results);
-        report
     }
 
     fn get_target(&self) -> LastzTarget {
@@ -87,8 +102,8 @@ impl<'a> LastzRunner<'a> {
         LastzTarget::new(reference, self.multiple_targets, LastzNameParse::None)
     }
 
-    fn get_query(&self) -> LastzQuery {
-        let contig_path = self.contigs.parent_dir.join(&self.contigs.file_name);
+    fn get_query(&self, contig: &FileMetadata) -> LastzQuery {
+        let contig_path = contig.parent_dir.join(&contig.file_name);
         LastzQuery::new(contig_path, LastzNameParse::None)
     }
 }
@@ -118,6 +133,8 @@ pub struct Lastz<'a> {
     /// Override arguments for Lastz
     ///   If None, use DEFAULT_LASTZ_PARAMS
     pub override_args: Option<&'a str>,
+    /// Reference sequence name regex pattern
+    pub refname_regex: RefNameRegex,
 }
 
 impl<'a> Lastz<'a> {
@@ -134,6 +151,7 @@ impl<'a> Lastz<'a> {
             output_dir,
             output_format,
             override_args,
+            refname_regex: RefNameRegex::Default,
         }
     }
 
@@ -143,10 +161,28 @@ impl<'a> Lastz<'a> {
     pub fn run(&self) -> Result<LastzReport, Box<dyn Error>> {
         // datasets/contigs/Bunomys_chrysocomus_LSUMZ39568/contigs.fasta[multiple,nameparse=full]
         self.execute_lastz().expect("Failed to run Lastz");
-        self.execute_lastz()
+        let parsed_output = self.execute_lastz();
+        match parsed_output {
+            Ok(data) => {
+                let output_path = self.write_output(&data)?;
+                let refname_regex = self.get_refname_regex();
+                let mut report = LastzReport::new(output_path, &refname_regex);
+                report.create(&data);
+                Ok(report)
+            }
+            Err(e) => Err(format!("Failed to parse Lastz output: {}", e).into()),
+        }
     }
 
-    fn execute_lastz(&self) -> Result<LastzReport, Box<dyn Error>> {
+    fn get_refname_regex(&self) -> String {
+        match &self.refname_regex {
+            RefNameRegex::Default => DEFAULT_REFNAME_REGEX.to_string(),
+            RefNameRegex::Custom(pattern) => pattern.to_string(),
+            RefNameRegex::None => String::new(),
+        }
+    }
+
+    fn execute_lastz(&self) -> Result<Vec<LastzOutput>, Box<dyn Error>> {
         let mut cmd = Command::new(LASTZ_EXE);
         cmd.arg(self.target.get_path());
         cmd.arg(self.query.get_path());
@@ -159,9 +195,8 @@ impl<'a> Lastz<'a> {
 
         match self.check_success(&output) {
             Ok(_) => {
-                let output_path = self.create_output_path()?;
-                let reports = self.create_reports(&output, output_path)?;
-                Ok(reports)
+                let parsed_output = self.parse_output(&output)?;
+                Ok(parsed_output)
             }
             Err(e) => Err(e),
         }
@@ -185,14 +220,101 @@ impl<'a> Lastz<'a> {
         Ok(output_path)
     }
 
-    fn create_reports(
-        &self,
-        output: &Output,
-        output_path: PathBuf,
-    ) -> Result<LastzReport, Box<dyn Error>> {
-        let output = LastzOutput::new().parse(&output.stdout)?;
-        let report = LastzReport::new(output_path, self.output_format, output);
-        Ok(report)
+    fn parse_output(&self, output: &Output) -> Result<Vec<LastzOutput>, Box<dyn Error>> {
+        let parsed_output = LastzOutput::new().parse(&output.stdout)?;
+        Ok(parsed_output)
+    }
+
+    fn write_output(&self, parse_output: &[LastzOutput]) -> Result<PathBuf, Box<dyn Error>> {
+        let output_path = self.create_output_path()?;
+        let mut writer = csv::Writer::from_path(&output_path)?;
+        for record in parse_output {
+            writer.serialize(record)?;
+        }
+        Ok(output_path)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct LastzOutput {
+    /// Score of the alignment block.
+    /// the higher the score, the better the alignment
+    pub score: usize,
+    /// Name of the target sequence
+    pub name1: String,
+    /// Name of the query sequence
+    pub name2: String,
+    /// Strand of the target sequence
+    ///  +: forward strand
+    /// -: reverse strand
+    pub strand1: char,
+    /// Strand of the query sequence.
+    /// Query strand will be converted to
+    /// forward strand if it is reverse.
+    pub strand2: char,
+    /// The size of the target sequence
+    pub size1: usize,
+    /// The size of the query sequence
+    pub size2: usize,
+    /// Start position of the alignment block
+    /// in the target sequence
+    pub zstart1: usize,
+    /// Start position of the alignment block in the query sequence
+    pub zstart2: usize,
+    /// End position of the alignment block in the target sequence
+    pub end1: usize,
+    /// End position of the alignment block in the query sequence
+    pub end2: usize,
+    /// Fraction of aligned bases that matches
+    /// between the two sequences
+    pub identity: String,
+    /// Fraction of identity in the alignment block.
+    ///     the same as identity but in percentage
+    #[serde(rename = "idPct")]
+    pub id_pct: f64,
+    /// Fraction the entire input sequence that is align.
+    pub coverage: String,
+    /// Fraction of the entire input sequence that is align.
+    ///    the same as coverage but in percentage
+    #[serde(rename = "covPct")]
+    pub cov_pct: f64,
+}
+
+impl Default for LastzOutput {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl LastzOutput {
+    pub fn new() -> Self {
+        Self {
+            score: 0,
+            name1: String::new(),
+            name2: String::new(),
+            strand1: ' ',
+            strand2: ' ',
+            size1: 0,
+            size2: 0,
+            zstart1: 0,
+            zstart2: 0,
+            end1: 0,
+            end2: 0,
+            identity: String::new(),
+            id_pct: 0.0,
+            coverage: String::new(),
+            cov_pct: 0.0,
+        }
+    }
+
+    pub fn parse(&self, content: &[u8]) -> Result<Vec<Self>, Box<dyn Error>> {
+        let mut reports = Vec::new();
+        let mut reader = ReaderBuilder::new().delimiter(b'\t').from_reader(content);
+        for result in reader.deserialize() {
+            let record: LastzOutput = result?;
+            reports.push(record);
+        }
+        Ok(reports)
     }
 }
 
@@ -283,116 +405,5 @@ impl LastzQuery {
 
     pub fn get_file_stem(&self) -> String {
         get_file_stem!(self, query_path)
-    }
-}
-
-pub struct LastzResults {
-    pub output_dir: PathBuf,
-    pub output_format: LastzOutputFormat,
-    pub data: Vec<LastzOutput>,
-}
-
-impl LastzResults {
-    pub fn new(
-        output_dir: PathBuf,
-        output_format: &LastzOutputFormat,
-        data: Vec<LastzOutput>,
-    ) -> Self {
-        Self {
-            output_dir,
-            output_format: output_format.clone(),
-            data,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct LastzOutput {
-    /// Score of the alignment block.
-    /// the higher the score, the better the alignment
-    pub score: usize,
-    /// Name of the target sequence
-    pub name1: String,
-    /// Name of the query sequence
-    pub name2: String,
-    /// Strand of the target sequence
-    ///  +: forward strand
-    /// -: reverse strand
-    pub strand1: char,
-    /// Strand of the query sequence.
-    /// Query strand will be converted to
-    /// forward strand if it is reverse.
-    pub strand2: char,
-    /// The size of the target sequence
-    pub size1: usize,
-    /// The size of the query sequence
-    pub size2: usize,
-    /// Start position of the alignment block
-    /// in the target sequence
-    pub zstart1: usize,
-    /// Start position of the alignment block in the query sequence
-    pub zstart2: usize,
-    /// End position of the alignment block in the target sequence
-    pub end1: usize,
-    /// End position of the alignment block in the query sequence
-    pub end2: usize,
-    /// Fraction of aligned bases that matches
-    /// between the two sequences
-    pub identity: String,
-    /// Fraction of identity in the alignment block.
-    ///     the same as identity but in percentage
-    #[serde(rename = "idPct")]
-    pub id_pct: f64,
-    /// Fraction the entire input sequence that is align.
-    pub coverage: String,
-    /// Fraction of the entire input sequence that is align.
-    ///    the same as coverage but in percentage
-    #[serde(rename = "covPct")]
-    pub cov_pct: f64,
-}
-
-impl Default for LastzOutput {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl LastzOutput {
-    pub fn new() -> Self {
-        Self {
-            score: 0,
-            name1: String::new(),
-            name2: String::new(),
-            strand1: ' ',
-            strand2: ' ',
-            size1: 0,
-            size2: 0,
-            zstart1: 0,
-            zstart2: 0,
-            end1: 0,
-            end2: 0,
-            identity: String::new(),
-            id_pct: 0.0,
-            coverage: String::new(),
-            cov_pct: 0.0,
-        }
-    }
-
-    pub fn parse(&self, content: &[u8]) -> Result<Vec<Self>, Box<dyn Error>> {
-        let mut reports = Vec::new();
-        let mut reader = ReaderBuilder::new().delimiter(b'\t').from_reader(content);
-        for result in reader.deserialize() {
-            let record: LastzOutput = result?;
-            reports.push(record);
-        }
-        Ok(reports)
-    }
-
-    pub fn write(&self, reports: &[Self]) -> Result<(), Box<dyn Error>> {
-        let mut writer = csv::Writer::from_writer(std::io::stdout());
-        for report in reports {
-            writer.serialize(report)?;
-        }
-        Ok(())
     }
 }

@@ -1,20 +1,15 @@
 //! Map contig to reference sequence
-use std::{error::Error, path::Path, sync::mpsc};
+use std::{error::Error, path::Path};
 
 use colored::Colorize;
 use configs::MappedContigConfig;
-use lastz::{LastzQuery, LastzRunner, LastzTarget};
-use rayon::prelude::*;
-use reports::{ContigMappingResult, LastzReport};
+use lastz::LastzRunner;
+use reports::LastzReport;
 
 use crate::{
     cli::commands::map::MapContigArgs,
     helper::{common, files::FileMetadata},
-    types::{
-        map::{LastzNameParse, LastzOutputFormat},
-        runner::RunnerOptions,
-        Task,
-    },
+    types::{runner::RunnerOptions, Task},
 };
 
 pub mod configs;
@@ -71,6 +66,8 @@ impl<'a> ContigMapping<'a> {
         spinner.set_message("Mapping contigs to reference sequence");
         let config = self.parse_config().expect("Failed to parse config");
         spinner.finish_with_message(format!("{} Finished parsing config\n", "✔".green()));
+        let results = self.run_lastz(&config.contig_files);
+        self.log_output(&results);
     }
 
     fn parse_config(&self) -> Result<MappedContigConfig, Box<dyn Error>> {
@@ -79,21 +76,15 @@ impl<'a> ContigMapping<'a> {
         Ok(config)
     }
 
-    fn run_lastz(&self, contigs: &[FileMetadata]) -> Vec<ContigMappingResult> {
-        let progress_bar = common::init_progress_bar(contigs.len() as u64);
-        log::info!("Mapping contigs to reference sequence");
-        progress_bar.set_message("Contigs");
-        let (tx, rx) = mpsc::channel();
-        contigs.par_iter().for_each_with(tx, |tx, contig| {
-            let runner = LastzRunner::new(contig, &self.reference, &self.output_dir);
-            let report = runner
-                .run(self.runner.override_args)
-                .expect("Failed to run Lastz");
-            tx.send(report).unwrap();
-            progress_bar.inc(1);
+    fn run_lastz(&self, contigs: &[FileMetadata]) -> Vec<LastzReport> {
+        let runner = LastzRunner::new(&self.reference, &self.output_dir, self.runner.override_args);
+        let report = runner.run(contigs).expect("Failed to run Lastz");
+        report
+    }
+
+    fn log_output(&self, report: &[LastzReport]) {
+        report.iter().for_each(|r| {
+            println!("Output path: {}", r.output_path.display());
         });
-        let reports = rx.iter().collect::<Vec<ContigMappingResult>>();
-        progress_bar.finish_with_message(format!("{} Contigs\n", "✔".green()));
-        reports
     }
 }
