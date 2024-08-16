@@ -23,7 +23,7 @@ use super::reports::MappingData;
 /// Default lastz parameters. We use the following parameters by default:
 /// 1. --nogfextend to disable gapped extension
 pub const DEFAULT_LASTZ_PARAMS: &str =
-    "--strand=both --transition --nogfextend --step=20 --gap=400,30 --format=maf > results.maf";
+    "--strand=both --transition --nogfextend --step=20 --gap=400,30 --format=maf";
 /// Lastz executable.
 pub const LASTZ_EXE: &str = "lastz";
 /// Default output to CSV for easy reading
