@@ -40,7 +40,7 @@ pub enum RefNameRegex {
 
 /// Lastz runner
 /// Handle IO parsing and execution of Lastz
-pub struct LastzRunner<'a> {
+pub struct LastzMapping<'a> {
     /// Reference sequence to align against
     pub reference: &'a Path,
     pub output_dir: &'a Path,
@@ -50,7 +50,7 @@ pub struct LastzRunner<'a> {
     pub override_args: Option<&'a str>,
 }
 
-impl<'a> LastzRunner<'a> {
+impl<'a> LastzMapping<'a> {
     pub fn new(reference: &'a Path, output_dir: &'a Path, override_args: Option<&'a str>) -> Self {
         Self {
             reference,
