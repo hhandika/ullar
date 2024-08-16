@@ -21,7 +21,7 @@ use super::reports::MappingData;
 /// Default lastz parameters. We use the following parameters by default:
 /// 1. --nogfextend to disable gapped extension
 pub const DEFAULT_LASTZ_PARAMS: &str =
-    "--strand=both --transition --nogfextend --step=20 --gap=400,30 --format=maf";
+    "--strand=both --transition --nogfextend --step=20 --gap=400,30";
 /// Lastz executable.
 pub const LASTZ_EXE: &str = "lastz";
 /// Default output to CSV for easy reading
@@ -194,7 +194,9 @@ impl<'a> Lastz<'a> {
             Some(params) => parse_override_args!(cmd, params),
             None => parse_override_args!(cmd, DEFAULT_LASTZ_PARAMS),
         };
-
+        if self.output_format != &LastzOutputFormat::None {
+            cmd.arg(format!("--format={}", self.get_format()));
+        }
         let output = cmd.output()?;
 
         match self.check_success(&output) {
@@ -204,6 +206,10 @@ impl<'a> Lastz<'a> {
             }
             Err(e) => Err(e),
         }
+    }
+
+    fn get_format(&self) -> String {
+        self.output_format.to_string()
     }
 
     fn check_success(&self, output: &Output) -> Result<(), Box<dyn Error>> {
