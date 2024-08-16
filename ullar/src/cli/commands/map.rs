@@ -24,6 +24,9 @@ pub struct MapContigArgs {
     /// Path to the map configuration file
     #[arg(short, long, help = "Path to the map configuration file")]
     pub config: PathBuf,
+    /// Path to the reference sequence
+    #[arg(short, long, help = "Path to the reference sequence")]
+    pub reference: PathBuf,
     /// Output directory to store the alignments
     #[arg( 
         short,
