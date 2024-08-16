@@ -76,7 +76,7 @@ impl<'a> LastzMapping<'a> {
         let (tx, rx) = mpsc::channel();
         contigs.par_iter().for_each_with(tx, |tx, contig| {
             let data = self.run_lastz(contig).expect("Failed to run Lastz");
-            tx.send(data).unwrap();
+            tx.send(data).expect("Failed to send data");
             progress_bar.inc(1);
         });
         let data = rx.iter().collect::<Vec<MappingData>>();
@@ -314,12 +314,23 @@ impl LastzOutput {
 
     pub fn parse(&self, content: &[u8]) -> Result<Vec<Self>, Box<dyn Error>> {
         let mut results = Vec::new();
-        let mut reader = ReaderBuilder::new().delimiter(b'\t').from_reader(content);
+        let data = self.clean_unwanted_chars(content);
+        let mut reader = ReaderBuilder::new()
+            .delimiter(b'\t')
+            .from_reader(data.as_slice());
         for result in reader.deserialize() {
             let record: LastzOutput = result?;
             results.push(record);
         }
         Ok(results)
+    }
+
+    fn clean_unwanted_chars(&self, content: &[u8]) -> Vec<u8> {
+        content
+            .iter()
+            .filter(|&c| *c != b'#' && *c != b'%')
+            .map(|&c| c)
+            .collect::<Vec<u8>>()
     }
 }
 
