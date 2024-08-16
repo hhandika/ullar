@@ -49,13 +49,13 @@ impl<'a> MappedContigs<'a> {
         let progress_bar = common::init_progress_bar(self.mapping_data.len() as u64);
         progress_bar.set_message("Mapped contigs");
         let (tx, rx) = mpsc::channel();
-        self.mapping_data.par_iter().for_each(|data| {
+        self.mapping_data.iter().for_each(|data| {
             let sample_name = self.get_sample_name(&data.contig_path);
             let mut new_seq: SeqMatrix = IndexMap::new();
             let (seq, _) =
                 SeqParser::new(&data.contig_path, &DataType::Dna).parse(&types::InputFmt::Fasta);
             data.data.iter().for_each(|(refname, contig)| {
-                let contig_seq = seq.get(&contig.contig_name).unwrap();
+                let contig_seq = seq.get(&contig.contig_name).expect("Failed to get contig");
                 new_seq.insert(refname.to_string(), contig_seq.to_string());
             });
             tx.send((sample_name, new_seq)).unwrap();
