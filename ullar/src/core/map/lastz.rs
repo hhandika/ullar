@@ -11,10 +11,11 @@ use std::process::{Command, Output};
 use csv::ReaderBuilder;
 use serde::{Deserialize, Serialize};
 
+use crate::helper::files::FileMetadata;
 use crate::types::map::{LastzNameParse, LastzOutputFormat};
 use crate::{get_file_stem, parse_override_args};
 
-use super::reports::LastzReport;
+use super::reports::{LastzResults, LastzSummary};
 
 /// Default lastz parameters. We use the following parameters by default:
 /// 1. --nogfextend to disable gapped extension
@@ -26,13 +27,78 @@ pub const LASTZ_EXE: &str = "lastz";
 /// Default output to CSV for easy reading
 pub const DEFAULT_OUTPUT_EXT: &str = "csv";
 
-/// Lastz runner struct
+/// Lastz runner
+/// Handle IO parsing and execution of Lastz
+pub struct LastzRunner<'a> {
+    /// Contig query sequence
+    pub contigs: &'a FileMetadata,
+    /// Reference sequence to align against
+    pub reference: &'a Path,
+    pub output_dir: &'a Path,
+    /// Is reference contains multiple sequences
+    pub multiple_targets: bool,
+}
+
+impl<'a> LastzRunner<'a> {
+    pub fn new(contigs: &'a FileMetadata, reference: &'a Path, output_dir: &'a Path) -> Self {
+        Self {
+            contigs,
+            reference,
+            output_dir,
+            multiple_targets: true,
+        }
+    }
+
+    /// Map contig to reference sequence using Lastz.
+    /// We use target as the reference sequence
+    ///     and query as the contig sequence.
+    /// Lastz output tab delimited format containing the
+    ///    mapping scores.
+    /// Some of these contigs may match
+    ///   multiple reference sequences or vice versa.
+    /// It is just the way genomic sequences behave.
+    /// We don't want those duplicates. We will only keep the best match.
+    pub fn run(&self, override_args: Option<&'a str>) -> Result<LastzSummary, Box<dyn Error>> {
+        let results = self.run_lastz()?;
+        let reports = self.parse_report(results);
+        Ok(reports)
+    }
+
+    fn run_lastz(&self) -> Result<LastzResults, Box<dyn Error>> {
+        let target = self.get_target();
+        let query = self.get_query();
+        let runner = Lastz::new(
+            &target,
+            &query,
+            self.output_dir,
+            &LastzOutputFormat::None,
+            None,
+        );
+        runner.run()
+    }
+
+    fn parse_report(&self, results: LastzResults) -> LastzSummary {
+        let report = LastzSummary::new(results);
+        report
+    }
+
+    fn get_target(&self) -> LastzTarget {
+        let reference = self.reference.to_path_buf();
+        LastzTarget::new(reference, self.multiple_targets, LastzNameParse::None)
+    }
+
+    fn get_query(&self) -> LastzQuery {
+        let contig_path = self.contigs.parent_dir.join(&self.contigs.file_name);
+        LastzQuery::new(contig_path, LastzNameParse::None)
+    }
+}
+
 /// Handle the execution of Lastz
 /// The lastz command ordered as the following:
 /// lastz target.fa query.fa [options] > output.maf
 /// The lastz executor will execute the command,
 /// capture the output from stdout, and write to a file.
-pub struct LastzRunner<'a> {
+pub struct Lastz<'a> {
     /// The target sequence.
     ///    Lastz loads entire target sequences into memory.
     ///     If the target sequence is multiple sequences, use the
@@ -54,7 +120,7 @@ pub struct LastzRunner<'a> {
     pub override_args: Option<&'a str>,
 }
 
-impl<'a> LastzRunner<'a> {
+impl<'a> Lastz<'a> {
     pub fn new(
         target: &'a LastzTarget,
         query: &'a LastzQuery,
@@ -217,6 +283,26 @@ impl LastzQuery {
 
     pub fn get_file_stem(&self) -> String {
         get_file_stem!(self, query_path)
+    }
+}
+
+pub struct LastzResults {
+    pub output_dir: PathBuf,
+    pub output_format: LastzOutputFormat,
+    pub data: Vec<LastzOutput>,
+}
+
+impl LastzResults {
+    pub fn new(
+        output_dir: PathBuf,
+        output_format: &LastzOutputFormat,
+        data: Vec<LastzOutput>,
+    ) -> Self {
+        Self {
+            output_dir,
+            output_format: output_format.clone(),
+            data,
+        }
     }
 }
 
