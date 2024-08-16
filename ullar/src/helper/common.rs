@@ -34,7 +34,7 @@ pub fn init_progress_bar(len: u64) -> ProgressBar {
     progress_bar.set_style(
         ProgressStyle::default_bar()
             .tick_chars("🌑🌒🌓🌔🌕🌖🌗🌘")
-            .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} {msg}")
+            .template("{spinner} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} {msg}")
             .expect("Failed to set progress bar style"),
     );
     progress_bar
