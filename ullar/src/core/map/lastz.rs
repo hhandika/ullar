@@ -8,10 +8,12 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::sync::mpsc;
 
+use colored::Colorize;
 use csv::ReaderBuilder;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::helper::common;
 use crate::helper::files::FileMetadata;
 use crate::types::map::{LastzNameParse, LastzOutputFormat};
 use crate::{get_file_stem, parse_override_args};
@@ -68,18 +70,17 @@ impl<'a> LastzMapping<'a> {
     /// It is just the way genomic sequences behave.
     /// We don't want those duplicates. We will only keep the best match.
     pub fn run(&self, contigs: &[FileMetadata]) -> Result<Vec<MappingData>, Box<dyn Error>> {
-        // let progress_bar = common::init_progress_bar(contigs.len() as u64);
+        let progress_bar = common::init_progress_bar(contigs.len() as u64);
         log::info!("Mapping contigs to reference sequence");
-        // progress_bar.set_message("Contigs");
+        progress_bar.set_message("Contigs");
         let (tx, rx) = mpsc::channel();
         contigs.par_iter().for_each_with(tx, |tx, contig| {
-            log::info!("Mapping contig: {}", contig.file_name);
             let data = self.run_lastz(contig).expect("Failed to run Lastz");
             tx.send(data).expect("Failed to send data");
-            // progress_bar.inc(1);
+            progress_bar.inc(1);
         });
         let data = rx.iter().collect::<Vec<MappingData>>();
-        // progress_bar.finish_with_message(format!("{} Contigs\n", "✔".green()));
+        progress_bar.finish_with_message(format!("{} Contigs\n", "✔".green()));
         Ok(data)
     }
 
@@ -232,7 +233,6 @@ impl<'a> Lastz<'a> {
     }
 
     fn parse_output(&self, output: &Output) -> Result<Vec<LastzOutput>, Box<dyn Error>> {
-        log::info!("Output: {}", String::from_utf8_lossy(&output.stdout));
         let parsed_output = LastzOutput::new().parse(&output.stdout)?;
         Ok(parsed_output)
     }
