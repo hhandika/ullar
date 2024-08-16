@@ -3,7 +3,7 @@ use std::{error::Error, path::Path};
 
 use colored::Colorize;
 use configs::MappedContigConfig;
-use lastz::LastzMapping;
+use lastz::{LastzMapping, DEFAULT_LASTZ_PARAMS};
 use reports::MappingData;
 use sequences::MappedContigs;
 
@@ -108,6 +108,10 @@ impl<'a> ContigMapping<'a> {
             Aligner::Lastz => log::info!("{:18}: {}", "Aligner:", "Lastz"),
             Aligner::Exonerate => log::info!("{:18}: {}", "Aligner:", "Exonerate"),
             Aligner::Minimap => log::info!("{:18}: {}", "Aligner:", "Minimap"),
+        }
+        match self.runner.override_args {
+            Some(args) => log::info!("{:18}: {}\n", "Override args:", args),
+            None => log::info!("{:18}: {}\n", "Override args:", DEFAULT_LASTZ_PARAMS),
         }
     }
 
