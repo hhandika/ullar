@@ -226,6 +226,7 @@ impl<'a> Lastz<'a> {
     }
 
     fn parse_output(&self, output: &Output) -> Result<Vec<LastzOutput>, Box<dyn Error>> {
+        log::info!("Output: {}", String::from_utf8_lossy(&output.stdout));
         let parsed_output = LastzOutput::new().parse(&output.stdout)?;
         Ok(parsed_output)
     }
