@@ -86,11 +86,12 @@ impl<'a> LastzMapping<'a> {
     fn run_lastz(&self, contig: &FileMetadata) -> Result<MappingData, Box<dyn Error>> {
         let target = self.get_target();
         let query = self.get_query(contig);
+        let format = LastzOutputFormat::General(String::new());
         let runner = Lastz::new(
             &target,
             &query,
             self.output_dir,
-            &LastzOutputFormat::None,
+            &format,
             self.override_args,
         );
         runner.run()
