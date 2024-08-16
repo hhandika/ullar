@@ -51,7 +51,7 @@ impl<'a> AlignmentInit<'a> {
     fn log_input(&self) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Directory", self.input_dir.display());
-        log::info!("{:18}: {}", "Task", "Initialize alignment config");
+        log::info!("{:18}: {}\n", "Task", "Initialize alignment config");
     }
 
     fn log_final_output(&self, config_path: &Path) {

@@ -5,14 +5,14 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MappingQueryFormat {
     #[default]
-    Fasta,
+    Contig,
     Fastq,
 }
 
 impl Display for MappingQueryFormat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            MappingQueryFormat::Fasta => write!(f, "fasta"),
+            MappingQueryFormat::Contig => write!(f, "contig"),
             MappingQueryFormat::Fastq => write!(f, "fastq"),
         }
     }
@@ -23,7 +23,7 @@ impl FromStr for MappingQueryFormat {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "fasta" => Ok(MappingQueryFormat::Fasta),
+            "contig" => Ok(MappingQueryFormat::Contig),
             "fastq" => Ok(MappingQueryFormat::Fastq),
             _ => Err(format!("Unknown mapping query format: {}", s)),
         }

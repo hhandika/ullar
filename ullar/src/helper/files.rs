@@ -15,7 +15,9 @@ use size::Size;
 use walkdir::WalkDir;
 
 use crate::{
-    helper::regex::{FASTA_REGEX, FASTQ_REGEX, NEXUS_REGEX, PHYLIP_REGEX, PLAIN_TEXT_REGEX},
+    helper::regex::{
+        CONTIG_REGEX, FASTA_REGEX, FASTQ_REGEX, NEXUS_REGEX, PHYLIP_REGEX, PLAIN_TEXT_REGEX,
+    },
     re_match,
     types::SupportedFormats,
 };
@@ -179,6 +181,7 @@ impl<'a> FileFinder<'a> {
         match self.format {
             SupportedFormats::Fastq => re_match!(FASTQ_REGEX, path),
             SupportedFormats::Fasta => re_match!(FASTA_REGEX, path),
+            SupportedFormats::Contigs => re_match!(CONTIG_REGEX, path),
             SupportedFormats::Nexus => re_match!(NEXUS_REGEX, path),
             SupportedFormats::Phylip => re_match!(PHYLIP_REGEX, path),
             SupportedFormats::PlainText => re_match!(PLAIN_TEXT_REGEX, path),
@@ -205,7 +208,10 @@ impl FileMetadata {
     }
 
     pub fn get(&mut self, path: &Path) {
-        let file = fs::metadata(path).expect("Failed to get file metadata");
+        let file = fs::metadata(path).expect(&format!(
+            "Failed to get metadata for {}",
+            path.display().to_string().red()
+        ));
         self.file_name = path
             .file_name()
             .expect("Failed to get file name")
@@ -277,6 +283,14 @@ mod tests {
             let finder = FileFinder::new(path, &format);
             assert!(finder.is_matching_file(path));
         }
+    }
+
+    #[test]
+    fn test_re_contig() {
+        let path = Path::new("contigs.fasta");
+        let format = SupportedFormats::Contigs;
+        let finder = FileFinder::new(path, &format);
+        assert!(finder.is_matching_file(path));
     }
 
     #[test]

@@ -13,6 +13,7 @@ use assembly::AssemblySubcommand;
 use clap::{crate_authors, crate_description, crate_name, crate_version, Parser, Subcommand};
 use clean::CleanSubcommand;
 use deps::DepsSubcommand;
+use map::MapSubcommand;
 use new::NewArgs;
 use tree::TreeArgs;
 use utils::UtilSubCommand;
@@ -55,8 +56,8 @@ pub(crate) enum UllarSubcommand {
     #[command(subcommand, name = "assemble", about = "Assemble cleaned reads")]
     Assemble(AssemblySubcommand),
     /// Map contigs to reference
-    #[command(name = "map", about = "Map contigs to reference")]
-    Map,
+    #[command(subcommand, name = "map", about = "Map contigs to reference")]
+    Map(MapSubcommand),
     /// Locus alignment
     #[command(subcommand, name = "align", about = "Align sequences")]
     Alignment(AlignmentSubcommand),
