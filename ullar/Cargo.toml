@@ -11,6 +11,7 @@ keywords = ["cli", "utility", "pipeline", "genomics", "phylogenomics"]
 categories = ["command-line-utilities", "science"]
 
 [dependencies]
+anyhow = "1.0.86"
 bio = "2.0.1"
 chrono = "0.4.38"
 clap = { version = "4.5.4", features = ["derive"] }
