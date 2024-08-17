@@ -1,8 +1,10 @@
 //! Utilities for managing dependencies.
 
 use colored::Colorize;
+use comfy_table::Table;
 use fastp::FastpMetadata;
 use iqtree::IqtreeMetadata;
+use lastz::LastzMetadata;
 use mafft::MafftMetadata;
 use serde::{Deserialize, Serialize};
 use spades::SpadesMetadata;
@@ -33,28 +35,12 @@ macro_rules! version {
     }};
 }
 
-enum Deps {
-    Spades,
-    Fastp,
-    Lastz,
-    Mafft,
-    Iqtree,
-}
-
-const DEPENDENCY_LIST: [Deps; 5] = [
-    Deps::Fastp,
-    Deps::Spades,
-    Deps::Iqtree,
-    Deps::Lastz,
-    Deps::Mafft,
-];
-
 pub struct DependencyCheck {
-    pub spades: Option<DepMetadata>,
-    pub fastp: Option<DepMetadata>,
-    pub lastz: Option<DepMetadata>,
-    pub mafft: Option<DepMetadata>,
-    pub iqtree: Option<DepMetadata>,
+    pub fastp: FastpMetadata,
+    pub spades: SpadesMetadata,
+    pub lastz: LastzMetadata,
+    pub mafft: MafftMetadata,
+    pub iqtree: IqtreeMetadata,
 }
 
 impl Default for DependencyCheck {
@@ -66,100 +52,111 @@ impl Default for DependencyCheck {
 impl DependencyCheck {
     pub fn new() -> Self {
         Self {
-            spades: None,
-            fastp: None,
-            lastz: None,
-            mafft: None,
-            iqtree: None,
+            fastp: FastpMetadata::new(),
+            spades: SpadesMetadata::new(),
+            lastz: LastzMetadata::new(),
+            mafft: MafftMetadata::new(),
+            iqtree: IqtreeMetadata::new(),
         }
     }
 
     pub fn check(&mut self) {
-        self.get();
-        self.check_spades();
-        self.check_fastp();
-        self.check_lastz();
-        self.check_iqtree();
-        self.check_mafft();
+        let mut table = self.log_status();
+        self.log_read_cleaning(&mut table);
+        self.log_denovo_assembly(&mut table);
+        self.log_contig_mapping(&mut table);
+        self.log_sequence_alignment(&mut table);
+        self.log_phylogenetic_inference(&mut table);
     }
 
-    fn get(&mut self) {
-        DEPENDENCY_LIST.iter().for_each(|dep| match dep {
-            Deps::Spades => self.spades(),
-            Deps::Fastp => self.fastp(),
-            Deps::Lastz => self.lastz(),
-            Deps::Iqtree => self.iqtree(),
-            Deps::Mafft => self.mafft(),
-        });
+    fn log_status(&self) -> Table {
+        log::info!("{}", "Dependencies".cyan());
+        let mut table = Table::new();
+        table.add_row(["Feature", "Dependencies", "Version", "Status"]);
+        table
     }
 
-    fn check_spades(&self) {
-        match &self.spades {
-            Some(spades) => self.print_ok(&spades.name, &spades.version),
-            None => self.print_error("SPAdes"),
+    fn log_read_cleaning(&mut self, table: &mut Table) {
+        let feature = "Read cleaning";
+        self.fastp = FastpMetadata::new().get();
+        match &self.fastp.metadata {
+            Some(metadata) => {
+                let status_ok = self.status_ok(true);
+                table.add_row([feature, "fastp", metadata.version.as_str(), &status_ok]);
+            }
+            None => {
+                let status_error = self.status_ok(false);
+                table.add_row([feature, "fastp", "fastp", "Unknown", &status_error]);
+            }
         }
     }
 
-    fn check_fastp(&self) {
-        match &self.fastp {
-            Some(fastp) => self.print_ok(&fastp.name, &fastp.version),
-            None => self.print_error("fastp"),
+    fn log_denovo_assembly(&mut self, table: &mut Table) {
+        let feature = "De novo assembly";
+        self.spades = SpadesMetadata::new().get();
+        match &self.spades.metadata {
+            Some(metadata) => {
+                let status_ok = self.status_ok(true);
+                table.add_row([feature, "SPAdes", metadata.version.as_str(), &status_ok]);
+            }
+            None => {
+                let status_error = self.status_ok(false);
+                table.add_row([feature, "SPAdes", "spades", "Unknown", &status_error]);
+            }
         }
     }
 
-    fn check_lastz(&self) {
-        match &self.lastz {
-            Some(lastz) => self.print_ok(&lastz.name, &lastz.version),
-            None => self.print_error("lastz"),
+    fn log_contig_mapping(&mut self, table: &mut Table) {
+        let feature = "Contig mapping";
+        self.lastz = LastzMetadata::new().get();
+        match &self.lastz.metadata {
+            Some(metadata) => {
+                let status_ok = self.status_ok(true);
+                table.add_row([feature, "LASTZ", metadata.version.as_str(), &status_ok]);
+            }
+            None => {
+                let status_error = self.status_ok(false);
+                table.add_row([feature, "LASTZ", "lastz", "Unknown", &status_error]);
+            }
         }
     }
 
-    fn check_mafft(&self) {
-        match &self.mafft {
-            Some(mafft) => self.print_ok(&mafft.name, &mafft.version),
-            None => self.print_error("MAFFT"),
+    fn log_sequence_alignment(&mut self, table: &mut Table) {
+        let feature = "Sequence alignment";
+        self.mafft = MafftMetadata::new().get();
+        match &self.mafft.metadata {
+            Some(metadata) => {
+                let status_ok = self.status_ok(true);
+                table.add_row([feature, "MAFFT", metadata.version.as_str(), &status_ok]);
+            }
+            None => {
+                let status_error = self.status_ok(false);
+                table.add_row([feature, "MAFFT", "mafft", "Unknown", &status_error]);
+            }
         }
     }
 
-    fn check_iqtree(&self) {
-        match &self.iqtree {
-            Some(iqtree) => self.print_ok(&iqtree.name, &iqtree.version),
-            None => self.print_error("IQ-TREE"),
+    fn log_phylogenetic_inference(&mut self, table: &mut Table) {
+        let feature = "Phylogenetic inference";
+        self.iqtree = IqtreeMetadata::new().get();
+        match &self.iqtree.metadata {
+            Some(metadata) => {
+                let status_ok = self.status_ok(true);
+                table.add_row([feature, "IQ-TREE", metadata.version.as_str(), &status_ok]);
+            }
+            None => {
+                let status_error = self.status_ok(false);
+                table.add_row([feature, "IQ-TREE", "iqtree", "Unknown", &status_error]);
+            }
         }
     }
 
-    fn print_ok(&self, name: &str, version: &str) {
-        let app = format!("{} v{}", name, version);
-        log::info!("{:18}: {}", app, "[OK]".green())
-    }
-
-    fn print_error(&self, name: &str) {
-        log::error!("{:18}: {}", name, "[NOT FOUND]".red())
-    }
-
-    fn spades(&mut self) {
-        let spades = SpadesMetadata::new().get();
-        self.spades = spades.metadata;
-    }
-
-    fn fastp(&mut self) {
-        let fastp = FastpMetadata::new().get();
-        self.fastp = fastp.metadata;
-    }
-
-    fn iqtree(&mut self) {
-        let iqtree = IqtreeMetadata::new().get();
-        self.iqtree = iqtree.metadata;
-    }
-
-    fn mafft(&mut self) {
-        let mafft = MafftMetadata::new().get();
-        self.mafft = mafft.metadata;
-    }
-
-    fn lastz(&mut self) {
-        let lastz = lastz::LastzMetadata::new().get();
-        self.lastz = lastz.metadata;
+    fn status_ok(&self, ok: bool) -> String {
+        if ok {
+            "[OK]".green().to_string()
+        } else {
+            "[ERROR]".red().to_string()
+        }
     }
 }
 
