@@ -7,6 +7,7 @@ use std::{
 };
 
 use colored::Colorize;
+use indicatif::ProgressBar;
 
 use crate::{cli::commands::map::MapInitArgs, helper::common, types::map::MappingQueryFormat};
 
@@ -48,19 +49,23 @@ impl<'a> InitMappingConfig<'a> {
         self.log_input();
         let spinner = common::init_spinner();
         spinner.set_message("Initializing mapping configuration");
-        let config_path = self.write_config().expect("Failed to write config");
-        spinner.finish_with_message(format!("{} Finished writing config\n", "✔".green()));
-        self.log_output(&config_path);
+        self.write_config(&spinner);
     }
 
-    fn write_config(&self) -> Result<PathBuf, Box<dyn Error>> {
+    fn write_config(&self, spinner: &ProgressBar) {
         match self.query_format {
-            MappingQueryFormat::Contig => self.write_contig_config(),
-            MappingQueryFormat::Fastq => Err("Fastq format is not supported yet".into()),
+            MappingQueryFormat::Contig => {
+                spinner.set_message("Writing contig config");
+                let (path, config) = self.write_contig_config().expect("Failed writing config");
+                spinner.finish_with_message(format!("{} Finished writing config\n", "✔".green()));
+                self.log_output(&path);
+                self.log_contig_output(&config);
+            }
+            MappingQueryFormat::Fastq => unimplemented!(),
         }
     }
 
-    fn write_contig_config(&self) -> Result<PathBuf, Box<dyn Error>> {
+    fn write_contig_config(&self) -> Result<(PathBuf, MappedContigConfig), Box<dyn Error>> {
         let name_source = self
             .name_source
             .parse::<SampleNameSource>()
@@ -76,7 +81,7 @@ impl<'a> InitMappingConfig<'a> {
             );
         }
         let output_path = config.to_yaml()?;
-        Ok(output_path)
+        Ok((output_path, config))
     }
 
     fn get_contig_paths(&self) -> Vec<PathBuf> {
@@ -99,6 +104,8 @@ impl<'a> InitMappingConfig<'a> {
             }
             None => self.log_input_paths(),
         }
+        log::info!("{:18}: {}", "Format", self.query_format);
+        log::info!("{:18}: {}", "Name source", self.name_source);
         log::info!("{:18}: {}\n", "Task", "Initialize mapping config");
     }
 
@@ -133,5 +140,9 @@ impl<'a> InitMappingConfig<'a> {
                 .to_str()
                 .expect("Failed parsing file")
         );
+    }
+
+    fn log_contig_output(&self, config: &MappedContigConfig) {
+        log::info!("{:18}: {}", "Contig counts", config.contig_file_counts);
     }
 }
