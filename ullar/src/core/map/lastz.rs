@@ -14,6 +14,7 @@ use csv::ReaderBuilder;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::core::deps::lastz::LASTZ_EXE;
 use crate::helper::common;
 use crate::types::map::{LastzNameParse, LastzOutputFormat};
 use crate::{get_file_stem, parse_override_args};
@@ -25,8 +26,7 @@ use super::reports::MappingData;
 /// 1. --nogfextend to disable gapped extension
 pub const DEFAULT_LASTZ_PARAMS: &str =
     "--strand=both --transition --nogfextend --step=20 --gap=400,30";
-/// Lastz executable.
-pub const LASTZ_EXE: &str = "lastz";
+
 /// Default output to CSV for easy reading
 pub const DEFAULT_OUTPUT_EXT: &str = "csv";
 

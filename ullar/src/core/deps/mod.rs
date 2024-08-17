@@ -9,6 +9,7 @@ use spades::SpadesMetadata;
 
 pub mod fastp;
 pub mod iqtree;
+pub mod lastz;
 pub mod mafft;
 pub mod spades;
 
