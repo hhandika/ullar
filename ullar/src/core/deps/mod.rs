@@ -36,15 +36,23 @@ macro_rules! version {
 enum Deps {
     Spades,
     Fastp,
+    Lastz,
     Mafft,
     Iqtree,
 }
 
-const DEPENDENCY_LIST: [Deps; 4] = [Deps::Fastp, Deps::Spades, Deps::Iqtree, Deps::Mafft];
+const DEPENDENCY_LIST: [Deps; 5] = [
+    Deps::Fastp,
+    Deps::Spades,
+    Deps::Iqtree,
+    Deps::Lastz,
+    Deps::Mafft,
+];
 
 pub struct DependencyCheck {
     pub spades: Option<DepMetadata>,
     pub fastp: Option<DepMetadata>,
+    pub lastz: Option<DepMetadata>,
     pub mafft: Option<DepMetadata>,
     pub iqtree: Option<DepMetadata>,
 }
@@ -60,6 +68,7 @@ impl DependencyCheck {
         Self {
             spades: None,
             fastp: None,
+            lastz: None,
             mafft: None,
             iqtree: None,
         }
@@ -77,6 +86,7 @@ impl DependencyCheck {
         DEPENDENCY_LIST.iter().for_each(|dep| match dep {
             Deps::Spades => self.spades(),
             Deps::Fastp => self.fastp(),
+            Deps::Lastz => self.lastz(),
             Deps::Iqtree => self.iqtree(),
             Deps::Mafft => self.mafft(),
         });
@@ -137,6 +147,11 @@ impl DependencyCheck {
     fn mafft(&mut self) {
         let mafft = MafftMetadata::new().get();
         self.mafft = mafft.metadata;
+    }
+
+    fn lastz(&mut self) {
+        let lastz = lastz::LastzMetadata::new().get();
+        self.lastz = lastz.metadata;
     }
 }
 
