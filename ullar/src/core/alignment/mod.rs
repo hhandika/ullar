@@ -122,7 +122,13 @@ impl<'a> Alignment<'a> {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config path", self.config_path.display());
         log::info!("{:18}: {}", "Sample counts", config.sample_counts);
-        log::info!("{:18}: {}", "File counts", config.file_counts);
+        log::info!("{:18}: {}", "File found", config.file_summary.total_found);
+        log::info!("{:18}: {}", "File skipped", config.file_summary.skipped);
+        log::info!(
+            "{:18}: {}",
+            "Final file count",
+            config.file_summary.final_count
+        );
         log::info!("{:18}: {}", "Task", self.task);
         self.log_mafft_info();
     }
