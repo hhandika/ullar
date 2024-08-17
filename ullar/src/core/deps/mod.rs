@@ -78,6 +78,7 @@ impl DependencyCheck {
         self.get();
         self.check_spades();
         self.check_fastp();
+        self.check_lastz();
         self.check_iqtree();
         self.check_mafft();
     }
