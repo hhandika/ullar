@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     core::utils::deps::DepMetadata,
     helper::{
-        alignments::{CandidateAlignmentSummary, FilteredContigs},
+        alignments::{CandidateAlignmentSummary, FilteredSequenceFiles},
         configs::{generate_config_output_path, PreviousStep},
         files::FileMetadata,
     },
@@ -67,8 +67,8 @@ impl AlignmentConfig {
             None => self.previous_step = PreviousStep::new(Task::Unknown),
         }
         self.file_summary = sequence_files.summary;
-        self.sample_counts = self.count_samples(&sequence_files.final_contigs);
-        self.contigs = self.get_metadata(&sequence_files.final_contigs);
+        self.sample_counts = self.count_samples(&sequence_files.final_files);
+        self.contigs = self.get_metadata(&sequence_files.final_files);
     }
 
     /// Get raw loci files
@@ -79,14 +79,14 @@ impl AlignmentConfig {
         Ok(output_path)
     }
 
-    fn find_files(&self, input_dir: &Path) -> FilteredContigs {
+    fn find_files(&self, input_dir: &Path) -> FilteredSequenceFiles {
         let input_format = InputFmt::Fasta;
         let sequence_files = SeqFileFinder::new(input_dir).find_recursive_only(&input_format);
         self.filter_problematic_contigs(&sequence_files)
     }
 
-    fn filter_problematic_contigs(&self, contigs: &[PathBuf]) -> FilteredContigs {
-        let mut filtered_contigs = FilteredContigs::new();
+    fn filter_problematic_contigs(&self, contigs: &[PathBuf]) -> FilteredSequenceFiles {
+        let mut filtered_contigs = FilteredSequenceFiles::new();
         filtered_contigs.filter_single_sequence(contigs);
         filtered_contigs
     }
