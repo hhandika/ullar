@@ -39,7 +39,7 @@ impl LastzMetadata {
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {
         let version = re_capture_version(version_data);
         Some(DepMetadata {
-            name: "fastp".to_string(),
+            name: "LASTZ".to_string(),
             version: version.to_string(),
             executable: LASTZ_EXE.to_string(),
         })
