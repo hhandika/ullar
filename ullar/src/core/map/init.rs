@@ -10,7 +10,7 @@ use colored::Colorize;
 
 use crate::{cli::commands::map::MapInitArgs, helper::common, types::map::MappingQueryFormat};
 
-use super::configs::MappedContigConfig;
+use super::configs::{MappedContigConfig, SampleNameSource};
 
 pub struct InitMappingConfig<'a> {
     /// Query directory containing query sequences
@@ -19,6 +19,8 @@ pub struct InitMappingConfig<'a> {
     pub query_paths: Option<&'a [PathBuf]>,
     /// Input query format
     pub query_format: MappingQueryFormat,
+    /// Source to parse file names
+    pub name_source: &'a str,
 }
 
 impl Default for InitMappingConfig<'_> {
@@ -27,6 +29,7 @@ impl Default for InitMappingConfig<'_> {
             query_dir: None,
             query_paths: None,
             query_format: MappingQueryFormat::Contig,
+            name_source: "file",
         }
     }
 }
@@ -37,6 +40,7 @@ impl<'a> InitMappingConfig<'a> {
             query_dir: args.dir.as_deref(),
             query_paths: args.input.as_deref(),
             query_format: args.query_format.parse().expect("Invalid query format"),
+            name_source: &args.name_source,
         }
     }
 
@@ -57,12 +61,16 @@ impl<'a> InitMappingConfig<'a> {
     }
 
     fn write_contig_config(&self) -> Result<PathBuf, Box<dyn Error>> {
-        let mut config = MappedContigConfig::default();
+        let name_source = self
+            .name_source
+            .parse::<SampleNameSource>()
+            .expect("Invalid name source");
+        let mut config = MappedContigConfig::init(name_source);
         match self.query_dir {
             Some(dir) => config.from_contig_dir(dir, None),
             None => config.from_contig_paths(&self.get_contig_paths(), None),
         }
-        if config.contig_files.is_empty() {
+        if config.contigs.is_empty() {
             return Err(
                 "No sequence found in the input directory. Please, check input is FASTA".into(),
             );

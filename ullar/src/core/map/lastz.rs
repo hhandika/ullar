@@ -14,10 +14,10 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::helper::common;
-use crate::helper::files::FileMetadata;
 use crate::types::map::{LastzNameParse, LastzOutputFormat};
 use crate::{get_file_stem, parse_override_args};
 
+use super::configs::ContigFiles;
 use super::reports::MappingData;
 
 /// Default lastz parameters. We use the following parameters by default:
@@ -69,13 +69,15 @@ impl<'a> LastzMapping<'a> {
     ///   multiple reference sequences or vice versa.
     /// It is just the way genomic sequences behave.
     /// We don't want those duplicates. We will only keep the best match.
-    pub fn run(&self, contigs: &[FileMetadata]) -> Result<Vec<MappingData>, Box<dyn Error>> {
+    pub fn run(&self, contigs: &[ContigFiles]) -> Result<Vec<MappingData>, Box<dyn Error>> {
         let progress_bar = common::init_progress_bar(contigs.len() as u64);
         log::info!("Mapping contigs to reference sequence");
         progress_bar.set_message("Contigs");
         let (tx, rx) = mpsc::channel();
         contigs.par_iter().for_each_with(tx, |tx, contig| {
-            let data = self.run_lastz(contig).expect("Failed to run Lastz");
+            let data = self
+                .run_lastz(contig, &contig.sample_name)
+                .expect("Failed to run Lastz");
             tx.send(data).expect("Failed to send data");
             progress_bar.inc(1);
         });
@@ -84,7 +86,11 @@ impl<'a> LastzMapping<'a> {
         Ok(data)
     }
 
-    fn run_lastz(&self, contig: &FileMetadata) -> Result<MappingData, Box<dyn Error>> {
+    fn run_lastz(
+        &self,
+        contig: &ContigFiles,
+        sample_name: &str,
+    ) -> Result<MappingData, Box<dyn Error>> {
         let target = self.get_target();
         let query = self.get_query(contig);
         let format = LastzOutputFormat::General(String::new());
@@ -95,7 +101,7 @@ impl<'a> LastzMapping<'a> {
             &format,
             self.override_args,
         );
-        runner.run()
+        runner.run(sample_name)
     }
 
     fn get_target(&self) -> LastzTarget {
@@ -105,8 +111,8 @@ impl<'a> LastzMapping<'a> {
         target
     }
 
-    fn get_query(&self, contig: &FileMetadata) -> LastzQuery {
-        let contig_path = contig.parent_dir.join(&contig.file_name);
+    fn get_query(&self, contig: &ContigFiles) -> LastzQuery {
+        let contig_path = contig.metadata.parent_dir.join(&contig.metadata.file_name);
         let query = LastzQuery::new(contig_path, LastzNameParse::None);
         query.get_path();
         query
@@ -163,7 +169,7 @@ impl<'a> Lastz<'a> {
     /// Execute the Lastz alignment
     /// Return the lastz output
     /// Else return an error
-    pub fn run(&self) -> Result<MappingData, Box<dyn Error>> {
+    pub fn run(&self, sample_name: &str) -> Result<MappingData, Box<dyn Error>> {
         // datasets/contigs/Bunomys_chrysocomus_LSUMZ39568/contigs.fasta[multiple,nameparse=full]
         self.execute_lastz().expect("Failed to run Lastz");
         let parsed_output = self.execute_lastz();
@@ -171,9 +177,13 @@ impl<'a> Lastz<'a> {
             Ok(data) => {
                 let output_path = self.write_output(&data)?;
                 let refname_regex = self.get_refname_regex();
-                let mut results =
-                    MappingData::new(&self.query.query_path, output_path, &refname_regex);
-                results.summarize(&data);
+                let mut results = MappingData::new(
+                    sample_name,
+                    &self.query.query_path,
+                    output_path,
+                    &refname_regex,
+                );
+                results.summarize(&data, &self.target.target_path);
                 Ok(results)
             }
             Err(e) => Err(format!("Failed to parse Lastz output: {}", e).into()),

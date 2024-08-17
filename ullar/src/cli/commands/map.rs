@@ -63,6 +63,13 @@ pub struct MapInitArgs {
         value_parser = builder::PossibleValuesParser::new(["contig", "read"])
     )]
     pub query_format: String,
+    #[arg(
+        long,
+        default_value = "file",
+        help = "Sample name sources",
+        value_parser = builder::PossibleValuesParser::new(["file", "directory"])
+    )]
+    pub name_source: String,
     #[command(flatten)]
     pub common: CommonRunnerArgs,
 }
