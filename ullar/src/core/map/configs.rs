@@ -192,10 +192,13 @@ impl ContigFiles {
                     .components()
                     .map(|c| c.as_os_str().to_string_lossy().to_string())
                     .collect::<Vec<String>>();
-                if components.is_empty() {
+                if components.is_empty() && components.len() == 1 {
                     self.sample_name = filastem;
                 } else {
-                    self.sample_name = components.last().unwrap_or(&filastem).to_string();
+                    // Get the second last component which is the sample directory
+                    // e.g. /path/to/sample/contig.fasta
+                    // Will get the component "sample"
+                    self.sample_name = components[components.len() - 2].clone();
                 }
             }
         }
