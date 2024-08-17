@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use std::error::Error;
 
 use colored::Colorize;
+use comfy_table::Table;
 
 use crate::cli::commands::alignment::AlignmentInitArgs;
 use crate::helper::common;
@@ -66,5 +67,18 @@ impl<'a> AlignmentInit<'a> {
             "Final file count",
             config.file_summary.final_count
         );
+        self.log_info_skipped_msg(config);
+    }
+
+    fn log_info_skipped_msg(&self, config: &AlignmentConfig) {
+        if config.file_summary.skipped > 0 {
+            let mut table = Table::new();
+            let msg = format!(
+                "Skipped {} file(s) because it contains less than 2 sequences",
+                config.file_summary.skipped.to_string().yellow()
+            );
+            table.add_row(vec![msg]);
+            log::warn!("\n{}\n", table);
+        }
     }
 }
