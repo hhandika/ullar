@@ -8,7 +8,7 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 use crate::{
-    core::{clean::reports::CleanReadReport, utils::deps::DepMetadata},
+    core::{clean::reports::CleanReadReport, deps::DepMetadata},
     helper::configs::{generate_config_output_path, PreviousStep},
     types::{reads::FastqReads, Task},
 };

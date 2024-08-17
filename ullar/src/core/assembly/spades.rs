@@ -9,7 +9,9 @@ use indicatif::ProgressBar;
 use sysinfo::System;
 
 use crate::{
-    check_read1_exists, create_output_dir,
+    check_read1_exists,
+    core::deps::spades::SPADES_EXE,
+    create_output_dir,
     helper::common::{self, PrettyHeader},
     parse_override_args,
     types::reads::FastqReads,
@@ -17,7 +19,6 @@ use crate::{
 
 use super::reports::SpadeReports;
 
-pub const SPADES_EXE: &str = "spades.py";
 pub const SPADES_DEFAULT_PARAMS: &str = "--isolate";
 
 pub struct SpadeRunner<'a> {

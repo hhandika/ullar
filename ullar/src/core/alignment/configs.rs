@@ -11,7 +11,7 @@ use segul::helper::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    core::utils::deps::DepMetadata,
+    core::deps::DepMetadata,
     helper::{
         alignments::{CandidateAlignmentSummary, FilteredSequenceFiles},
         configs::{generate_config_output_path, PreviousStep},
