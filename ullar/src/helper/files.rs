@@ -297,7 +297,7 @@ mod tests {
 
     #[test]
     fn test_read_finder() {
-        let dir = Path::new("tests/reads");
+        let dir = Path::new("tests/data/reads");
         let format = SupportedFormats::Fastq;
         let finder = FileFinder::new(dir, &format);
         let files = finder.find_files().expect("Failed to find files");
