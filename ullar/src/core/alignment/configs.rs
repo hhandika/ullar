@@ -19,7 +19,7 @@ use crate::{
     types::Task,
 };
 
-pub const DEFAULT_LOCUS_CONFIG: &str = "mapped_contig";
+pub const DEFAULT_ALIGNMENT_CONFIG: &str = "unaligned_contigs";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AlignmentConfig {
@@ -74,7 +74,7 @@ impl AlignmentConfig {
 
     /// Get raw loci files
     pub fn to_yaml(&self) -> Result<PathBuf, Box<dyn Error>> {
-        let output_path = generate_config_output_path(DEFAULT_LOCUS_CONFIG);
+        let output_path = generate_config_output_path(DEFAULT_ALIGNMENT_CONFIG);
         let writer = File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
         Ok(output_path)
