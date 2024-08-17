@@ -68,7 +68,7 @@ impl<'a> ContigMapping<'a> {
         spinner.set_message("Mapping contigs to reference sequence");
         let config = self.parse_config().expect("Failed to parse config");
         spinner.finish_with_message(format!("{} Finished parsing config\n", "✔".green()));
-        self.log_input();
+        self.log_input(config.contigs.len());
         PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
         let results = self.run_lastz(&config.contigs);
         self.generate_mapped_contig(&results);
@@ -92,10 +92,11 @@ impl<'a> ContigMapping<'a> {
         MappedContigWriter::new(data, self.output_dir, self.reference).generate();
     }
 
-    fn log_input(&self) {
+    fn log_input(&self, file_count: usize) {
         log::info!("{}", "Input".cyan());
-        log::info!("{:18}: {}", "Config:", self.config_path.display());
-        log::info!("{:18}: {}", "Reference:", self.reference.display());
+        log::info!("{:18}: {}", "Config", self.config_path.display());
+        log::info!("{:18}: {}", "Reference", self.reference.display());
+        log::info!("{:18}: {}", "File count", file_count);
         log::info!("{:18}: {}", "Task", self.task);
         self.log_aligner_info();
     }
