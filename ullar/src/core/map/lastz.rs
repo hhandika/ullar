@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::sync::mpsc;
 
+use anyhow::Context;
 use colored::Colorize;
 use csv::ReaderBuilder;
 use rayon::prelude::*;
@@ -211,7 +212,12 @@ impl<'a> Lastz<'a> {
         if self.output_format != &LastzOutputFormat::None {
             cmd.arg(format!("--format={}", self.get_format()));
         }
-        let output = cmd.output()?;
+        let output = cmd.output().with_context(|| {
+            format!(
+                "Failed to execute Lastz. Do {} to see lastz executable exists.",
+                "ullar deps check".yellow()
+            )
+        })?;
 
         match self.check_success(&output) {
             Ok(_) => {
