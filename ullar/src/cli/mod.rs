@@ -19,10 +19,11 @@ use crate::{
         alignment::{init::AlignmentInit, Alignment},
         assembly::{init::AssemblyInit, Assembly},
         clean::ReadCleaner,
+        deps::DependencyCheck,
         map::{init::InitMappingConfig, ContigMapping},
         new::NewProject,
         tree::TreeEstimation,
-        utils::{checksum::Sha256Executor, deps::DependencyCheck, scan::ReadScanner},
+        utils::{checksum::Sha256Executor, scan::ReadScanner},
     },
     helper::{self, common::PrettyHeader},
 };

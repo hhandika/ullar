@@ -25,7 +25,7 @@ use crate::{
     types::{runner::RunnerOptions, Task},
 };
 
-use super::{tree::configs::TreeInferenceConfig, utils::deps::MafftMetadata};
+use super::{deps::mafft::MafftMetadata, tree::configs::TreeInferenceConfig};
 
 pub const DEFAULT_ALIGNMENT_OUTPUT_DIR: &str = "alignments";
 

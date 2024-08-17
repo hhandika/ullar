@@ -13,7 +13,7 @@ use crate::{
 
 use self::reports::SpadeReports;
 
-use super::utils::deps::SpadesMetadata;
+use super::deps::spades::SpadesMetadata;
 
 pub mod configs;
 pub mod init;

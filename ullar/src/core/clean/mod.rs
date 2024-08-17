@@ -22,7 +22,7 @@ use crate::types::Task;
 use self::reports::CleanReadReport;
 
 use super::assembly::configs::AssemblyConfig;
-use super::utils::deps::FastpMetadata;
+use super::deps::fastp::FastpMetadata;
 
 pub const DEFAULT_CLEAN_READ_OUTPUT_DIR: &str = "cleaned_reads";
 

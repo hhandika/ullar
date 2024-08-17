@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{helper::files::FileMetadata, types::alignments::AlignmentFiles};
 
-use crate::{core::utils::deps::DepMetadata, helper::configs::generate_config_output_path};
+use crate::{core::deps::DepMetadata, helper::configs::generate_config_output_path};
 
 pub const DEFAULT_TREE_PREFIX: &str = "tree";
 pub const DEFAULT_TREE_CONFIG_DIR: &str = "configs";
