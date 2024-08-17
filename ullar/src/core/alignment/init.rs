@@ -31,12 +31,12 @@ impl<'a> AlignmentInit<'a> {
         let spin = common::init_spinner();
         self.log_input();
         spin.set_message("Initializing alignment configuration");
-        let config_path = self.write_config().expect("Failed to write config");
+        let (path, config) = self.write_config().expect("Failed to write config");
         spin.finish_with_message(format!("{} Finished writing output config\n", "✔".green()));
-        self.log_final_output(&config_path);
+        self.log_final_output(&path, &config);
     }
 
-    fn write_config(&self) -> Result<PathBuf, Box<dyn Error>> {
+    fn write_config(&self) -> Result<(PathBuf, AlignmentConfig), Box<dyn Error>> {
         let mut config = AlignmentConfig::default();
         config.init(self.input_dir, None);
         if config.contigs.is_empty() {
@@ -45,7 +45,7 @@ impl<'a> AlignmentInit<'a> {
             );
         }
         let output_path = config.to_yaml()?;
-        Ok(output_path)
+        Ok((output_path, config))
     }
 
     fn log_input(&self) {
@@ -54,9 +54,17 @@ impl<'a> AlignmentInit<'a> {
         log::info!("{:18}: {}\n", "Task", "Initialize alignment config");
     }
 
-    fn log_final_output(&self, config_path: &Path) {
+    fn log_final_output(&self, config_path: &Path, config: &AlignmentConfig) {
         log::info!("{}", "Output".cyan());
-        log::info!("{:18}: {}", "Directory", self.output_dir.display());
+        log::info!("{:18}: {}", "Config directory", self.output_dir.display());
         log::info!("{:18}: {}", "Config file", config_path.display());
+        log::info!("{:18}: {}", "Sample counts", config.sample_counts);
+        log::info!("{:18}: {}", "File found", config.file_summary.total_found);
+        log::info!("{:18}: {}", "File skipped", config.file_summary.skipped);
+        log::info!(
+            "{:18}: {}\n",
+            "Final file count",
+            config.file_summary.final_count
+        );
     }
 }

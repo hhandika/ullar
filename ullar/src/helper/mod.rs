@@ -1,4 +1,5 @@
 //! Helper functions for the project
+pub mod alignments;
 pub mod checksum;
 pub mod command;
 pub mod common;

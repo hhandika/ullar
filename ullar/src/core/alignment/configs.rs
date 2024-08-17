@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     core::utils::deps::DepMetadata,
     helper::{
+        alignments::{CandidateAlignmentSummary, FilteredContigs},
         configs::{generate_config_output_path, PreviousStep},
         files::FileMetadata,
     },
@@ -23,8 +24,8 @@ pub const DEFAULT_ALIGNMENT_CONFIG: &str = "unaligned_contigs";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AlignmentConfig {
+    pub file_summary: CandidateAlignmentSummary,
     pub sample_counts: usize,
-    pub file_counts: usize,
     pub previous_step: PreviousStep,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub override_args: Option<String>,
@@ -34,8 +35,8 @@ pub struct AlignmentConfig {
 impl Default for AlignmentConfig {
     fn default() -> Self {
         Self {
+            file_summary: CandidateAlignmentSummary::default(),
             sample_counts: 0,
-            file_counts: 0,
             previous_step: PreviousStep::default(),
             override_args: None,
             contigs: Vec::new(),
@@ -45,16 +46,14 @@ impl Default for AlignmentConfig {
 
 impl AlignmentConfig {
     pub fn new(
-        sample_counts: usize,
-        file_counts: usize,
         task: Task,
         dependencies: Vec<DepMetadata>,
         override_args: Option<String>,
         contigs: Vec<FileMetadata>,
     ) -> Self {
         Self {
-            sample_counts,
-            file_counts,
+            file_summary: CandidateAlignmentSummary::default(),
+            sample_counts: 0,
             previous_step: PreviousStep::with_dependencies(task, dependencies),
             override_args,
             contigs,
@@ -67,9 +66,9 @@ impl AlignmentConfig {
             Some(step) => self.previous_step = step,
             None => self.previous_step = PreviousStep::new(Task::Unknown),
         }
-        self.file_counts = sequence_files.len();
-        self.sample_counts = self.count_samples(&sequence_files);
-        self.contigs = self.get_metadata(&sequence_files);
+        self.file_summary = sequence_files.summary;
+        self.sample_counts = self.count_samples(&sequence_files.final_contigs);
+        self.contigs = self.get_metadata(&sequence_files.final_contigs);
     }
 
     /// Get raw loci files
@@ -80,14 +79,20 @@ impl AlignmentConfig {
         Ok(output_path)
     }
 
-    fn find_files(&self, input_dir: &Path) -> Vec<PathBuf> {
+    fn find_files(&self, input_dir: &Path) -> FilteredContigs {
         let input_format = InputFmt::Fasta;
         let sequence_files = SeqFileFinder::new(input_dir).find_recursive_only(&input_format);
-        sequence_files
+        self.filter_problematic_contigs(&sequence_files)
+    }
+
+    fn filter_problematic_contigs(&self, contigs: &[PathBuf]) -> FilteredContigs {
+        let mut filtered_contigs = FilteredContigs::new();
+        filtered_contigs.filter_single_sequence(contigs);
+        filtered_contigs
     }
 
     fn count_samples(&self, sequence_files: &[PathBuf]) -> usize {
-        let format = InputFmt::Fasta;
+        let format = InputFmt::Auto;
         let datatype = DataType::Dna;
         let unique_ids = IDs::new(sequence_files, &format, &datatype).id_unique();
         unique_ids.len()
