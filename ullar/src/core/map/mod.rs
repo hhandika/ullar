@@ -2,17 +2,14 @@
 use std::{error::Error, path::Path};
 
 use colored::Colorize;
-use configs::MappedContigConfig;
+use configs::{ContigFiles, MappedContigConfig};
 use lastz::{LastzMapping, DEFAULT_LASTZ_PARAMS};
 use reports::MappingData;
-use sequences::MappedContigs;
+use writer::MappedContigWriter;
 
 use crate::{
     cli::commands::map::MapContigArgs,
-    helper::{
-        common,
-        files::{FileMetadata, PathCheck},
-    },
+    helper::{common, files::PathCheck},
     types::{runner::RunnerOptions, Task},
 };
 
@@ -22,7 +19,7 @@ pub mod init;
 pub mod lastz;
 pub mod minimap;
 pub mod reports;
-pub mod sequences;
+pub mod writer;
 
 pub const DEFAULT_MAPPED_CONTIG_OUTPUT_DIR: &str = "mapped_contigs";
 pub const DEFAULT_MAP_READ_OUTPUT_DIR: &str = "mapped_reads";
@@ -73,7 +70,7 @@ impl<'a> ContigMapping<'a> {
         spinner.finish_with_message(format!("{} Finished parsing config\n", "✔".green()));
         self.log_input();
         PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
-        let results = self.run_lastz(&config.contig_files);
+        let results = self.run_lastz(&config.contigs);
         self.generate_mapped_contig(&results);
         self.log_output(&results);
     }
@@ -84,7 +81,7 @@ impl<'a> ContigMapping<'a> {
         Ok(config)
     }
 
-    fn run_lastz(&self, contigs: &[FileMetadata]) -> Vec<MappingData> {
+    fn run_lastz(&self, contigs: &[ContigFiles]) -> Vec<MappingData> {
         let runner =
             LastzMapping::new(&self.reference, &self.output_dir, self.runner.override_args);
         let report = runner.run(contigs).expect("Failed to run Lastz");
@@ -92,7 +89,7 @@ impl<'a> ContigMapping<'a> {
     }
 
     fn generate_mapped_contig(&self, data: &[MappingData]) {
-        MappedContigs::new(data, self.output_dir, self.reference).generate();
+        MappedContigWriter::new(data, self.output_dir, self.reference).generate();
     }
 
     fn log_input(&self) {

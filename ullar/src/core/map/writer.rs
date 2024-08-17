@@ -1,3 +1,4 @@
+/// Write results
 use core::str;
 use std::{collections::HashMap, path::Path, sync::mpsc};
 
@@ -5,7 +6,6 @@ use bio::alphabets::dna;
 use colored::Colorize;
 use indexmap::IndexMap;
 use rayon::prelude::*;
-use regex::Regex;
 use segul::{
     helper::{
         sequence::SeqParser,
@@ -20,13 +20,13 @@ use super::reports::MappingData;
 
 pub const DEFAULT_MAPPED_CONTIG_OUTPUT_DIR: &str = "unaligned_contigs";
 
-pub struct MappedContigs<'a> {
+pub struct MappedContigWriter<'a> {
     pub mapping_data: &'a [MappingData],
     pub output_dir: &'a Path,
     pub contig_path: &'a Path,
 }
 
-impl<'a> MappedContigs<'a> {
+impl<'a> MappedContigWriter<'a> {
     pub fn new(
         mapping_data: &'a [MappingData],
         output_dir: &'a Path,
@@ -52,26 +52,26 @@ impl<'a> MappedContigs<'a> {
         let (tx, rx) = mpsc::channel();
         progress_bar.set_message("Mapped contigs");
         self.mapping_data.par_iter().for_each_with(tx, |tx, data| {
-            let sample_name = self.get_sample_name(&data.contig_path);
             let mut matrix: HashMap<String, SeqMatrix> = HashMap::new();
             let (mut seq, _) =
                 SeqParser::new(&data.contig_path, &DataType::Dna).parse(&types::InputFmt::Fasta);
             data.data.iter().for_each(|(refname, contig)| {
-                let data = seq
+                let sequence = seq
                     .get(&contig.contig_name)
                     .expect("Failed to get sequence");
-                let sequence = self.get_sequence(&data, contig.strand);
+                let sequence = self.get_sequence(&sequence, contig.strand);
                 if matrix.contains_key(refname) {
                     let seq_matrix = matrix.get_mut(refname).unwrap();
-                    seq_matrix.insert(sample_name.to_string(), sequence);
+                    seq_matrix.insert(data.sample_name.to_string(), sequence);
                 } else {
                     let mut seq_matrix = IndexMap::new();
-                    seq_matrix.insert(sample_name.to_string(), sequence);
+                    seq_matrix.insert(data.sample_name.to_string(), sequence);
                     matrix.insert(refname.clone(), seq_matrix);
                 }
             });
             seq.clear();
-            tx.send((sample_name, matrix)).expect("Failed to send data");
+            tx.send((data.sample_name.to_string(), matrix))
+                .expect("Failed to send data");
             progress_bar.inc(1);
         });
 
@@ -122,18 +122,5 @@ impl<'a> MappedContigs<'a> {
         let mut header = Header::default();
         header.from_seq_matrix(&matrix, false);
         header
-    }
-
-    fn get_sample_name(&self, path: &Path) -> String {
-        let sample_name = path
-            .file_stem()
-            .expect("Failed to get file stem")
-            .to_str()
-            .expect("Failed to convert file stem to string")
-            .to_string();
-        let regex_pattern = r"_contigs$";
-        let re = Regex::new(regex_pattern).expect("Failed to compile regex pattern");
-        let sample_name = re.replace_all(&sample_name, "");
-        sample_name.to_string()
     }
 }

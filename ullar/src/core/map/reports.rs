@@ -3,6 +3,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use segul::helper::{
+    sequence::SeqParser,
+    types::{DataType, InputFmt},
+};
+
 use crate::types::map::LastzOutputFormat;
 
 use super::lastz::LastzOutput;
@@ -26,6 +31,7 @@ impl MappingReport {
 }
 
 pub struct MappingData {
+    pub sample_name: String,
     pub contig_path: PathBuf,
     pub output_path: PathBuf,
     pub refname_regex: String,
@@ -34,20 +40,32 @@ pub struct MappingData {
     /// The key is the reference sequence name.
     /// The value is the best contig score and other stats.
     pub data: ContigMapping,
+    /// Number of references that the contig mapped to
+    /// This could be a probe sequence
+    pub ref_count: usize,
 }
 
 impl MappingData {
-    pub fn new(contig_path: &Path, output_path: PathBuf, refname_regex: &str) -> Self {
+    pub fn new(
+        sample_name: &str,
+        contig_path: &Path,
+        output_path: PathBuf,
+        refname_regex: &str,
+    ) -> Self {
         Self {
+            sample_name: sample_name.to_string(),
             contig_path: contig_path.to_path_buf(),
             output_path,
             refname_regex: refname_regex.to_string(),
+            ref_count: 0,
             data: BTreeMap::new(),
         }
     }
 
-    pub fn summarize(&mut self, lastz_output: &[LastzOutput]) {
+    pub fn summarize(&mut self, lastz_output: &[LastzOutput], target_path: &Path) {
         self.data = self.find_best_contigs(lastz_output);
+        let (seq, _) = SeqParser::new(target_path, &DataType::Dna).parse(&InputFmt::Auto);
+        self.ref_count = seq.len();
     }
 
     fn find_best_contigs(&self, lastz_output: &[LastzOutput]) -> ContigMapping {
@@ -279,6 +297,7 @@ mod tests {
         };
         let lastz_output = vec![lastz_output, lastz_output2, lastz_output3, lastz_output4];
         let report = MappingData::new(
+            "test_contig",
             Path::new("test"),
             PathBuf::from("test"),
             DEFAULT_REFNAME_REGEX,
