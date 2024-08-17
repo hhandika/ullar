@@ -107,6 +107,13 @@ impl DependencyCheck {
         }
     }
 
+    fn check_lastz(&self) {
+        match &self.lastz {
+            Some(lastz) => self.print_ok(&lastz.name, &lastz.version),
+            None => self.print_error("lastz"),
+        }
+    }
+
     fn check_mafft(&self) {
         match &self.mafft {
             Some(mafft) => self.print_ok(&mafft.name, &mafft.version),
