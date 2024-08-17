@@ -19,6 +19,7 @@ pub mod init;
 pub mod lastz;
 pub mod minimap;
 pub mod reports;
+pub mod summary;
 pub mod writer;
 
 pub const DEFAULT_MAPPED_CONTIG_OUTPUT_DIR: &str = "mapped_contigs";
