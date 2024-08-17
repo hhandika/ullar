@@ -93,19 +93,25 @@ impl<'a> InitMappingConfig<'a> {
 
     fn log_input(&self) {
         log::info!("{}", "Input".cyan());
+        match self.query_dir {
+            Some(dir) => {
+                log::info!("{:18}: {}", "Directory", dir.display());
+            }
+            None => self.log_input_paths(),
+        }
+        log::info!("{:18}: {}\n", "Task", "Initialize mapping config");
+    }
+
+    fn log_input_paths(&self) {
         match self.query_paths {
             Some(paths) => {
+                log::info!("{:18}: {}", "Input path", "Stdin");
                 log::info!("{:18}: {}", "File counts", paths.len());
             }
             None => {
-                log::info!(
-                    "{:18}: {}",
-                    "Input directory",
-                    self.query_dir.expect("No directory found").display()
-                );
+                log::info!("{:18}: {}", "Input directory", "Multiple files");
             }
         }
-        log::info!("{:18}: {}\n", "Task", "Initialize mapping config");
     }
 
     fn log_output(&self, output_path: &Path) {
