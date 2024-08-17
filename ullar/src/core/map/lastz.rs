@@ -170,7 +170,6 @@ impl<'a> Lastz<'a> {
     /// Return the lastz output
     /// Else return an error
     pub fn run(&self, sample_name: &str) -> Result<MappingData, Box<dyn Error>> {
-        // datasets/contigs/Bunomys_chrysocomus_LSUMZ39568/contigs.fasta[multiple,nameparse=full]
         self.execute_lastz().expect("Failed to run Lastz");
         let parsed_output = self.execute_lastz();
         match parsed_output {
