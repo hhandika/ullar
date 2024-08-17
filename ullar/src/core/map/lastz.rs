@@ -351,7 +351,7 @@ impl LastzOutput {
         content
             .iter()
             .filter(|&c| *c != b'#' && *c != b'%')
-            .map(|&c| c)
+            .copied()
             .collect::<Vec<u8>>()
     }
 }

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use segul::helper::{
@@ -33,7 +33,7 @@ impl FilteredSequenceFiles {
         self.summary.count(total_found, self.final_files.len());
     }
 
-    fn is_single_sequence(&self, contig: &PathBuf) -> bool {
+    fn is_single_sequence(&self, contig: &Path) -> bool {
         let datatype = DataType::Dna;
         let input_fmt = InputFmt::Auto;
         let (_, header) = SeqParser::new(contig, &datatype).parse(&input_fmt);

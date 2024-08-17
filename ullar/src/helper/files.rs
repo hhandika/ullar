@@ -210,10 +210,12 @@ impl FileMetadata {
     }
 
     pub fn get(&mut self, path: &Path) {
-        let file = fs::metadata(path).expect(&format!(
-            "Failed to get metadata for {}",
-            path.display().to_string().red()
-        ));
+        let file = fs::metadata(path).unwrap_or_else(|_| {
+            panic!(
+                "Failed to get metadata for {}",
+                path.display().to_string().red()
+            )
+        });
         self.file_name = path
             .file_name()
             .expect("Failed to get file name")

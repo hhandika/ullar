@@ -86,7 +86,7 @@ impl MappedContigConfig {
             previous_step: PreviousStep::with_dependencies(task, dependencies),
             override_args,
             contigs: Vec::new(),
-            name_source: name_source,
+            name_source,
         }
     }
 
@@ -160,7 +160,7 @@ impl MappedContigConfig {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct ContigFiles {
     pub sample_name: String,
     pub metadata: FileMetadata,
@@ -184,16 +184,16 @@ impl ContigFiles {
     }
 
     fn parse_sample_name(&mut self, contig: &Path, source: &SampleNameSource) {
-        let filastem = self.get_file_stem(contig);
+        let file_stem = self.get_file_stem(contig);
         match source {
-            SampleNameSource::File => self.sample_name = filastem,
+            SampleNameSource::File => self.sample_name = file_stem,
             SampleNameSource::Directory => {
                 let components = contig
                     .components()
                     .map(|c| c.as_os_str().to_string_lossy().to_string())
                     .collect::<Vec<String>>();
                 if components.is_empty() && components.len() == 1 {
-                    self.sample_name = filastem;
+                    self.sample_name = file_stem;
                 } else {
                     // Get the second last component which is the sample directory
                     // e.g. /path/to/sample/contig.fasta
