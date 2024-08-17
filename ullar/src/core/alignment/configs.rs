@@ -22,7 +22,7 @@ use crate::{
 
 pub const DEFAULT_ALIGNMENT_CONFIG: &str = "unaligned_contigs";
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AlignmentConfig {
     pub file_summary: CandidateAlignmentSummary,
     pub sample_counts: usize,
@@ -30,18 +30,6 @@ pub struct AlignmentConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub override_args: Option<String>,
     pub contigs: Vec<FileMetadata>,
-}
-
-impl Default for AlignmentConfig {
-    fn default() -> Self {
-        Self {
-            file_summary: CandidateAlignmentSummary::default(),
-            sample_counts: 0,
-            previous_step: PreviousStep::default(),
-            override_args: None,
-            contigs: Vec::new(),
-        }
-    }
 }
 
 impl AlignmentConfig {

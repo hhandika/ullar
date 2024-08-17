@@ -74,7 +74,7 @@ impl<'a> MappedContigWriter<'a> {
                 let sequence = seq
                     .get(&contig.contig_name)
                     .expect("Failed to get sequence");
-                let sequence = self.get_sequence(&sequence, contig.strand);
+                let sequence = self.get_sequence(sequence, contig.strand);
                 if matrix.contains_key(refname) {
                     let seq_matrix = matrix.get_mut(refname).unwrap();
                     seq_matrix.insert(data.sample_name.to_string(), sequence);
@@ -170,7 +170,7 @@ impl<'a> SummaryWriter<'a> {
         let mut writer = csv::Writer::from_path(&output_dir).expect("Failed to create csv writer");
         self.mapped_matrix.iter().for_each(|(refname, matrix)| {
             let mut summary = FinalMappingSummary::new(refname.to_string(), matrix.len());
-            summary.summarize_matches(&self.mapped_matrix);
+            summary.summarize_matches(self.mapped_matrix);
             writer
                 .serialize(summary)
                 .expect("Failed to write summary to file");

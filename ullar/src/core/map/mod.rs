@@ -83,10 +83,8 @@ impl<'a> ContigMapping<'a> {
     }
 
     fn run_lastz(&self, contigs: &[ContigFiles]) -> Vec<MappingData> {
-        let runner =
-            LastzMapping::new(&self.reference, &self.output_dir, self.runner.override_args);
-        let report = runner.run(contigs).expect("Failed to run Lastz");
-        report
+        let lastz = LastzMapping::new(self.reference, self.output_dir, self.runner.override_args);
+        lastz.run(contigs).expect("Failed to run Lastz")
     }
 
     fn generate_mapped_contig(&self, data: &[MappingData]) {

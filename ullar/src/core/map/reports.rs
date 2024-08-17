@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::{btree_map::Entry, BTreeMap, HashMap},
     path::{Path, PathBuf},
 };
 
@@ -76,18 +76,18 @@ impl MappingData {
             let contig_name = String::from(&output.name2);
 
             // Check if reference has already been mapped to a contig
-            if best_contigs.contains_key(&ref_name) {
-                let matches_refs =
-                    self.update_matching_refs(&mut matches_refs, output, &contig_name);
-                self.update_matching_contigs(&mut best_contigs, output, &ref_name, matches_refs);
-            } else {
+            if let Entry::Vacant(e) = best_contigs.entry(ref_name.to_string()) {
                 let mut contig = BestContig::from_lastz_output(output);
                 let matches_refs =
                     self.update_matching_refs(&mut matches_refs, output, &contig_name);
                 if matches_refs {
                     contig.update_duplicate_refs();
                 }
-                best_contigs.insert(ref_name, contig);
+                e.insert(contig);
+            } else {
+                let matches_refs =
+                    self.update_matching_refs(&mut matches_refs, output, &contig_name);
+                self.update_matching_contigs(&mut best_contigs, output, &ref_name, matches_refs);
             }
         });
         best_contigs
@@ -142,6 +142,7 @@ impl MappingData {
 /// and their mapping information. Only the
 /// best mapping information is stored.
 /// We also keep track of duplicate mappings.
+#[derive(Debug, Default)]
 pub struct BestContig {
     pub contig_name: String,
     pub ref_name: String,
