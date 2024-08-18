@@ -163,7 +163,6 @@ impl<'a> SummaryWriter<'a> {
         let ref_names = self.count_references(reference_data);
         self.reference_counts = ref_names.len();
         let progress_bar = common::init_progress_bar(self.reference_counts as u64);
-        log::info!("Writing contig summary to file...");
         let messages = "Contig/Loci summary";
         progress_bar.set_message(messages);
         let output_dir = self.create_output_path();
