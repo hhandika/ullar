@@ -133,8 +133,14 @@ impl MappingData {
 
     fn clean_reference_name(&self, ref_name: &str) -> String {
         let re = regex::Regex::new(&self.refname_regex).expect("Failed to create regex");
-        let ref_name = re.replace_all(ref_name, "").to_string();
+        let ref_name = re
+            .captures(ref_name)
+            .expect("Failed to capture reference name");
         ref_name
+            .get(1)
+            .expect("Failed to get reference name")
+            .as_str()
+            .to_string()
     }
 }
 
@@ -221,8 +227,7 @@ pub struct ContigMappingSummary {
 
 #[cfg(test)]
 mod tests {
-
-    use crate::core::map::lastz::DEFAULT_REFNAME_REGEX;
+    use crate::helper::regex::UCE_REGEX;
 
     use super::*;
 
@@ -301,7 +306,7 @@ mod tests {
             "test_contig",
             Path::new("test"),
             PathBuf::from("test"),
-            DEFAULT_REFNAME_REGEX,
+            UCE_REGEX,
         );
         let best_contigs = report.find_best_contigs(&lastz_output);
         assert_eq!(best_contigs.len(), 2);

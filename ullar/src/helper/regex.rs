@@ -48,8 +48,14 @@ pub const READ1_REGEX: &str = r"^(.+?)(_|-)(?i)(R1|1|read1|read_1|read-1)(\D)(?:
 /// Match Read 2 from file name
 pub const READ2_REGEX: &str = r"^(.+?)(_|-)(?i)(R2|2|read2|read_2|read-2)(\D)(?:.*)$";
 
+/// Match contig sample names without the contig suffix
+/// Expect name using underscore as a separator
+pub const CONTIG_SAMPLE_REGEX: &str = r"^(\w+)(_)([a-zA-Z0-9]+)";
+
+/// Match Faircloth-lab UCE 5K reference names
+pub const UCE_REGEX: &str = r"^(uce|locus)-\\d+";
+
 /// Lazy static regex matcher
-///
 /// Matches a file name with a given pattern
 /// Returns true if the file name matches the pattern
 #[macro_export]

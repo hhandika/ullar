@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::{builder, Args, Subcommand};
 
-use crate::core::map::{configs::DEFAULT_LOCUS_CONFIG, DEFAULT_MAPPED_CONTIG_OUTPUT_DIR};
+use crate::{core::map::{configs::DEFAULT_LOCUS_CONFIG, DEFAULT_MAPPED_CONTIG_OUTPUT_DIR}, helper::regex::CONTIG_SAMPLE_REGEX};
 
 use super::common::CommonRunnerArgs;
 
@@ -24,9 +24,6 @@ pub struct MapContigArgs {
     /// Path to the map configuration file
     #[arg(short, long, help = "Path to the map configuration file")]
     pub config: PathBuf,
-    /// Path to the reference sequence
-    #[arg(short, long, help = "Path to the reference sequence")]
-    pub reference: PathBuf,
     /// Output directory to store the alignments
     #[arg( 
         short,
@@ -54,7 +51,6 @@ pub struct MapInitArgs {
         help = "Input query path using stdin.",
     )]
     pub input: Option<Vec<PathBuf>>,
-
     #[arg(
         short = 'f',
         long = "format",
@@ -63,11 +59,28 @@ pub struct MapInitArgs {
         value_parser = builder::PossibleValuesParser::new(["contig", "read"])
     )]
     pub query_format: String,
+    /// Path to the reference sequence
+    #[arg(short, long, help = "Path to the reference sequence")]
+    pub reference: PathBuf,
+    #[arg(
+        long,
+        default_value = "^(uce|locus)-\\d+",
+        help = "Regular expression to extract reference name",
+        require_equals = true,
+    )]
+    pub re_reference: String,
+    #[arg(
+        long,
+        default_value = CONTIG_SAMPLE_REGEX,
+        help = "Regular expression to match sample names",
+        require_equals = true,
+    )]
+    pub re_sample: String,
     #[arg(
         long,
         default_value = "file",
         help = "Sample name sources",
-        value_parser = builder::PossibleValuesParser::new(["file", "directory"])
+        value_parser = builder::PossibleValuesParser::new(["file", "directory", "regex"])
     )]
     pub name_source: String,
     /// Config file name
