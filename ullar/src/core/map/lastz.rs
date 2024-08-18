@@ -1,7 +1,7 @@
 //! Runner for the lastz alignment tool.
 //!
 //!
-//! Documentation for Lastz can be found [here](https://www.bx.psu.edu/~rsharris/lastz/README.lastz-1.04.15.html).
+//! Documentation for Lastz can be found [here](https://www.bx.psu.edu/~rsharris/lastz/README.lastz-1.04.15.html)
 use std::error::Error;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -81,7 +81,7 @@ impl<'a> LastzMapping<'a> {
         contigs.par_iter().for_each_with(tx, |tx, contig| {
             let data = self
                 .run_lastz(contig, &contig.sample_name)
-                .expect("Failed to run Lastz");
+                .expect("Unknown lastz error. Check executable in the path");
             tx.send(data).expect("Failed to send data");
             progress_bar.inc(1);
         });
@@ -174,7 +174,7 @@ impl<'a> Lastz<'a> {
     /// Return the lastz output
     /// Else return an error
     pub fn run(&self, sample_name: &str) -> Result<MappingData, Box<dyn Error>> {
-        self.execute_lastz().expect("Failed to run Lastz");
+        self.execute_lastz().expect("Unknown error");
         let parsed_output = self.execute_lastz();
         match parsed_output {
             Ok(data) => {
@@ -241,7 +241,12 @@ impl<'a> Lastz<'a> {
     }
 
     fn create_output_path(&self) -> Result<PathBuf, Box<dyn Error>> {
-        fs::create_dir_all(self.output_dir)?;
+        fs::create_dir_all(self.output_dir).with_context(|| {
+            format!(
+                "Failed to write Lastz output to file: {}",
+                self.output_dir.display()
+            )
+        })?;
         let output_dir = self.output_dir.join(LASTZ_RESULT_DIR);
         let output_filename = format!("{}_{}", self.query.get_file_stem(), LASTZ_RESULT_SUFFIX);
         let output_path = output_dir
