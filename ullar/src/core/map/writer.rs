@@ -1,7 +1,7 @@
 /// Write results
 use core::str;
 use std::{
-    collections::{BTreeSet, HashMap},
+    collections::HashMap,
     fs,
     path::{Path, PathBuf},
     sync::mpsc,
@@ -189,7 +189,7 @@ impl<'a> SummaryWriter<'a> {
         }
     }
 
-    fn count_references(&mut self, reference_data: &ReferenceFile) -> BTreeSet<String> {
+    fn count_references(&mut self, reference_data: &ReferenceFile) -> Vec<String> {
         let input_fmt = types::InputFmt::Auto;
         let datatype = DataType::Dna;
         let ref_path = reference_data
@@ -197,11 +197,12 @@ impl<'a> SummaryWriter<'a> {
             .parent_dir
             .join(&reference_data.metadata.file_name);
         let ref_ids = IDs::new(&[ref_path], &input_fmt, &datatype).id_unique();
-        let mut parse_ref_name = BTreeSet::new();
+        let mut parse_ref_name = Vec::new();
         ref_ids.iter().for_each(|id| {
             let ref_name = self.capture_reference_name(&reference_data.name_regex, id);
-            parse_ref_name.insert(ref_name);
+            parse_ref_name.push(ref_name);
         });
+        parse_ref_name.dedup();
         parse_ref_name
     }
 
