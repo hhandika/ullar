@@ -1,7 +1,6 @@
 //! Utilities for managing dependencies.
-
 use colored::Colorize;
-use comfy_table::Table;
+use comfy_table::{Cell, Color, Table};
 use fastp::FastpMetadata;
 use iqtree::IqtreeMetadata;
 use lastz::LastzMetadata;
@@ -36,11 +35,11 @@ macro_rules! version {
 }
 
 pub struct DependencyCheck {
-    pub fastp: FastpMetadata,
-    pub spades: SpadesMetadata,
-    pub lastz: LastzMetadata,
-    pub mafft: MafftMetadata,
-    pub iqtree: IqtreeMetadata,
+    fastp: FastpMetadata,
+    spades: SpadesMetadata,
+    lastz: LastzMetadata,
+    mafft: MafftMetadata,
+    iqtree: IqtreeMetadata,
 }
 
 impl Default for DependencyCheck {
@@ -67,12 +66,13 @@ impl DependencyCheck {
         self.log_contig_mapping(&mut table);
         self.log_sequence_alignment(&mut table);
         self.log_phylogenetic_inference(&mut table);
+        log::info!("{}", table);
     }
 
     fn log_status(&self) -> Table {
         log::info!("{}", "Dependencies".cyan());
         let mut table = Table::new();
-        table.add_row(["Feature", "Dependencies", "Version", "Status"]);
+        table.set_header(["Features", "Dependencies", "Version", "Status"]);
         table
     }
 
@@ -81,12 +81,12 @@ impl DependencyCheck {
         self.fastp = FastpMetadata::new().get();
         match &self.fastp.metadata {
             Some(metadata) => {
-                let status_ok = self.status_ok(true);
-                table.add_row([feature, "fastp", metadata.version.as_str(), &status_ok]);
+                let cells = self.get_cell(feature, "fastp", &metadata.version, true);
+                table.add_row(cells);
             }
             None => {
-                let status_error = self.status_ok(false);
-                table.add_row([feature, "fastp", "fastp", "Unknown", &status_error]);
+                let cells = self.get_cell(feature, "fastp", "Unknown", false);
+                table.add_row(cells);
             }
         }
     }
@@ -96,12 +96,12 @@ impl DependencyCheck {
         self.spades = SpadesMetadata::new().get();
         match &self.spades.metadata {
             Some(metadata) => {
-                let status_ok = self.status_ok(true);
-                table.add_row([feature, "SPAdes", metadata.version.as_str(), &status_ok]);
+                let cells = self.get_cell(feature, "SPAdes", &metadata.version, true);
+                table.add_row(cells);
             }
             None => {
-                let status_error = self.status_ok(false);
-                table.add_row([feature, "SPAdes", "spades", "Unknown", &status_error]);
+                let cells = self.get_cell(feature, "SPAdes", "Unknown", false);
+                table.add_row(cells);
             }
         }
     }
@@ -111,12 +111,12 @@ impl DependencyCheck {
         self.lastz = LastzMetadata::new().get();
         match &self.lastz.metadata {
             Some(metadata) => {
-                let status_ok = self.status_ok(true);
-                table.add_row([feature, "LASTZ", metadata.version.as_str(), &status_ok]);
+                let cells = self.get_cell(feature, "LASTZ", &metadata.version, true);
+                table.add_row(cells);
             }
             None => {
-                let status_error = self.status_ok(false);
-                table.add_row([feature, "LASTZ", "lastz", "Unknown", &status_error]);
+                let cells = self.get_cell(feature, "LASTZ", "Unknown", false);
+                table.add_row(cells);
             }
         }
     }
@@ -126,12 +126,12 @@ impl DependencyCheck {
         self.mafft = MafftMetadata::new().get();
         match &self.mafft.metadata {
             Some(metadata) => {
-                let status_ok = self.status_ok(true);
-                table.add_row([feature, "MAFFT", metadata.version.as_str(), &status_ok]);
+                let cells = self.get_cell(feature, "MAFFT", &metadata.version, true);
+                table.add_row(cells);
             }
             None => {
-                let status_error = self.status_ok(false);
-                table.add_row([feature, "MAFFT", "mafft", "Unknown", &status_error]);
+                let cells = self.get_cell(feature, "MAFFT", "Unknown", false);
+                table.add_row(cells);
             }
         }
     }
@@ -141,21 +141,31 @@ impl DependencyCheck {
         self.iqtree = IqtreeMetadata::new().get();
         match &self.iqtree.metadata {
             Some(metadata) => {
-                let status_ok = self.status_ok(true);
-                table.add_row([feature, "IQ-TREE", metadata.version.as_str(), &status_ok]);
+                let cells = self.get_cell(feature, "IQ-TREE", &metadata.version, true);
+                table.add_row(cells);
             }
             None => {
-                let status_error = self.status_ok(false);
-                table.add_row([feature, "IQ-TREE", "iqtree", "Unknown", &status_error]);
+                let cells = self.get_cell(feature, "IQ-TREE", "Unknown", false);
+                table.add_row(cells);
             }
         }
     }
 
-    fn status_ok(&self, ok: bool) -> String {
+    fn get_cell(&self, feature: &str, app: &str, version: &str, ok: bool) -> Vec<Cell> {
+        let status = self.status_ok(ok);
+        vec![
+            Cell::new(feature),
+            Cell::new(app),
+            Cell::new(version),
+            status,
+        ]
+    }
+
+    fn status_ok(&self, ok: bool) -> Cell {
         if ok {
-            "[OK]".green().to_string()
+            Cell::new("[OK]").fg(Color::Green)
         } else {
-            "[ERROR]".red().to_string()
+            Cell::new("[ERROR]").fg(Color::Red)
         }
     }
 }
