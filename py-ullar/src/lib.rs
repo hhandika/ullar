@@ -1,5 +1,5 @@
 use pyo3::prelude::*;
-use ullar::helper::utils::get_api_version;
+use ullar::helper::common::get_api_version;
 
 /// Formats the sum of two numbers as string.
 #[pyfunction]
