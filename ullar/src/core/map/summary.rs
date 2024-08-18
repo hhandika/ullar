@@ -15,16 +15,16 @@ pub struct FinalMappingSummary {
     ///     based on total number of samples.
     ///     Total matches / total samples * 100
     #[serde(skip)]
-    pub percent_matches: f64,
+    pub total_percent_coverage: f64,
 }
 
 impl FinalMappingSummary {
     /// Create a new FinalMappingSummary instance.
-    pub fn new(total_references: usize, total_matches: usize) -> Self {
+    pub fn new(total_references: usize) -> Self {
         Self {
             total_references,
-            total_matches,
-            percent_matches: 0.0,
+            total_matches: 0,
+            total_percent_coverage: 0.0,
         }
     }
 
@@ -32,7 +32,7 @@ impl FinalMappingSummary {
     /// Returns true if the reference sequence is found in the data.
     pub fn summarize_matches(&mut self, data: &MappedMatrix) {
         self.total_matches = data.len();
-        self.percent_matches = self.calculate_percent_matches();
+        self.total_percent_coverage = self.calculate_percent_matches();
     }
 
     fn calculate_percent_matches(&self) -> f64 {
