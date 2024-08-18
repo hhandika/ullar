@@ -33,7 +33,7 @@ pub fn init_spinner() -> ProgressBar {
 #[cfg(not(tarpaulin_include))]
 pub fn init_progress_bar(len: u64) -> ProgressBar {
     let progress_bar = ProgressBar::new(len);
-    let duration: Duration = Duration::from_millis(500);
+    let duration: Duration = Duration::from_millis(250);
     progress_bar.enable_steady_tick(duration);
     progress_bar.set_style(
         ProgressStyle::default_bar()
