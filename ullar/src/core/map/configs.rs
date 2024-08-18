@@ -130,8 +130,8 @@ impl MappedContigConfig {
     }
 
     /// Get raw loci files
-    pub fn to_yaml(&self) -> Result<PathBuf, Box<dyn Error>> {
-        let output_path = generate_config_output_path(DEFAULT_LOCUS_CONFIG);
+    pub fn to_yaml(&self, file_name: &str) -> Result<PathBuf, Box<dyn Error>> {
+        let output_path = generate_config_output_path(file_name);
         let writer = File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
         Ok(output_path)

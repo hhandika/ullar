@@ -9,9 +9,17 @@ use std::{
 use colored::Colorize;
 use indicatif::ProgressBar;
 
-use crate::{cli::commands::map::MapInitArgs, helper::common, types::map::MappingQueryFormat};
+use crate::{
+    cli::commands::map::MapInitArgs,
+    helper::{
+        common,
+        configs::{CONFIG_EXTENSION, DEFAULT_CONFIG_DIR},
+        files::PathCheck,
+    },
+    types::map::MappingQueryFormat,
+};
 
-use super::configs::{MappedContigConfig, SampleNameSource};
+use super::configs::{MappedContigConfig, SampleNameSource, DEFAULT_LOCUS_CONFIG};
 
 pub struct InitMappingConfig<'a> {
     /// Query directory containing query sequences
@@ -22,6 +30,8 @@ pub struct InitMappingConfig<'a> {
     pub query_format: MappingQueryFormat,
     /// Source to parse file names
     pub name_source: &'a str,
+    /// Config file name
+    pub config_name: &'a str,
 }
 
 impl Default for InitMappingConfig<'_> {
@@ -31,6 +41,7 @@ impl Default for InitMappingConfig<'_> {
             query_paths: None,
             query_format: MappingQueryFormat::Contig,
             name_source: "file",
+            config_name: DEFAULT_LOCUS_CONFIG,
         }
     }
 }
@@ -42,11 +53,16 @@ impl<'a> InitMappingConfig<'a> {
             query_paths: args.input.as_deref(),
             query_format: args.query_format.parse().expect("Invalid query format"),
             name_source: &args.name_source,
+            config_name: &args.config_name,
         }
     }
 
     pub fn init(&self) {
         self.log_input();
+        let config_path = Path::new(DEFAULT_CONFIG_DIR)
+            .join(self.config_name)
+            .with_extension(CONFIG_EXTENSION);
+        PathCheck::new(&config_path, false, false).prompt_exists(false);
         let spinner = common::init_spinner();
         spinner.set_message("Initializing mapping configuration");
         self.write_config(&spinner);
@@ -80,7 +96,7 @@ impl<'a> InitMappingConfig<'a> {
                 "No sequence found in the input directory. Please, check input is FASTA".into(),
             );
         }
-        let output_path = config.to_yaml()?;
+        let output_path = config.to_yaml(self.config_name)?;
         Ok((output_path, config))
     }
 
@@ -143,6 +159,6 @@ impl<'a> InitMappingConfig<'a> {
     }
 
     fn log_contig_output(&self, config: &MappedContigConfig) {
-        log::info!("{:18}: {}", "Contig counts", config.contig_file_counts);
+        log::info!("{:18}: {}", "Sample counts", config.contig_file_counts);
     }
 }
