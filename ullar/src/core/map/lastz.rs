@@ -79,10 +79,16 @@ impl<'a> LastzMapping<'a> {
         progress_bar.set_message("Contigs");
         let (tx, rx) = mpsc::channel();
         contigs.par_iter().for_each_with(tx, |tx, contig| {
-            let data = self
-                .run_lastz(contig, &contig.sample_name)
-                .expect("Unknown lastz error. Check executable in the path");
-            tx.send(data).expect("Failed to send data");
+            let data = self.run_lastz(contig, &contig.sample_name);
+            match data {
+                Ok(data) => {
+                    tx.send(data).expect("Failed to send data");
+                }
+                Err(e) => {
+                    let msg = format!("Failed to map contig {}: {}", contig.sample_name.red(), e);
+                    log::error!("{}", msg);
+                }
+            }
             progress_bar.inc(1);
         });
         let data = rx.iter().collect::<Vec<MappingData>>();

@@ -101,7 +101,10 @@ impl<'a> Alignment<'a> {
         let (tx, rx) = mpsc::channel();
         input_files.par_iter().for_each_with(tx, |tx, file| {
             let output = self.align_mafft(file);
-            tx.send(output).expect("Failed to send output path");
+            match output {
+                Ok(path) => tx.send(path).expect("Failed to send output path"),
+                Err(e) => log::error!("Failed to align {}: {}", file.file_name.red(), e),
+            }
             progress_bar.inc(1);
         });
 
@@ -113,9 +116,9 @@ impl<'a> Alignment<'a> {
         report
     }
 
-    fn align_mafft(&self, input: &FileMetadata) -> PathBuf {
+    fn align_mafft(&self, input: &FileMetadata) -> Result<PathBuf, Box<dyn Error>> {
         let mafft = MafftRunner::new(input, self.output_dir, self.runner.override_args);
-        mafft.run().expect("Failed to run MAFFT")
+        mafft.run()
     }
 
     fn log_input(&self, config: &AlignmentConfig) {
