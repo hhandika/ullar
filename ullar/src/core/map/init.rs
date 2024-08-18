@@ -30,6 +30,8 @@ pub struct InitMappingConfig<'a> {
     /// Input query format
     pub query_format: MappingQueryFormat,
     /// Source to parse file names
+    /// Path to reference sequence
+    pub reference_path: &'a Path,
     pub name_source: &'a str,
     /// Config file name
     pub config_name: &'a str,
@@ -46,6 +48,7 @@ impl Default for InitMappingConfig<'_> {
             query_paths: None,
             query_format: MappingQueryFormat::Contig,
             name_source: "file",
+            reference_path: Path::new(""),
             config_name: DEFAULT_LOCUS_CONFIG,
             refname_regex: UCE_REGEX,
             sample_name_regex: CONTIG_SAMPLE_REGEX,
@@ -59,6 +62,7 @@ impl<'a> InitMappingConfig<'a> {
             query_dir: args.dir.as_deref(),
             query_paths: args.input.as_deref(),
             query_format: args.query_format.parse().expect("Invalid query format"),
+            reference_path: &args.reference,
             name_source: &args.name_source,
             config_name: &args.config_name,
             refname_regex: &args.re_reference,
@@ -102,7 +106,7 @@ impl<'a> InitMappingConfig<'a> {
                 "No sequence found in the input directory. Please, check input is FASTA".into(),
             );
         }
-        let output_path = config.to_yaml(self.config_name)?;
+        let output_path = config.to_yaml(self.config_name, self.reference_path)?;
         Ok((output_path, config))
     }
 
