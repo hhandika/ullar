@@ -50,7 +50,7 @@ impl FinalMappingSummary {
         let matrix = data
             .get(&self.reference_name)
             .expect("Failed to get matrix");
-        self.total_matches = matrix.len();
+        self.total_matches = data.len();
         self.percent_matches = self.total_matches as f64 / self.total_references as f64 * 100.0;
         let total_sequence_length = self.count_total_sequence_length(matrix);
         self.mean_sequence_length = self.calculate_mean_sequence_length(total_sequence_length);
