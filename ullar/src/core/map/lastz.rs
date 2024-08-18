@@ -241,18 +241,23 @@ impl<'a> Lastz<'a> {
     }
 
     fn create_output_path(&self) -> Result<PathBuf, Box<dyn Error>> {
-        fs::create_dir_all(self.output_dir).with_context(|| {
-            format!(
-                "Failed to write Lastz output to file: {}",
-                self.output_dir.display()
-            )
-        })?;
         let output_dir = self.output_dir.join(LASTZ_RESULT_DIR);
+        self.create_directory(&output_dir)?;
         let output_filename = format!("{}_{}", self.query.get_file_stem(), LASTZ_RESULT_SUFFIX);
         let output_path = output_dir
             .join(&output_filename)
             .with_extension(DEFAULT_OUTPUT_EXT);
         Ok(output_path)
+    }
+
+    fn create_directory(&self, dir: &Path) -> Result<(), Box<dyn Error>> {
+        fs::create_dir_all(dir).with_context(|| {
+            format!(
+                "Failed to write Lastz output to file: {}",
+                self.output_dir.display()
+            )
+        })?;
+        Ok(())
     }
 
     fn parse_output(&self, output: &Output) -> Result<Vec<LastzOutput>, Box<dyn Error>> {
