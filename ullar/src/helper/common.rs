@@ -12,6 +12,10 @@ const BYTE_TO_GB: u64 = 1024 * 1024 * 1024;
 const HEADER_SYMBOL: char = '=';
 const FOOTER_SYMBOL: char = '-';
 
+pub fn get_api_version() -> String {
+    crate_version!().to_string()
+}
+
 #[cfg(not(tarpaulin_include))]
 pub fn init_spinner() -> ProgressBar {
     let spin = ProgressBar::new_spinner();
