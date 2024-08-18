@@ -175,7 +175,8 @@ impl<'a> SummaryWriter<'a> {
     pub fn write(&mut self, reference_data: &ReferenceFile) -> FinalMappingSummary {
         let ref_names = self.count_references(reference_data);
         self.reference_counts = ref_names.len();
-        let summary = FinalMappingSummary::new(self.reference_counts);
+        let mut summary = FinalMappingSummary::new(self.reference_counts);
+        summary.summarize(&self.mapped_matrix);
         let progress_bar = common::init_progress_bar(self.reference_counts as u64);
         let messages = "Contig/Loci summary";
         progress_bar.set_message(messages);

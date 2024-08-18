@@ -30,7 +30,7 @@ impl FinalMappingSummary {
 
     /// Summarize the matches for each reference sequence.
     /// Returns true if the reference sequence is found in the data.
-    pub fn summarize_matches(&mut self, data: &MappedMatrix) {
+    pub fn summarize(&mut self, data: &MappedMatrix) {
         self.total_matches = data.len();
         self.total_percent_coverage = self.calculate_percent_matches();
     }
