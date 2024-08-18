@@ -34,7 +34,7 @@ pub const SUMMARY_EXT: &str = "csv";
 
 pub type MappedMatrix = HashMap<String, SeqMatrix>;
 
-const PROGRESS_MSG: &str = "Contigs/Loci";
+const SUMMARY_MSG: &str = "Contigs/Loci";
 
 pub struct MappedContigWriter<'a> {
     pub mapping_data: &'a [MappingData],
@@ -73,7 +73,8 @@ impl<'a> MappedContigWriter<'a> {
         let mut final_matrix: MappedMatrix = HashMap::new();
         let progress_bar = common::init_progress_bar(self.mapping_data.len() as u64);
         let (tx, rx) = mpsc::channel();
-        progress_bar.set_message(PROGRESS_MSG);
+        let msg = "Samples";
+        progress_bar.set_message(msg);
         self.mapping_data.par_iter().for_each_with(tx, |tx, data| {
             let mut matrix: MappedMatrix = HashMap::new();
             let (mut seq, _) =
@@ -102,7 +103,7 @@ impl<'a> MappedContigWriter<'a> {
             self.create_mapped_matrix(&mut final_matrix, matrix);
         });
 
-        progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), PROGRESS_MSG));
+        progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), msg));
         final_matrix
     }
 
@@ -129,7 +130,7 @@ impl<'a> MappedContigWriter<'a> {
 
     fn write_sequences(&self, final_matrix: &MappedMatrix) {
         let progress_bar = common::init_progress_bar(final_matrix.len() as u64);
-        progress_bar.set_message(PROGRESS_MSG);
+        progress_bar.set_message(SUMMARY_MSG);
         final_matrix.par_iter().for_each(|(refname, contigs)| {
             let output_dir = self.output_dir.join(DEFAULT_UNALIGN_SEQUENCE_OUTPUT_DIR);
             let file_name = format!("{}.fasta", refname);
@@ -140,7 +141,7 @@ impl<'a> MappedContigWriter<'a> {
                 .write_sequence(&types::OutputFmt::Fasta)
                 .expect("Failed to write sequences");
         });
-        progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), PROGRESS_MSG));
+        progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), SUMMARY_MSG));
     }
 
     fn get_header(&self, matrix: SeqMatrix) -> Header {
@@ -180,7 +181,7 @@ impl<'a> SummaryWriter<'a> {
         let mut summary = FinalMappingSummary::new(self.reference_counts);
         summary.summarize(&self.mapped_matrix);
         let progress_bar = common::init_progress_bar(self.reference_counts as u64);
-        progress_bar.set_message(PROGRESS_MSG);
+        progress_bar.set_message(SUMMARY_MSG);
         let output_dir = self.create_output_path();
         let mut writer = csv::Writer::from_path(&output_dir).expect("Failed to create csv writer");
         ref_names.iter().for_each(|name| {
@@ -190,7 +191,7 @@ impl<'a> SummaryWriter<'a> {
                 .expect("Failed to write summary to file");
             progress_bar.inc(1);
         });
-        progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), PROGRESS_MSG));
+        progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), SUMMARY_MSG));
         summary
     }
 

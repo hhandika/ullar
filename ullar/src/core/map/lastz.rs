@@ -77,7 +77,8 @@ impl<'a> LastzMapping<'a> {
     pub fn run(&self, contigs: &[ContigFiles]) -> Result<Vec<MappingData>, Box<dyn Error>> {
         let progress_bar = common::init_progress_bar(contigs.len() as u64);
         log::info!("Mapping contigs to reference sequence");
-        progress_bar.set_message("Contigs");
+        let msg = "Samples";
+        progress_bar.set_message(msg);
         let (tx, rx) = mpsc::channel();
         contigs.par_iter().for_each_with(tx, |tx, contig| {
             let data = self.run_lastz(contig, &contig.sample_name);
@@ -93,7 +94,7 @@ impl<'a> LastzMapping<'a> {
             progress_bar.inc(1);
         });
         let data = rx.iter().collect::<Vec<MappingData>>();
-        progress_bar.finish_with_message(format!("{} Contigs\n", "✔".green()));
+        progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), msg));
         Ok(data)
     }
 
