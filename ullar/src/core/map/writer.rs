@@ -160,9 +160,9 @@ impl<'a> SummaryWriter<'a> {
     }
 
     pub fn write(&mut self, reference_data: &ReferenceFile) {
-        let progress_bar = common::init_progress_bar(self.mapped_matrix.len() as u64);
         let ref_names = self.count_references(reference_data);
         self.reference_counts = ref_names.len();
+        let progress_bar = common::init_progress_bar(self.reference_counts as u64);
         log::info!("Writing contig summary to file...");
         let messages = "Contig/Loci summary";
         progress_bar.set_message(messages);
@@ -180,12 +180,13 @@ impl<'a> SummaryWriter<'a> {
 
     fn summarize_matches(&self, ref_name: &str) -> FinalMappingSummary {
         match self.mapped_matrix.get(ref_name) {
-            Some(matrix) => {
-                let mut summary = FinalMappingSummary::new(ref_name.to_string(), matrix.len());
-                summary.summarize_matches(self.mapped_matrix);
+            Some(_) => {
+                let mut summary =
+                    FinalMappingSummary::new(ref_name.to_string(), self.reference_counts);
+                summary.summarize_matches(&self.mapped_matrix);
                 summary
             }
-            None => FinalMappingSummary::new(ref_name.to_string(), 0),
+            None => FinalMappingSummary::new(ref_name.to_string(), self.reference_counts),
         }
     }
 
