@@ -15,6 +15,7 @@ use crate::{
         common,
         configs::{CONFIG_EXTENSION, DEFAULT_CONFIG_DIR},
         files::PathCheck,
+        regex::{CONTIG_SAMPLE_REGEX, UCE_REGEX},
     },
     types::map::MappingQueryFormat,
 };
@@ -32,6 +33,10 @@ pub struct InitMappingConfig<'a> {
     pub name_source: &'a str,
     /// Config file name
     pub config_name: &'a str,
+    /// Reference regex names
+    pub refname_regex: &'a str,
+    /// Sample name regex
+    pub sample_name_regex: &'a str,
 }
 
 impl Default for InitMappingConfig<'_> {
@@ -42,6 +47,8 @@ impl Default for InitMappingConfig<'_> {
             query_format: MappingQueryFormat::Contig,
             name_source: "file",
             config_name: DEFAULT_LOCUS_CONFIG,
+            refname_regex: UCE_REGEX,
+            sample_name_regex: CONTIG_SAMPLE_REGEX,
         }
     }
 }
@@ -54,6 +61,8 @@ impl<'a> InitMappingConfig<'a> {
             query_format: args.query_format.parse().expect("Invalid query format"),
             name_source: &args.name_source,
             config_name: &args.config_name,
+            refname_regex: &args.re_reference,
+            sample_name_regex: &args.re_sample,
         }
     }
 
@@ -82,11 +91,8 @@ impl<'a> InitMappingConfig<'a> {
     }
 
     fn write_contig_config(&self) -> Result<(PathBuf, MappedContigConfig), Box<dyn Error>> {
-        let name_source = self
-            .name_source
-            .parse::<SampleNameSource>()
-            .expect("Invalid name source");
-        let mut config = MappedContigConfig::init(name_source);
+        let name_source = self.get_sample_name_source();
+        let mut config = MappedContigConfig::init(name_source, self.refname_regex);
         match self.query_dir {
             Some(dir) => config.from_contig_dir(dir, None),
             None => config.from_contig_paths(&self.get_contig_paths(), None),
@@ -98,6 +104,17 @@ impl<'a> InitMappingConfig<'a> {
         }
         let output_path = config.to_yaml(self.config_name)?;
         Ok((output_path, config))
+    }
+
+    fn get_sample_name_source(&self) -> SampleNameSource {
+        let mut source = self
+            .name_source
+            .parse::<SampleNameSource>()
+            .expect("Invalid name source");
+        if let SampleNameSource::Regex(_) = source {
+            source = SampleNameSource::Regex(self.sample_name_regex.to_string());
+        }
+        source
     }
 
     fn get_contig_paths(&self) -> Vec<PathBuf> {

@@ -19,7 +19,7 @@ use crate::helper::common;
 use crate::types::map::{LastzNameParse, LastzOutputFormat};
 use crate::{get_file_stem, parse_override_args};
 
-use super::configs::ContigFiles;
+use super::configs::{ContigFiles, ReferenceFile};
 use super::reports::MappingData;
 
 /// Default lastz parameters. We use the following parameters by default:
@@ -33,9 +33,6 @@ pub const DEFAULT_OUTPUT_EXT: &str = "csv";
 const LASTZ_RESULT_DIR: &str = "lastz_results";
 const LASTZ_RESULT_SUFFIX: &str = "lastz";
 
-/// Default regex pattern to reference sequence name
-pub const DEFAULT_REFNAME_REGEX: &str = r"(?i)_p\d+$";
-
 pub enum RefNameRegex {
     Default,
     Custom(String),
@@ -46,7 +43,7 @@ pub enum RefNameRegex {
 /// Handle IO parsing and execution of Lastz
 pub struct LastzMapping<'a> {
     /// Reference sequence to align against
-    pub reference: &'a Path,
+    pub reference_data: &'a ReferenceFile,
     pub output_dir: &'a Path,
     /// Is reference contains multiple sequences
     pub multiple_targets: bool,
@@ -55,9 +52,13 @@ pub struct LastzMapping<'a> {
 }
 
 impl<'a> LastzMapping<'a> {
-    pub fn new(reference: &'a Path, output_dir: &'a Path, override_args: Option<&'a str>) -> Self {
+    pub fn new(
+        reference_data: &'a ReferenceFile,
+        output_dir: &'a Path,
+        override_args: Option<&'a str>,
+    ) -> Self {
         Self {
-            reference,
+            reference_data,
             output_dir,
             override_args,
             multiple_targets: true,
@@ -110,13 +111,18 @@ impl<'a> LastzMapping<'a> {
             self.output_dir,
             &format,
             self.override_args,
+            &self.reference_data.name_regex,
         );
         runner.run(sample_name)
     }
 
     fn get_target(&self) -> LastzTarget {
-        let reference = self.reference.to_path_buf();
-        let target = LastzTarget::new(reference, self.multiple_targets, LastzNameParse::None);
+        let ref_path = self
+            .reference_data
+            .metadata
+            .parent_dir
+            .join(&self.reference_data.metadata.file_name);
+        let target = LastzTarget::new(ref_path, self.multiple_targets, LastzNameParse::None);
         target.get_path();
         target
     }
@@ -155,7 +161,7 @@ pub struct Lastz<'a> {
     ///   If None, use DEFAULT_LASTZ_PARAMS
     pub override_args: Option<&'a str>,
     /// Reference sequence name regex pattern
-    pub refname_regex: RefNameRegex,
+    pub refname_regex: &'a str,
 }
 
 impl<'a> Lastz<'a> {
@@ -165,6 +171,7 @@ impl<'a> Lastz<'a> {
         output_dir: &'a Path,
         output_format: &'a LastzOutputFormat,
         override_args: Option<&'a str>,
+        refname_regex: &'a str,
     ) -> Self {
         Self {
             target,
@@ -172,7 +179,7 @@ impl<'a> Lastz<'a> {
             output_dir,
             output_format,
             override_args,
-            refname_regex: RefNameRegex::Default,
+            refname_regex,
         }
     }
 
@@ -185,25 +192,16 @@ impl<'a> Lastz<'a> {
         match parsed_output {
             Ok(data) => {
                 let output_path = self.write_output(&data)?;
-                let refname_regex = self.get_refname_regex();
                 let mut results = MappingData::new(
                     sample_name,
                     &self.query.query_path,
                     output_path,
-                    &refname_regex,
+                    self.refname_regex,
                 );
                 results.summarize(&data, &self.target.target_path);
                 Ok(results)
             }
             Err(e) => Err(format!("Failed to parse Lastz output: {}", e).into()),
-        }
-    }
-
-    fn get_refname_regex(&self) -> String {
-        match &self.refname_regex {
-            RefNameRegex::Default => DEFAULT_REFNAME_REGEX.to_string(),
-            RefNameRegex::Custom(pattern) => pattern.to_string(),
-            RefNameRegex::None => String::new(),
         }
     }
 

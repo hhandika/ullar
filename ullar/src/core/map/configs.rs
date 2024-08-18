@@ -21,10 +21,11 @@ pub const DEFAULT_LOCUS_CONFIG: &str = "mapped_contig";
 
 pub const CONTIG_REGEX: &str = r"(?i)(contig*)";
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum SampleNameSource {
     File,
     Directory,
+    Regex(String),
 }
 
 impl Display for SampleNameSource {
@@ -32,6 +33,7 @@ impl Display for SampleNameSource {
         match self {
             SampleNameSource::File => write!(f, "file"),
             SampleNameSource::Directory => write!(f, "directory"),
+            SampleNameSource::Regex(regex) => write!(f, "regex: {}", regex),
         }
     }
 }
@@ -43,6 +45,7 @@ impl FromStr for SampleNameSource {
         match s {
             "file" => Ok(SampleNameSource::File),
             "directory" => Ok(SampleNameSource::Directory),
+            "regex" => Ok(SampleNameSource::Regex(CONTIG_REGEX.to_string())),
             _ => Err(format!("Invalid sample name source: {}", s)),
         }
     }
@@ -58,6 +61,7 @@ pub struct MappedContigConfig {
     /// Source of the sample name
     /// for the mapped contigs
     pub name_source: SampleNameSource,
+    pub reference_data: ReferenceFile,
     pub contigs: Vec<ContigFiles>,
 }
 
@@ -68,6 +72,7 @@ impl Default for MappedContigConfig {
             previous_step: PreviousStep::default(),
             override_args: None,
             contigs: Vec::new(),
+            reference_data: ReferenceFile::default(),
             name_source: SampleNameSource::File,
         }
     }
@@ -80,6 +85,7 @@ impl MappedContigConfig {
         dependencies: Vec<DepMetadata>,
         override_args: Option<String>,
         name_source: SampleNameSource,
+        reference_regex: &str,
     ) -> Self {
         Self {
             contig_file_counts: file_counts,
@@ -87,16 +93,18 @@ impl MappedContigConfig {
             override_args,
             contigs: Vec::new(),
             name_source,
+            reference_data: ReferenceFile::new(reference_regex),
         }
     }
 
-    pub fn init(name_source: SampleNameSource) -> Self {
+    pub fn init(name_source: SampleNameSource, reference_regex: &str) -> Self {
         Self {
             contig_file_counts: 0,
             previous_step: PreviousStep::default(),
             override_args: None,
             contigs: Vec::new(),
             name_source,
+            reference_data: ReferenceFile::new(reference_regex),
         }
     }
 
@@ -201,6 +209,16 @@ impl ContigFiles {
                     self.sample_name = components[components.len() - 2].clone();
                 }
             }
+            SampleNameSource::Regex(regex) => {
+                let re = regex::Regex::new(regex).expect("Invalid regex");
+                let sample_name = re
+                    .captures(&file_stem)
+                    .expect("Failed to get sample name")
+                    .get(0)
+                    .expect("Failed to get sample name")
+                    .as_str();
+                self.sample_name = sample_name.to_string();
+            }
         }
     }
 
@@ -210,5 +228,24 @@ impl ContigFiles {
             .expect("Failed to get file stem")
             .to_string_lossy()
             .to_string()
+    }
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct ReferenceFile {
+    pub name_regex: String,
+    pub metadata: FileMetadata,
+}
+
+impl ReferenceFile {
+    pub fn new(name_regex: &str) -> Self {
+        Self {
+            name_regex: name_regex.to_string(),
+            metadata: FileMetadata::new(),
+        }
+    }
+
+    pub fn parse(&mut self, reference: &Path) {
+        self.metadata.get(reference);
     }
 }

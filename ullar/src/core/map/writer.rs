@@ -1,7 +1,7 @@
 /// Write results
 use core::str;
 use std::{
-    collections::HashMap,
+    collections::{BTreeSet, HashMap},
     fs,
     path::{Path, PathBuf},
     sync::mpsc,
@@ -13,6 +13,7 @@ use indexmap::IndexMap;
 use rayon::prelude::*;
 use segul::{
     helper::{
+        finder::IDs,
         sequence::SeqParser,
         types::{self, DataType, Header, SeqMatrix},
     },
@@ -21,7 +22,7 @@ use segul::{
 
 use crate::helper::common;
 
-use super::{reports::MappingData, summary::FinalMappingSummary, DEFAULT_MAPPED_CONTIG_OUTPUT_DIR};
+use super::{configs::ReferenceFile, reports::MappingData, summary::FinalMappingSummary};
 
 pub const DEFAULT_UNALIGN_SEQUENCE_OUTPUT_DIR: &str = "unaligned_sequences";
 pub const SUMMARY_FILE_STEM: &str = "mapping_summary";
@@ -32,19 +33,19 @@ pub type MappedMatrix = HashMap<String, SeqMatrix>;
 pub struct MappedContigWriter<'a> {
     pub mapping_data: &'a [MappingData],
     pub output_dir: &'a Path,
-    pub reference_path: &'a Path,
+    pub reference_data: &'a ReferenceFile,
 }
 
 impl<'a> MappedContigWriter<'a> {
     pub fn new(
         mapping_data: &'a [MappingData],
         output_dir: &'a Path,
-        reference_path: &'a Path,
+        reference_data: &'a ReferenceFile,
     ) -> Self {
         Self {
             mapping_data,
             output_dir,
-            reference_path,
+            reference_data,
         }
     }
 
@@ -54,9 +55,8 @@ impl<'a> MappedContigWriter<'a> {
         log::info!("Writing contigs to file...");
         self.write_sequences(&final_matrix);
         log::info!("Writing summary to file...");
-        let summary_writer =
-            SummaryWriter::new(self.output_dir, self.reference_path, &final_matrix);
-        summary_writer.write();
+        let mut summary_writer = SummaryWriter::new(self.output_dir, &final_matrix);
+        summary_writer.write(self.reference_data);
     }
 
     fn map_contigs(&self) -> HashMap<String, SeqMatrix> {
@@ -144,33 +144,32 @@ impl<'a> MappedContigWriter<'a> {
 
 pub struct SummaryWriter<'a> {
     pub output_dir: &'a Path,
-    pub reference_path: &'a Path,
+    /// Total number of reference sequences
+    /// or loci in the reference sequence.
+    pub reference_counts: usize,
     pub mapped_matrix: &'a MappedMatrix,
 }
 
 impl<'a> SummaryWriter<'a> {
-    pub fn new(
-        output_dir: &'a Path,
-        reference_path: &'a Path,
-        mapped_matrix: &'a MappedMatrix,
-    ) -> Self {
+    pub fn new(output_dir: &'a Path, mapped_matrix: &'a MappedMatrix) -> Self {
         Self {
             output_dir,
-            reference_path,
+            reference_counts: 0,
             mapped_matrix,
         }
     }
 
-    pub fn write(&self) {
+    pub fn write(&mut self, reference_data: &ReferenceFile) {
         let progress_bar = common::init_progress_bar(self.mapped_matrix.len() as u64);
+        let ref_names = self.count_references(reference_data);
+        self.reference_counts = ref_names.len();
         log::info!("Writing contig summary to file...");
         let messages = "Contig/Loci summary";
         progress_bar.set_message(messages);
         let output_dir = self.create_output_path();
         let mut writer = csv::Writer::from_path(&output_dir).expect("Failed to create csv writer");
-        self.mapped_matrix.iter().for_each(|(refname, matrix)| {
-            let mut summary = FinalMappingSummary::new(refname.to_string(), matrix.len());
-            summary.summarize_matches(self.mapped_matrix);
+        ref_names.iter().for_each(|name| {
+            let summary = self.summarize_matches(name);
             writer
                 .serialize(summary)
                 .expect("Failed to write summary to file");
@@ -179,10 +178,46 @@ impl<'a> SummaryWriter<'a> {
         progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), messages));
     }
 
+    fn summarize_matches(&self, ref_name: &str) -> FinalMappingSummary {
+        match self.mapped_matrix.get(ref_name) {
+            Some(matrix) => {
+                let mut summary = FinalMappingSummary::new(ref_name.to_string(), matrix.len());
+                summary.summarize_matches(self.mapped_matrix);
+                summary
+            }
+            None => FinalMappingSummary::new(ref_name.to_string(), 0),
+        }
+    }
+
+    fn count_references(&mut self, reference_data: &ReferenceFile) -> BTreeSet<String> {
+        let input_fmt = types::InputFmt::Auto;
+        let datatype = DataType::Dna;
+        let ref_path = reference_data
+            .metadata
+            .parent_dir
+            .join(&reference_data.metadata.file_name);
+        let ref_ids = IDs::new(&[ref_path], &input_fmt, &datatype).id_unique();
+        let mut parse_ref_name = BTreeSet::new();
+        ref_ids.iter().for_each(|id| {
+            let ref_name = self.capture_reference_name(&reference_data.name_regex, id);
+            parse_ref_name.insert(ref_name);
+        });
+        parse_ref_name
+    }
+
+    fn capture_reference_name(&self, regex: &str, id: &str) -> String {
+        let re = regex::Regex::new(regex).expect("Failed to compile regex");
+        let captures = re.captures(id).expect("Failed to capture reference name");
+        captures
+            .get(1)
+            .expect("Failed to get reference name")
+            .as_str()
+            .to_string()
+    }
+
     fn create_output_path(&self) -> PathBuf {
-        let output_dir = self.output_dir.join(DEFAULT_MAPPED_CONTIG_OUTPUT_DIR);
-        fs::create_dir_all(&output_dir).expect("Failed to create output directory");
-        output_dir
+        fs::create_dir_all(&self.output_dir).expect("Failed to create output directory");
+        self.output_dir
             .join(SUMMARY_FILE_STEM)
             .with_extension(SUMMARY_EXT)
     }
