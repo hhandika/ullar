@@ -195,19 +195,11 @@ impl<'a> SummaryWriter<'a> {
     fn summarize_matches(&self, ref_name: &str) -> FinalContigSummary {
         match self.mapped_matrix.get(ref_name) {
             Some(_) => {
-                let mut summary = FinalContigSummary::new(
-                    ref_name.to_string(),
-                    self.total_samples,
-                    self.reference_counts,
-                );
+                let mut summary = FinalContigSummary::new(ref_name.to_string(), self.total_samples);
                 summary.summarize_matches(&self.mapped_matrix);
                 summary
             }
-            None => FinalContigSummary::new(
-                ref_name.to_string(),
-                self.total_samples,
-                self.reference_counts,
-            ),
+            None => FinalContigSummary::new(ref_name.to_string(), self.total_samples),
         }
     }
 

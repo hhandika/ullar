@@ -127,5 +127,10 @@ impl<'a> ContigMapping<'a> {
             summary.total_references
         );
         log::info!("{:18}: {}", "Total sample matches:", summary.total_matches);
+        log::info!(
+            "{:18}: {:.2}%",
+            "Percent coverage:",
+            summary.percent_matches
+        );
     }
 }
