@@ -138,7 +138,8 @@ impl MappedContigConfig {
     }
 
     /// Get raw loci files
-    pub fn to_yaml(&self, file_name: &str) -> Result<PathBuf, Box<dyn Error>> {
+    pub fn to_yaml(&mut self, file_name: &str, ref_path: &Path) -> Result<PathBuf, Box<dyn Error>> {
+        self.reference_data.get(ref_path);
         let output_path = generate_config_output_path(file_name);
         let writer = File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
@@ -245,7 +246,7 @@ impl ReferenceFile {
         }
     }
 
-    pub fn parse(&mut self, reference: &Path) {
+    pub fn get(&mut self, reference: &Path) {
         self.metadata.get(reference);
     }
 }
