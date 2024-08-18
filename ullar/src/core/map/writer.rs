@@ -22,7 +22,11 @@ use segul::{
 
 use crate::helper::common;
 
-use super::{configs::ReferenceFile, reports::MappingData, summary::FinalMappingSummary};
+use super::{
+    configs::ReferenceFile,
+    reports::MappingData,
+    summary::{FinalContigSummary, FinalMappingSummary},
+};
 
 pub const DEFAULT_UNALIGN_SEQUENCE_OUTPUT_DIR: &str = "unaligned_sequences";
 pub const SUMMARY_FILE_STEM: &str = "mapping_summary";
@@ -49,14 +53,16 @@ impl<'a> MappedContigWriter<'a> {
         }
     }
 
-    pub fn generate(&self) {
+    pub fn generate(&self) -> FinalMappingSummary {
         log::info!("Filtering paralogs...");
         let final_matrix = self.map_contigs();
         log::info!("Writing contigs to file...");
         self.write_sequences(&final_matrix);
         log::info!("Writing summary to file...");
-        let mut summary_writer = SummaryWriter::new(self.output_dir, &final_matrix);
-        summary_writer.write(self.reference_data);
+        let total_samples = self.mapping_data.len();
+        let mut summary_writer = SummaryWriter::new(self.output_dir, &final_matrix, total_samples);
+        let summary = summary_writer.write(self.reference_data);
+        summary
     }
 
     fn map_contigs(&self) -> HashMap<String, SeqMatrix> {
@@ -148,20 +154,28 @@ pub struct SummaryWriter<'a> {
     /// or loci in the reference sequence.
     pub reference_counts: usize,
     pub mapped_matrix: &'a MappedMatrix,
+    /// Total number of samples
+    pub total_samples: usize,
 }
 
 impl<'a> SummaryWriter<'a> {
-    pub fn new(output_dir: &'a Path, mapped_matrix: &'a MappedMatrix) -> Self {
+    pub fn new(
+        output_dir: &'a Path,
+        mapped_matrix: &'a MappedMatrix,
+        total_samples: usize,
+    ) -> Self {
         Self {
             output_dir,
             reference_counts: 0,
             mapped_matrix,
+            total_samples,
         }
     }
 
-    pub fn write(&mut self, reference_data: &ReferenceFile) {
+    pub fn write(&mut self, reference_data: &ReferenceFile) -> FinalMappingSummary {
         let ref_names = self.count_references(reference_data);
         self.reference_counts = ref_names.len();
+        let summary = FinalMappingSummary::new(self.total_samples, self.reference_counts);
         let progress_bar = common::init_progress_bar(self.reference_counts as u64);
         let messages = "Contig/Loci summary";
         progress_bar.set_message(messages);
@@ -175,17 +189,25 @@ impl<'a> SummaryWriter<'a> {
             progress_bar.inc(1);
         });
         progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), messages));
+        summary
     }
 
-    fn summarize_matches(&self, ref_name: &str) -> FinalMappingSummary {
+    fn summarize_matches(&self, ref_name: &str) -> FinalContigSummary {
         match self.mapped_matrix.get(ref_name) {
             Some(_) => {
-                let mut summary =
-                    FinalMappingSummary::new(ref_name.to_string(), self.reference_counts);
+                let mut summary = FinalContigSummary::new(
+                    ref_name.to_string(),
+                    self.total_samples,
+                    self.reference_counts,
+                );
                 summary.summarize_matches(&self.mapped_matrix);
                 summary
             }
-            None => FinalMappingSummary::new(ref_name.to_string(), self.reference_counts),
+            None => FinalContigSummary::new(
+                ref_name.to_string(),
+                self.total_samples,
+                self.reference_counts,
+            ),
         }
     }
 

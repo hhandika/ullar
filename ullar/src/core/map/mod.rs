@@ -5,6 +5,7 @@ use colored::Colorize;
 use configs::MappedContigConfig;
 use lastz::{LastzMapping, DEFAULT_LASTZ_PARAMS};
 use reports::MappingData;
+use summary::FinalMappingSummary;
 use writer::MappedContigWriter;
 
 use crate::{
@@ -69,8 +70,8 @@ impl<'a> ContigMapping<'a> {
         self.log_input(config.contigs.len());
         PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
         let results = self.run_lastz(&config);
-        self.generate_mapped_contig(&results, &config);
-        self.log_output(&results);
+        let summary = self.generate_mapped_contig(&results, &config);
+        self.log_output(&results, &summary);
     }
 
     fn parse_config(&self) -> Result<MappedContigConfig, Box<dyn Error>> {
@@ -88,8 +89,12 @@ impl<'a> ContigMapping<'a> {
         lastz.run(&config.contigs).expect("Failed to run Lastz")
     }
 
-    fn generate_mapped_contig(&self, data: &[MappingData], config: &MappedContigConfig) {
-        MappedContigWriter::new(data, self.output_dir, &config.reference_data).generate();
+    fn generate_mapped_contig(
+        &self,
+        data: &[MappingData],
+        config: &MappedContigConfig,
+    ) -> FinalMappingSummary {
+        MappedContigWriter::new(data, self.output_dir, &config.reference_data).generate()
     }
 
     fn log_input(&self, file_count: usize) {
@@ -112,9 +117,15 @@ impl<'a> ContigMapping<'a> {
         }
     }
 
-    fn log_output(&self, report: &[MappingData]) {
+    fn log_output(&self, report: &[MappingData], summary: &FinalMappingSummary) {
         log::info!("{}", "Output".cyan());
         log::info!("{:18}: {}", "Total contigs:", report.len());
         log::info!("{:18}: {}", "Output dir:", self.output_dir.display());
+        log::info!(
+            "{:18}: {}",
+            "Total reference loci:",
+            summary.total_references
+        );
+        log::info!("{:18}: {}", "Total sample matches:", summary.total_matches);
     }
 }
