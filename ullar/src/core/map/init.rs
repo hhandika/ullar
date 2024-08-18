@@ -84,7 +84,7 @@ impl<'a> InitMappingConfig<'a> {
     fn write_config(&self, spinner: &ProgressBar) {
         match self.query_format {
             MappingQueryFormat::Contig => {
-                spinner.set_message("Writing contig config");
+                spinner.set_message("Writing mapping config");
                 let (path, config) = self.write_contig_config().expect("Failed writing config");
                 spinner.finish_with_message(format!("{} Finished writing config\n", "✔".green()));
                 self.log_output(&path);
