@@ -119,8 +119,8 @@ impl<'a> ContigMapping<'a> {
 
     fn log_output(&self, report: &[MappingData], summary: &FinalMappingSummary) {
         log::info!("{}", "Output".cyan());
-        log::info!("{:18}: {}", "Total contigs:", report.len());
-        log::info!("{:18}: {}", "Output dir:", self.output_dir.display());
+        log::info!("{:18}: {}", "Output dir", self.output_dir.display());
+        log::info!("{:18}: {}", "Total processed", report.len());
         log::info!("{:18}: {}", "Reference counts", summary.total_references);
         log::info!("{:18}: {}", "Sample matches", summary.total_matches);
         log::info!(
