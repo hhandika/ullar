@@ -192,7 +192,7 @@ impl<'a> Lastz<'a> {
         let parsed_output = self.execute_lastz();
         match parsed_output {
             Ok(data) => {
-                let output_path = self.write_output(&data)?;
+                let output_path = self.write_output(&data, sample_name)?;
                 let mut results = MappingData::new(
                     sample_name,
                     &self.query.query_path,
@@ -245,10 +245,10 @@ impl<'a> Lastz<'a> {
         Ok(())
     }
 
-    fn create_output_path(&self) -> Result<PathBuf, Box<dyn Error>> {
+    fn create_output_path(&self, sample_name: &str) -> Result<PathBuf, Box<dyn Error>> {
         let output_dir = self.output_dir.join(LASTZ_RESULT_DIR);
         self.create_directory(&output_dir)?;
-        let output_filename = format!("{}_{}", self.query.get_file_stem(), LASTZ_RESULT_SUFFIX);
+        let output_filename = format!("{}_{}", sample_name, LASTZ_RESULT_SUFFIX);
         let output_path = output_dir
             .join(&output_filename)
             .with_extension(DEFAULT_OUTPUT_EXT);
@@ -270,8 +270,12 @@ impl<'a> Lastz<'a> {
         Ok(parsed_output)
     }
 
-    fn write_output(&self, parse_output: &[LastzOutput]) -> Result<PathBuf, Box<dyn Error>> {
-        let output_path = self.create_output_path()?;
+    fn write_output(
+        &self,
+        parse_output: &[LastzOutput],
+        sample_name: &str,
+    ) -> Result<PathBuf, Box<dyn Error>> {
+        let output_path = self.create_output_path(sample_name)?;
         let mut writer = csv::Writer::from_path(&output_path)?;
         for record in parse_output {
             writer.serialize(record)?;
