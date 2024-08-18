@@ -126,8 +126,11 @@ impl<'a> PathCheck<'a> {
 
     fn delete_file(&self) {
         fs::remove_file(self.path).expect("Failed to remove file");
-        let msg = format!("\nFile {} has been removed.\n", self.path.display());
-        log::warn!("{}", msg.red());
+        let msg = format!(
+            "\nFile {} has been removed.\n",
+            self.path.display().to_string().red()
+        );
+        log::warn!("{}", msg);
     }
 }
 
