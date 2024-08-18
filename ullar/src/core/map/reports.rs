@@ -133,14 +133,11 @@ impl MappingData {
 
     fn clean_reference_name(&self, ref_name: &str) -> String {
         let re = regex::Regex::new(&self.refname_regex).expect("Failed to create regex");
-        let ref_name = re
-            .captures(ref_name)
-            .expect("Failed to capture reference name");
-        ref_name
-            .get(1)
-            .expect("Failed to get reference name")
-            .as_str()
-            .to_string()
+        let capture = re.captures(ref_name);
+        match capture {
+            Some(capture) => capture[0].to_string(),
+            None => ref_name.to_string(),
+        }
     }
 }
 
@@ -234,7 +231,7 @@ mod tests {
     #[test]
     fn test_contig_matching() {
         let lastz_output = LastzOutput {
-            name1: String::from("ref1_p1"),
+            name1: String::from("uce-1_p1"),
             name2: String::from("contig1"),
             strand1: '+',
             strand2: '+',
@@ -251,7 +248,7 @@ mod tests {
             cov_pct: 100.0,
         };
         let lastz_output2 = LastzOutput {
-            name1: String::from("ref2_p1"),
+            name1: String::from("uce-2_p1"),
             name2: String::from("contig2"),
             strand1: '+',
             strand2: '+',
@@ -268,7 +265,7 @@ mod tests {
             cov_pct: 100.0,
         };
         let lastz_output3 = LastzOutput {
-            name1: String::from("ref2_p1"),
+            name1: String::from("uce-2_p1"),
             name2: String::from("contig3"),
             strand1: '+',
             strand2: '+',
@@ -285,7 +282,7 @@ mod tests {
             cov_pct: 8.0,
         };
         let lastz_output4 = LastzOutput {
-            name1: String::from("ref1_p1"),
+            name1: String::from("uce-1_p1"),
             name2: String::from("contig3"),
             strand1: '+',
             strand2: '+',
@@ -310,11 +307,11 @@ mod tests {
         );
         let best_contigs = report.find_best_contigs(&lastz_output);
         assert_eq!(best_contigs.len(), 2);
-        let regex = report.clean_reference_name("ref1_p1");
-        assert_eq!(regex, "ref1");
-        assert_eq!(best_contigs.get("ref1").unwrap().contig_name, "contig1");
-        assert_eq!(best_contigs.get("ref2").unwrap().contig_name, "contig2");
-        assert_eq!(best_contigs.get("ref1").unwrap().duplicate_refs, 1);
-        assert_eq!(best_contigs.get("ref2").unwrap().duplicate_contigs, 1);
+        let regex = report.clean_reference_name("uce-1_p1");
+        assert_eq!(regex, "uce-1");
+        assert_eq!(best_contigs.get("uce-1").unwrap().contig_name, "contig1");
+        assert_eq!(best_contigs.get("uce-2").unwrap().contig_name, "contig2");
+        assert_eq!(best_contigs.get("uce-1").unwrap().duplicate_refs, 1);
+        assert_eq!(best_contigs.get("uce-2").unwrap().duplicate_contigs, 1);
     }
 }

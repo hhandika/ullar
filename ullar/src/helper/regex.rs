@@ -53,7 +53,7 @@ pub const READ2_REGEX: &str = r"^(.+?)(_|-)(?i)(R2|2|read2|read_2|read-2)(\D)(?:
 pub const CONTIG_SAMPLE_REGEX: &str = r"^(\w+)(_)([a-zA-Z0-9]+)";
 
 /// Match Faircloth-lab UCE 5K reference names
-pub const UCE_REGEX: &str = r"^(uce|locus)-\\d+";
+pub const UCE_REGEX: &str = r"^(uce|locus)-\d+";
 
 /// Lazy static regex matcher
 /// Matches a file name with a given pattern

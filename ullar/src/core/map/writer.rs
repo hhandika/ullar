@@ -206,13 +206,12 @@ impl<'a> SummaryWriter<'a> {
     }
 
     fn capture_reference_name(&self, regex: &str, id: &str) -> String {
-        let re = regex::Regex::new(regex).expect("Failed to compile regex");
-        let captures = re.captures(id).expect("Failed to capture reference name");
-        captures
-            .get(1)
-            .expect("Failed to get reference name")
-            .as_str()
-            .to_string()
+        let re = regex::Regex::new(&regex).expect("Failed to create regex");
+        let capture = re.captures(id);
+        match capture {
+            Some(capture) => capture[0].to_string(),
+            None => id.to_string(),
+        }
     }
 
     fn create_output_path(&self) -> PathBuf {
