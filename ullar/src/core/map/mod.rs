@@ -121,16 +121,12 @@ impl<'a> ContigMapping<'a> {
         log::info!("{}", "Output".cyan());
         log::info!("{:18}: {}", "Total contigs:", report.len());
         log::info!("{:18}: {}", "Output dir:", self.output_dir.display());
-        log::info!(
-            "{:18}: {}",
-            "Total reference loci:",
-            summary.total_references
-        );
-        log::info!("{:18}: {}", "Total sample matches:", summary.total_matches);
+        log::info!("{:18}: {}", "Reference counts", summary.total_references);
+        log::info!("{:18}: {}", "Sample matches", summary.total_matches);
         log::info!(
             "{:18}: {:.2}%",
             "Percent coverage:",
-            summary.percent_matches
+            summary.total_percent_coverage
         );
     }
 }
