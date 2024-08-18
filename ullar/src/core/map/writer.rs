@@ -63,8 +63,7 @@ impl<'a> MappedContigWriter<'a> {
         log::info!("Writing summary to file...");
         let total_samples = self.mapping_data.len();
         let mut summary_writer = SummaryWriter::new(self.output_dir, &final_matrix, total_samples);
-        let summary = summary_writer.write(self.reference_data);
-        summary
+        summary_writer.write(self.reference_data)
     }
 
     fn map_contigs(&self) -> HashMap<String, SeqMatrix> {
@@ -179,7 +178,7 @@ impl<'a> SummaryWriter<'a> {
         let ref_names = self.count_references(reference_data);
         self.reference_counts = ref_names.len();
         let mut summary = FinalMappingSummary::new(self.reference_counts);
-        summary.summarize(&self.mapped_matrix);
+        summary.summarize(self.mapped_matrix);
         let progress_bar = common::init_progress_bar(self.reference_counts as u64);
         progress_bar.set_message(SUMMARY_MSG);
         let output_dir = self.create_output_path();
@@ -199,7 +198,7 @@ impl<'a> SummaryWriter<'a> {
         match self.mapped_matrix.get(ref_name) {
             Some(_) => {
                 let mut summary = FinalContigSummary::new(ref_name.to_string(), self.total_samples);
-                summary.summarize_matches(&self.mapped_matrix);
+                summary.summarize_matches(self.mapped_matrix);
                 summary
             }
             None => FinalContigSummary::new(ref_name.to_string(), self.total_samples),
@@ -224,7 +223,7 @@ impl<'a> SummaryWriter<'a> {
     }
 
     fn capture_reference_name(&self, regex: &str, id: &str) -> String {
-        let re = regex::Regex::new(&regex).expect("Failed to create regex");
+        let re = regex::Regex::new(regex).expect("Failed to create regex");
         let capture = re.captures(id);
         match capture {
             Some(capture) => capture[0].to_string(),
@@ -233,7 +232,7 @@ impl<'a> SummaryWriter<'a> {
     }
 
     fn create_output_path(&self) -> PathBuf {
-        fs::create_dir_all(&self.output_dir).expect("Failed to create output directory");
+        fs::create_dir_all(self.output_dir).expect("Failed to create output directory");
         self.output_dir
             .join(SUMMARY_FILE_STEM)
             .with_extension(SUMMARY_EXT)
