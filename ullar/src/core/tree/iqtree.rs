@@ -1,5 +1,4 @@
 //! Species and gene tree inference using IQ-TREE.
-
 use std::path::PathBuf;
 
 pub struct IQTreeRunner<'a> {

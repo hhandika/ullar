@@ -37,8 +37,8 @@ size = "0.4.1"
 sysinfo = "0.30.12"
 walkdir = "2.5.0"
 
-[target.'cfg(unix)'.dependencies]
-minimap2 = "0.1.17"
+# [target.'cfg(unix)'.dependencies]
+# minimap2 = "0.1.17"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tarpaulin_include)'] }
