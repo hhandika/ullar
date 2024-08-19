@@ -50,9 +50,7 @@ impl MafftMetadata {
     /// Get the version of mafft unix
     #[cfg(target_family = "unix")]
     fn get_mafft(&self) -> Option<String> {
-        let mafft_exe = crate::core::alignment::mafft::MAFFT_EXE;
-
-        let output = Command::new(mafft_exe).arg("--version").output();
+        let output = Command::new(MAFFT_EXE).arg("--version").output();
         match output {
             Err(_) => None,
             Ok(output) => {
