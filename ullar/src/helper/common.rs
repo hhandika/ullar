@@ -1,6 +1,7 @@
 //! Miscellaneous utility functions
 use clap::{crate_description, crate_name, crate_version};
 use indicatif::{ProgressBar, ProgressStyle};
+use size::Size;
 use std::time::Duration;
 use sysinfo::System;
 
@@ -203,7 +204,7 @@ impl SystemInfo {
 
     fn get_memory(&mut self) {
         let total_memory = self.info.total_memory();
-        self.total_memory = format!("{:.0} GB", total_memory as f64 / 1_073_741_824.0);
+        self.total_memory = Size::from_bytes(total_memory).to_string();
     }
 
     fn get_timestamp(&mut self) {
