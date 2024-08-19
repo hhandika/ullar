@@ -125,6 +125,7 @@ impl PrettyHeader {
 }
 
 pub struct SystemInfo {
+    info: System,
     pub os: String,
     pub os_version: String,
     pub kernel_version: String,
@@ -143,34 +144,34 @@ impl Default for SystemInfo {
 
 impl SystemInfo {
     pub fn new() -> Self {
-        let info = System::new_all();
-        let os = System::name().unwrap_or_default();
-        let os_version = System::os_version().unwrap_or_default();
-        let kernel_version = System::kernel_version().unwrap_or_default();
-        let cpu = info
-            .cpus()
-            .iter()
-            .take(1)
-            .map(|cpu| cpu.brand())
-            .collect::<String>();
-        let threads = info.cpus().len();
-        let cores = info.physical_core_count().unwrap_or_default();
-        let total_memory = info.total_memory() / BYTE_TO_GB;
-        let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-
         Self {
-            os,
-            os_version,
-            kernel_version,
-            cpu,
-            cores,
-            threads,
-            total_memory: format!("{} GB", total_memory),
-            timestamp,
+            info: System::new_all(),
+            os: System::name().unwrap_or_default(),
+            os_version: System::os_version().unwrap_or_default(),
+            kernel_version: System::kernel_version().unwrap_or_default(),
+            cpu: String::new(),
+            cores: 0,
+            threads: 0,
+            total_memory: String::new(),
+            timestamp: String::new(),
         }
     }
 
-    pub fn get_system_info(&self) {
+    pub fn get_only_thread_counts() -> usize {
+        let info = System::new_all();
+        info.cpus().len()
+    }
+
+    pub fn get(&mut self) {
+        self.get_cpus();
+        self.get_cores();
+        self.get_thread_count();
+        self.get_memory();
+        self.get_timestamp();
+    }
+
+    pub fn get_system_info(&mut self) {
+        self.get();
         log::info!("{}", "System Information".cyan());
         let os_name = format!("{} v{}", self.os, self.os_version);
         log::info!("{:18}: {}", "OS", os_name);
@@ -181,5 +182,32 @@ impl SystemInfo {
         log::info!("{:18}: {}", "Threads", self.threads);
         log::info!("{:18}: {}", "Total Memory", self.total_memory);
         log::info!("{:18}: {}\n", "Timestamp", self.timestamp);
+    }
+
+    fn get_thread_count(&mut self) {
+        self.threads = self.info.cpus().len()
+    }
+
+    fn get_cpus(&mut self) {
+        self.cpu = self
+            .info
+            .cpus()
+            .iter()
+            .take(1)
+            .map(|cpu| cpu.brand())
+            .collect::<String>()
+    }
+
+    fn get_cores(&mut self) {
+        self.cores = self.info.physical_core_count().unwrap_or_default();
+    }
+
+    fn get_memory(&mut self) {
+        let total_memory = self.info.total_memory() / BYTE_TO_GB;
+        self.total_memory = format!("{} GB", total_memory);
+    }
+
+    fn get_timestamp(&mut self) {
+        self.timestamp = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
     }
 }

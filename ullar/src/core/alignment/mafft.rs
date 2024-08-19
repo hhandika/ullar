@@ -4,14 +4,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
+use crate::core::deps::mafft::MAFFT_EXE;
 use crate::helper::files::FileMetadata;
 use crate::parse_override_args;
-
-/// Default MAFFT executable for Unix systems
-pub const MAFFT_EXE: &str = "mafft";
-
-/// Default MAFFT executable for Windows systems
-pub const MAFFT_WINDOWS: &str = "mafft.bat";
 
 /// Default MAFFT parameters. We use --adjustdirection
 ///     and --maxiterate 1000 by default. The user can
@@ -64,10 +59,8 @@ impl<'a> MafftRunner<'a> {
         self.execute_mafft()
     }
 
+    #[cfg(target_family = "unix")]
     fn execute_mafft(&self) -> Result<PathBuf, Box<dyn Error>> {
-        #[cfg(target_family = "windows")]
-        let mut cmd = Command::new(MAFFT_WINDOWS);
-        #[cfg(target_family = "unix")]
         let mut cmd = Command::new(MAFFT_EXE);
         match self.override_args {
             Some(params) => parse_override_args!(cmd, params),
@@ -75,33 +68,80 @@ impl<'a> MafftRunner<'a> {
         };
 
         cmd.arg(self.get_input_path());
-
         let output = cmd.output()?;
 
         match self.check_success(&output) {
             Ok(_) => {
                 let output_path = self.create_output_path()?;
-                self.write_output(&output_path, &output)?;
+                self.write_output(&output_path, &output.stdout)?;
                 Ok(output_path)
             }
             Err(e) => Err(e),
         }
     }
 
-    fn write_output(&self, output_path: &PathBuf, output: &Output) -> Result<(), Box<dyn Error>> {
-        fs::write(output_path, &output.stdout)?;
+    #[cfg(target_family = "windows")]
+    fn execute_mafft(&self) -> Result<PathBuf, Box<dyn Error>> {
+        let mut cmd = Command::new("wsl.exe");
+        cmd.arg(MAFFT_EXE);
+        match self.override_args {
+            Some(params) => parse_override_args!(cmd, params),
+            None => parse_override_args!(cmd, DEFAULT_MAFFT_PARAMS),
+        };
+
+        cmd.arg(self.get_input_path());
+        // let output_path = self.create_output_path()?;
+        let output = cmd.output()?;
+
+        match self.check_success(&output) {
+            Ok(_) => {
+                let output_path = self.create_output_path()?;
+                self.write_output(&output_path, &output.stdout)?;
+                Ok(output_path)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    // #[cfg(target_family = "unix")]
+    fn write_output(&self, output_path: &PathBuf, output: &[u8]) -> Result<(), Box<dyn Error>> {
+        if !output.is_empty() {
+            fs::write(output_path, output)?;
+        }
         Ok(())
+    }
+
+    #[cfg(target_family = "unix")]
+    fn create_output_path(&self) -> Result<PathBuf, Box<dyn Error>> {
+        fs::create_dir_all(self.output_dir)?;
+        let output_dir = self
+            .output_dir
+            .canonicalize()
+            .expect("Failed to get output path");
+        let output_path = output_dir.join(&self.input_file.file_name);
+        Ok(output_path)
+    }
+
+    #[cfg(target_family = "unix")]
+    fn get_input_path(&self) -> PathBuf {
+        let input_path = self.input_file.parent_dir.join(&self.input_file.file_name);
+        input_path.canonicalize().expect("Failed to get input path")
     }
 
     fn create_output_path(&self) -> Result<PathBuf, Box<dyn Error>> {
         fs::create_dir_all(self.output_dir)?;
         let output_path = self.output_dir.join(&self.input_file.file_name);
+
         Ok(output_path)
     }
 
-    fn get_input_path(&self) -> PathBuf {
+    #[cfg(target_os = "windows")]
+    fn get_input_path(&self) -> String {
         let input_path = self.input_file.parent_dir.join(&self.input_file.file_name);
-        input_path.canonicalize().expect("Failed to get input path")
+        input_path
+            .to_str()
+            .expect("Failed to get input path")
+            .to_string()
     }
 
     fn check_success(&self, output: &Output) -> Result<(), Box<dyn Error>> {
