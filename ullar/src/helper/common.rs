@@ -8,7 +8,6 @@ use chrono::Local;
 use colored::Colorize;
 
 const LINE_DECORATOR_LEN: usize = 80;
-const BYTE_TO_GB: u64 = 1024 * 1024 * 1024;
 const HEADER_SYMBOL: char = '=';
 const FOOTER_SYMBOL: char = '-';
 
@@ -203,8 +202,8 @@ impl SystemInfo {
     }
 
     fn get_memory(&mut self) {
-        let total_memory = self.info.total_memory() / BYTE_TO_GB;
-        self.total_memory = format!("{} GB", total_memory);
+        let total_memory = self.info.total_memory();
+        self.total_memory = format!("{:.0} GB", total_memory as f64 / 1_073_741_824.0);
     }
 
     fn get_timestamp(&mut self) {
