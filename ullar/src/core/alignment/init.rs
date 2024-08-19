@@ -29,8 +29,8 @@ impl<'a> AlignmentInit<'a> {
     /// 1. Write the alignment configuration to the output directory
     /// 2. Log the input and output directories
     pub fn init(&self) {
-        let spin = common::init_spinner();
         self.log_input();
+        let spin = common::init_spinner();
         spin.set_message("Initializing alignment configuration");
         let (path, config) = self.write_config().expect("Failed to write config");
         spin.finish_with_message(format!("{} Finished writing output config\n", "✔".green()));
