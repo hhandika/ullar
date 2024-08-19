@@ -20,7 +20,7 @@ use crate::{
     types::Task,
 };
 
-pub const DEFAULT_ALIGNMENT_CONFIG: &str = "unaligned_contigs";
+pub const DEFAULT_ALIGNMENT_CONFIG: &str = "alignment_contigs";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AlignmentConfig {
