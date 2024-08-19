@@ -2,6 +2,9 @@ use std::process::Command;
 
 use super::DepMetadata;
 
+/// Default MAFFT executable for Unix systems
+pub const MAFFT_EXE: &str = "mafft";
+
 pub struct MafftMetadata {
     pub metadata: Option<DepMetadata>,
 }
@@ -34,13 +37,11 @@ impl MafftMetadata {
     /// Get the version of fastp
     #[cfg(target_family = "windows")]
     fn get_mafft(&self) -> Option<String> {
-        let mafft_exe = crate::core::alignment::mafft::MAFFT_WINDOWS;
-
-        let output = Command::new(mafft_exe).arg("-h").output();
+        let output = Command::new("wsl.exe").arg(MAFFT_EXE).arg("-h").output();
         match output {
             Err(_) => None,
             Ok(output) => {
-                let version = String::from_utf8_lossy(&output.stdout);
+                let version = String::from_utf8_lossy(&output.stderr);
                 Some(version.to_string())
             }
         }
