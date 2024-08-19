@@ -128,13 +128,6 @@ impl<'a> MafftRunner<'a> {
         input_path.canonicalize().expect("Failed to get input path")
     }
 
-    fn create_output_path(&self) -> Result<PathBuf, Box<dyn Error>> {
-        fs::create_dir_all(self.output_dir)?;
-        let output_path = self.output_dir.join(&self.input_file.file_name);
-
-        Ok(output_path)
-    }
-
     #[cfg(target_os = "windows")]
     fn get_input_path(&self) -> String {
         let input_path = self.input_file.parent_dir.join(&self.input_file.file_name);
