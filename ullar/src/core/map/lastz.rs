@@ -75,8 +75,8 @@ impl<'a> LastzMapping<'a> {
     /// It is just the way genomic sequences behave.
     /// We don't want those duplicates. We will only keep the best match.
     pub fn run(&self, contigs: &[ContigFiles]) -> Result<Vec<MappingData>, Box<dyn Error>> {
-        let progress_bar = common::init_progress_bar(contigs.len() as u64);
         log::info!("Mapping contigs to reference sequence");
+        let progress_bar = common::init_progress_bar(contigs.len() as u64);
         let msg = "Samples";
         progress_bar.set_message(msg);
         let (tx, rx) = mpsc::channel();
