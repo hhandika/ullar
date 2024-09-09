@@ -111,7 +111,6 @@ impl<'a> MafftRunner<'a> {
         Ok(())
     }
 
-    #[cfg(target_family = "unix")]
     fn create_output_path(&self) -> Result<PathBuf, Box<dyn Error>> {
         fs::create_dir_all(self.output_dir)?;
         let output_dir = self
