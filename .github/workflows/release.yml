@@ -73,7 +73,7 @@ jobs:
         with:
           command: both
           target: aarch64-unknown-linux-gnu
-          args: --release
+          args: --release --package ullar
 
       - name: Compress release
         run: tar czvf ullar.tar.gz -C target/aarch64-unknown-linux-gnu/release ullar
