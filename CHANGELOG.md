@@ -1,8 +1,12 @@
 # Release Notes
 
+## v0.3.1
+
+- Fix CI/CD issues.
+
 ## v0.3.0
 
-- Add phyluce compatibility for mapping contigs to UCE loci.
+- Add mapping support and alignment features.
 
 ## v0.2.2
 
