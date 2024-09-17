@@ -81,7 +81,7 @@ impl<'a> MappedContigWriter<'a> {
             data.data.iter().for_each(|(refname, contig)| {
                 let sequence = seq
                     .get(&contig.contig_name)
-                    .expect("Failed to get sequence");
+                    .expect("Failed to get contig names. Check if contig names inside the FASTA file are correct.");
                 let sequence = self.get_sequence(sequence, contig.strand);
                 if matrix.contains_key(refname) {
                     let seq_matrix = matrix.get_mut(refname).unwrap();
