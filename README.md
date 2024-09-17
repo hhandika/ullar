@@ -2,19 +2,7 @@
 
 ![ci](https://github.com/hhandika/ullar/workflows/tests/badge.svg)
 
-ULLAR, named after _ular_, which means snakes in Indonesian/Malay, is an Ultrafast, scaLable, Accessible, and Reproducible pipeline for phylogenomics. What sets ULLAR apart from other pipelines? Let's delve into its unique features that address the current limitations in the field.
-
-## Performance and Scalability
-
-ULLAR stands out with its exceptional Performance and Scalability. Unlike most pipelines written in scripting languages (e.g., Python or R) or memory-inefficient languages (e.g., Java) and struggle with performance optimization, ULLAR is designed to be ultrafast and scalable, minimizing the pipeline's overhead.
-
-## Accessibility and Reproducibility
-
-1. ULLAR's goal is to be easy to install and easy to use. We want to minimize dependencies, avoid containerization (e.g., using Docker or Singularity), and make the pipeline as self-contained as possible. Whenever possible, we will interop with available tools using the Foreign-Function Interface (FFI) and a static-linked binary to minimize runtime dependencies. We will also simplify command arguments and accompany the pipeline with comprehensive documentation. This way, non-tech-savvy users or those without technical support can easily install the pipeline and efficiently conduct phylogenomic analyses.
-
-2. ULLAR is committed to supporting Windows for part of the pipeline, recognizing the importance of cross-platform compatibility in the field of bioinformatics. By prioritizing cross-platform tools available in Windows, we aim to improve reproducibility and accessibility, ensuring that all users, regardless of their operating system, can benefit from ULLAR's capabilities.
-
-3. ULLAR will be reproducible through log output and runner scripts, and each input and output file will be accompanied by SHA256 hash values for data integrity checks. It will also provide a checkpoint to resume the pipeline. There will be no more rerunning the whole pipeline when it fails in the middle or manual hacks to resume it.
+ULLAR, named after _ular_, which means snakes in Indonesian/Malay, stands for an Ultrafast, scaLable, Accessible, and Reproducible pipeline for phylogenomics. Our goal with ULLAR is to develop a pipeline that is lightweight and requires minimal learning curve. We wants a scalable pipeline that can be used by evolutionary biologists with limited bioinformatics background and technical supports. Whenever possible, ULLAR feature will run native on Windows as well as Linux and MacOS.
 
 ## Getting Started
 
@@ -22,13 +10,13 @@ ULLAR is currently under development. We are working on the pipeline's core comp
 
 ### Installation
 
-If you have Rust installed, you can install ULLAR using Cargo:
+Currently, ULLAR installation requires Rust. Follow Rust installation guide [here](https://www.rust-lang.org/tools/install). After installing Rust, you can install ULLAR using cargo:
 
 ```bash
-cargo install ullar
+cargo install --git https://github.com/hhandika/ullar.git
 ```
 
-Another option is to install ULLAR pre-compiled binary. You can download the latest release from the [release page](https://github.com/hhandika/ullar/releases/latest). Available binaries:
+<!-- Another option is to install ULLAR pre-compiled binary. You can download the latest release from the [release page](https://github.com/hhandika/ullar/releases/latest). Available binaries:
 
 | OS      | Download                                                                                                                                                                                                                             |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -52,21 +40,25 @@ or our home directory that is in the PATH if you don't have root access:
 
 ```bash
 cp ullar ~/bin
-```
+``` -->
 
-SEGUL provide a detailed installation guide on installing a single executable binary in different operating systems. You can find the guide [here](https://www.segul.app/docs/installation/install_binary)
+SEGUL provide a detailed installation guide on installing Rust based software [here](https://www.segul.app/docs/installation/install_source)
 
 ### Features & Dependencies
 
-| Feature            | Dependencies                                       |
-| ------------------ | -------------------------------------------------- |
-| Raw read cleaning  | [Fastp](https://github.com/OpenGene/fastp)         |
-| De novo assembly   | [SPAdes](http://cab.spbu.ru/software/spades/)      |
-| Reference mapping  | In development                                     |
-| Sequence alignment | [MAFFT](https://mafft.cbrc.jp/alignment/software/) |
-| ML phylogeny       | [IQ-TREE](http://www.iqtree.org/)                  |
-| MSC phylogeny      | [ASTER](https://github.com/chaoszhang/ASTER)       |
-| Summary statistics | [SEGUL](https://www.segul.app/)                    |
+| Feature                             | Dependencies                                       |
+| ----------------------------------- | -------------------------------------------------- |
+| Raw read cleaning                   | [Fastp](https://github.com/OpenGene/fastp)         |
+| De novo assembly                    | [SPAdes](http://cab.spbu.ru/software/spades/)      |
+| Reference mapping                   | [LASTZ](https://github.com/lastz/lastz)            |
+| Sequence alignment                  | [MAFFT](https://mafft.cbrc.jp/alignment/software/) |
+| ML phylogeny (in development)       | [IQ-TREE](http://www.iqtree.org/)                  |
+| MSC phylogeny (in development)      | [ASTER](https://github.com/chaoszhang/ASTER)       |
+| Data cleaning                       | [SEGUL](https://www.segul.app/)                    |
+| Summary statistics (in development) | [SEGUL](https://www.segul.app/)                    |
+
+> NOTE: Summary statistics and other data cleaning feature is under development, but you can install SEGUL separately.
+> Check out SEGUL documentation [here](https://www.segul.app/)
 
 You can check if you have the dependencies installed by running the following commands:
 
@@ -75,8 +67,6 @@ ullar deps check
 ```
 
 If you don't have the dependencies installed, you can install by following the instructions on the links provided above.
-
-### Usage
 
 Check ULLAR installation:
 
@@ -146,10 +136,18 @@ It will first check the config file and the hash values match the raw reads. For
 ullar clean -c configs/raw_read.yaml --process --skip-config-check
 ```
 
-## De Novo Assembly
+#### De Novo Assembly
 
 ULLAR uses SPAdes for de novo assembly. To run the assembly:
 
 ```bash
-ullar assemble -c configs/cleaned_read.yaml --process
+ullar assemble -c configs/assembly.yaml --process
+```
+
+#### Reference Mapping
+
+ULLAR uses LASTZ for reference mapping. To run the reference mapping:
+
+```bash
+ullar map -c configs/map.yaml --process
 ```
