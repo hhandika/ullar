@@ -8,6 +8,8 @@ use super::common::CommonRunnerArgs;
 
 #[derive(Subcommand)]
 pub(crate) enum CleanSubcommand {
+    /// Initialize a new clean config file
+    #[command(name = "init", about = "Create a new clean read config file")]
     /// Clean raw reads
     #[command(name = "run", about = "Perform read cleaning")]
     Clean(CleanArgs),
@@ -15,8 +17,8 @@ pub(crate) enum CleanSubcommand {
 
 #[derive(Args)]
 pub struct CleanArgs {
-    /// Path to the raw read configuration file
-    #[arg(short, long, help = "Path to the raw read configuration file")]
+    /// Path to the raw read config file
+    #[arg(short, long, help = "Path to the raw read config file")]
     pub config: PathBuf,
     /// Share command across features
     #[command(flatten)]
