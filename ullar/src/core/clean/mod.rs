@@ -27,7 +27,7 @@ use super::deps::fastp::FastpMetadata;
 pub const DEFAULT_CLEAN_READ_OUTPUT_DIR: &str = "cleaned_reads";
 
 pub struct ReadCleaner<'a> {
-    /// Path to the raw read configuration file
+    /// Path to the raw read config file
     pub config_path: &'a Path,
     /// Output directory to store the cleaned reads
     pub output_dir: &'a Path,

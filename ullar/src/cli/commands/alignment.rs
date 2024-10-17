@@ -8,18 +8,18 @@ use super::common::{CommonInitArgs, CommonRunnerArgs};
 
 #[derive(Subcommand)]
 pub(crate) enum AlignmentSubcommand {
-    /// Create alignment configuration file
-    #[command(name = "init", about = "Create alignment configuration file")]
+    /// Create alignment config file
+    #[command(name = "init", about = "Create an sequence aligning config file")]
     Init(AlignmentInitArgs),
     /// Perform locus alignment
-    #[command(name = "align", about = "Perform locus alignment")]
+    #[command(name = "align", about = "Align multiple sequences")]
     Align(AlignmentArgs),
 }
 
 #[derive(Args)]
 pub struct AlignmentArgs {
-    /// Path to the alignment configuration file
-    #[arg(short, long, help = "Path to the alignment configuration file")]
+    /// Path to the alignment config file
+    #[arg(short, long, help = "Path to the alignment config file")]
     pub config: PathBuf,
     /// Output directory to store the alignments
     #[arg(

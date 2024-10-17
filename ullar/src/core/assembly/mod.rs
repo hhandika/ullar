@@ -23,7 +23,7 @@ pub mod spades;
 pub const DEFAULT_ASSEMBLY_OUTPUT_DIR: &str = "assemblies";
 
 pub struct Assembly<'a> {
-    /// Path to the assembly configuration file
+    /// Path to the assembly config file
     pub config_path: &'a Path,
     /// Should the SHA256 checksum be checked
     /// before assembling the files

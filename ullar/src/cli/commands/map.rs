@@ -8,8 +8,8 @@ use super::common::CommonRunnerArgs;
 
 #[derive(Subcommand)]
 pub(crate) enum MapSubcommand {
-    /// Create a new map configuration file
-    #[command(name = "init", about = "Create a new map configuration file")]
+    /// Create a new map config file
+    #[command(name = "init", about = "Create a new map config file")]
     Init(MapInitArgs),
     /// Perform contig mapping
     #[command(name = "contig", about = "Map contigs to reference sequences")]
@@ -21,8 +21,8 @@ pub(crate) enum MapSubcommand {
 
 #[derive(Args)]
 pub struct MapContigArgs {
-    /// Path to the map configuration file
-    #[arg(short, long, help = "Path to the map configuration file")]
+    /// Path to the map config file
+    #[arg(short, long, help = "Path to the map config file")]
     pub config: PathBuf,
     /// Output directory to store the alignments
     #[arg( 
@@ -96,8 +96,8 @@ pub struct MapInitArgs {
 
 #[derive(Args)]
 pub struct MapReadArgs {
-    /// Path to the map configuration file
-    #[arg(short, long, help = "Path to the map configuration file")]
+    /// Path to the map config file
+    #[arg(short, long, help = "Path to the map config file")]
     pub config: PathBuf,
     /// Output directory to store the alignments
     #[arg( 
