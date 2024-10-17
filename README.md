@@ -74,13 +74,13 @@ Check ULLAR installation:
 ullar --version
 ```
 
-#### Generate a configuration file
+#### Generate a config file
 
 ```bash
 ullar new /raw_read_dir
 ```
 
-To check the configuration file:
+To check the config file:
 
 ```bash
 cat configs/raw_read.yaml

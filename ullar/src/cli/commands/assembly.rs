@@ -8,8 +8,8 @@ use super::common::{CommonInitArgs, CommonRunnerArgs};
 
 #[derive(Subcommand)]
 pub(crate) enum AssemblySubcommand {
-    /// Create assembly configuration file
-    #[command(name = "init", about = "Create assembly configuration file")]
+    /// Create assembly config file
+    #[command(name = "init", about = "Create assembly config file")]
     Init(AssemblyInitArgs),
     /// Assemble cleaned reads
     #[command(name = "run", about = "Assemble cleaned reads")]
@@ -18,8 +18,8 @@ pub(crate) enum AssemblySubcommand {
 
 #[derive(Args)]
 pub struct AssemblyArgs {
-    /// Path to the assembly configuration file
-    #[arg(short, long, help = "Path to the assembly configuration file")]
+    /// Path to the assembly config file
+    #[arg(short, long, help = "Path to the assembly config file")]
     pub config: PathBuf,
     /// Output directory to store the assemblies
     #[arg(short, long, default_value = DEFAULT_ASSEMBLY_OUTPUT_DIR,

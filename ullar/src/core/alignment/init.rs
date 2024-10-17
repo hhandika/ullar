@@ -26,7 +26,7 @@ impl<'a> AlignmentInit<'a> {
     /// Initialize the alignment configuration
     ///
     /// Steps:
-    /// 1. Write the alignment configuration to the output directory
+    /// 1. Write the alignment config to the output directory
     /// 2. Log the input and output directories
     pub fn init(&self) {
         self.log_input();

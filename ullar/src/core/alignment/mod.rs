@@ -30,7 +30,7 @@ use super::{deps::mafft::MafftMetadata, tree::configs::TreeInferenceConfig};
 pub const DEFAULT_ALIGNMENT_OUTPUT_DIR: &str = "alignments";
 
 pub struct Alignment<'a> {
-    /// Path to the alignment configuration file
+    /// Path to the alignment config file
     pub config_path: &'a Path,
     /// Output directory to store the alignments
     pub output_dir: &'a Path,
@@ -64,7 +64,7 @@ impl<'a> Alignment<'a> {
     /// Align the sequences based on the configuration
     ///
     /// Steps:
-    /// 1. Parse the configuration file
+    /// 1. Parse the config file
     /// 2. Log the input summary
     /// 3. Check if the output directory exists
     /// 4. Check configuration
@@ -72,10 +72,10 @@ impl<'a> Alignment<'a> {
     /// 7. Align the sequences
     pub fn align(&self) {
         let spinner = common::init_spinner();
-        spinner.set_message("Parsing configuration file");
+        spinner.set_message("Parsing config file");
         let config = self.parse_config().expect("Failed to parse config");
         spinner.finish_with_message(format!(
-            "{} Finished parsing configuration file\n",
+            "{} Finished parsing config file\n",
             "✔".green()
         ));
         self.log_input(&config);

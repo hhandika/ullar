@@ -8,12 +8,8 @@ use super::common::CommonRunnerArgs;
 
 #[derive(Args)]
 pub struct TreeArgs {
-    /// Path to the phylogenetic estimation configuration file
-    #[arg(
-        short,
-        long,
-        help = "Path to the phylogenetic estimation configuration file"
-    )]
+    /// Path to the phylogenetic estimation config file
+    #[arg(short, long, help = "Path to the phylogenetic estimation config file")]
     pub config: PathBuf,
     /// Output directory to store the phylogenetic trees
     #[arg(short, long, default_value = DEFAULT_PHYLO_OUTPUT_DIR,

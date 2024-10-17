@@ -17,7 +17,7 @@ pub const DEFAULT_ML_OUTPUT_DIR: &str = "ml_iqtree";
 pub const DEFAULT_MSC_OUTPUT_DIR: &str = "msc_aster";
 
 pub struct TreeEstimation<'a> {
-    /// Path to raw read configuration file
+    /// Path to raw read config file
     pub config_path: &'a Path,
     /// Checksum verification flag
     pub ignore_checksum: bool,

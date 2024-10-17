@@ -12,9 +12,9 @@ use crate::{core::deps::DepMetadata, helper::configs::generate_config_output_pat
 
 pub const DEFAULT_TREE_PREFIX: &str = "tree";
 pub const DEFAULT_TREE_CONFIG_DIR: &str = "configs";
-/// Default alignment configuration straight from the aligner
+/// Default alignment config straight from the aligner
 pub const DEFAULT_RAW_ALIGNMENT_CONFIG: &str = "raw_alignment";
-/// Default alignment configuration after cleaning
+/// Default alignment config after cleaning
 pub const DEFAULT_CLEANED_ALIGNMENT_CONFIG: &str = "cleaned_alignment";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -99,7 +99,7 @@ impl TreeInferenceConfig {
 //         }
 //     }
 
-//     /// Serialize the configuration to a YAML file.
+//     /// Serialize the config to a YAML file.
 //     pub fn to_yaml(&self, output_dir: &Path) -> Result<PathBuf, Box<dyn Error>> {
 //         fs::create_dir_all(output_dir)?;
 //         let mut output = output_dir.join("tree_inference_config");
