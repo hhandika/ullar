@@ -5,14 +5,14 @@ use std::{error::Error, path::Path};
 
 use colored::Colorize;
 
-use crate::cli::commands::new::NewArgs;
+use crate::cli::commands::clean::ReadCleaningInitArgs;
 use crate::core::clean::configs::{CleanReadConfig, ReadMatching};
 use crate::helper::common;
 use crate::helper::files::FileFinder;
 use crate::types::reads::{FastqReads, ReadAssignment, SampleNameFormat};
 use crate::types::SupportedFormats;
 
-pub struct NewProject<'a> {
+pub struct ReadCleaningInit<'a> {
     dir: &'a Path,
     extension: Option<&'a str>,
     separator: Option<char>,
@@ -22,8 +22,8 @@ pub struct NewProject<'a> {
     sample_name_format: SampleNameFormat,
 }
 
-impl<'a> NewProject<'a> {
-    pub fn from_arg(args: &'a NewArgs) -> Self {
+impl<'a> ReadCleaningInit<'a> {
+    pub fn from_arg(args: &'a ReadCleaningInitArgs) -> Self {
         Self {
             dir: args.dir.as_path(),
             extension: args.common.extension.as_deref(),
@@ -79,7 +79,6 @@ impl<'a> NewProject<'a> {
         records: Vec<FastqReads>,
         file_counts: usize,
     ) -> Result<PathBuf, Box<dyn Error>> {
-        // let data = serde_yaml::to_string(&records)?;
         let strategy: ReadMatching = self.get_read_matching_strategy();
         let extension = self.file_extension();
         let config = CleanReadConfig::new(

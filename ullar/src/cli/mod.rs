@@ -4,10 +4,9 @@ use clap::Parser;
 use commands::{
     alignment::{AlignmentArgs, AlignmentInitArgs, AlignmentSubcommand},
     assembly::{AssemblyArgs, AssemblyInitArgs, AssemblySubcommand},
-    clean::CleanSubcommand,
+    clean::{ReadCleaningInitArgs, ReadCleaningSubcommand},
     deps::DepsSubcommand,
     map::MapSubcommand,
-    new::NewArgs,
     utils::{ScannerSubcommand, UtilSubCommand},
     UllarCli, UllarSubcommand,
 };
@@ -18,10 +17,9 @@ use crate::{
     core::{
         alignment::{init::AlignmentInit, Alignment},
         assembly::{init::AssemblyInit, Assembly},
-        clean::ReadCleaner,
+        clean::{init::ReadCleaningInit, ReadCleaner},
         deps::DependencyCheck,
         map::{init::InitMappingConfig, ContigMapping},
-        new::NewProject,
         tree::TreeEstimation,
         utils::{checksum::Sha256Executor, scan::ReadScanner},
     },
@@ -70,7 +68,7 @@ impl Cli {
 
     fn match_subcommand(&self) {
         match &self.command.sub_cmd {
-            UllarSubcommand::New(new_args) => self.create_project(new_args),
+            UllarSubcommand::New(_) => unimplemented!("New project is not yet implemented"),
             UllarSubcommand::Clean(subcommand) => CleanArgParser::new(subcommand).parse(),
             UllarSubcommand::Assemble(subcommand) => AssemblyArgParser::new(subcommand).parse(),
             UllarSubcommand::Map(subcommand) => MapArgParser::new(subcommand).parse(),
@@ -79,11 +77,6 @@ impl Cli {
             UllarSubcommand::Deps(subcommand) => self.parse_dependencies(subcommand),
             UllarSubcommand::Utils(util_args) => self.parse_utils(util_args),
         }
-    }
-
-    fn create_project(&self, new_args: &NewArgs) {
-        let mut parser = NewProject::from_arg(new_args);
-        parser.execute().expect("Failed to execute new command");
     }
 
     fn parse_dependencies(&self, deps_subcommand: &DepsSubcommand) {
@@ -119,21 +112,27 @@ impl Cli {
 }
 
 struct CleanArgParser<'a> {
-    subcommand: &'a CleanSubcommand,
+    subcommand: &'a ReadCleaningSubcommand,
 }
 
 impl<'a> CleanArgParser<'a> {
-    fn new(subcommand: &'a CleanSubcommand) -> Self {
+    fn new(subcommand: &'a ReadCleaningSubcommand) -> Self {
         Self { subcommand }
     }
 
     fn parse(&self) {
         match self.subcommand {
-            CleanSubcommand::Clean(clean_args) => {
+            ReadCleaningSubcommand::Init(init_args) => self.init(init_args),
+            ReadCleaningSubcommand::Clean(clean_args) => {
                 let cleaner = ReadCleaner::from_arg(clean_args);
                 cleaner.clean();
             }
         }
+    }
+
+    fn init(&self, args: &ReadCleaningInitArgs) {
+        let mut parser = ReadCleaningInit::from_arg(args);
+        parser.execute().expect("Failed to execute new command");
     }
 }
 

@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::{builder, Args, Subcommand};
 
-use crate::{core::map::{configs::DEFAULT_LOCUS_CONFIG, DEFAULT_MAPPED_CONTIG_OUTPUT_DIR}, helper::regex::CONTIG_SAMPLE_REGEX};
+use crate::{core::map::{configs::DEFAULT_REF_MAPPING_CONFIG, DEFAULT_MAPPED_CONTIG_OUTPUT_DIR}, helper::regex::CONTIG_SAMPLE_REGEX};
 
 use super::common::CommonRunnerArgs;
 
@@ -86,7 +86,7 @@ pub struct MapInitArgs {
     /// Config file name
     #[arg(
         long,
-        default_value = DEFAULT_LOCUS_CONFIG,
+        default_value = DEFAULT_REF_MAPPING_CONFIG,
         help = "Config file name"
     )]
     pub config_name: String,

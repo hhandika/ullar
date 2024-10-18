@@ -11,7 +11,7 @@ pub mod utils;
 use alignment::AlignmentSubcommand;
 use assembly::AssemblySubcommand;
 use clap::{crate_authors, crate_description, crate_name, crate_version, Parser, Subcommand};
-use clean::CleanSubcommand;
+use clean::ReadCleaningSubcommand;
 use deps::DepsSubcommand;
 use map::MapSubcommand;
 use new::NewArgs;
@@ -51,7 +51,7 @@ pub(crate) enum UllarSubcommand {
     New(NewArgs),
     /// Clean raw reads
     #[command(subcommand, name = "clean", about = "Clean raw reads")]
-    Clean(CleanSubcommand),
+    Clean(ReadCleaningSubcommand),
     /// Assemble cleaned reads
     #[command(subcommand, name = "assemble", about = "Assemble cleaned reads")]
     Assemble(AssemblySubcommand),

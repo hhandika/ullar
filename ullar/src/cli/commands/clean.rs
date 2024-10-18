@@ -4,19 +4,29 @@ use clap::{Args, Subcommand};
 
 use crate::core::clean::DEFAULT_CLEAN_READ_OUTPUT_DIR;
 
-use super::common::CommonRunnerArgs;
+use super::common::{CommonInitArgs, CommonRunnerArgs};
 
 #[derive(Subcommand)]
-pub(crate) enum CleanSubcommand {
+pub(crate) enum ReadCleaningSubcommand {
     /// Initialize a new clean config file
-    #[command(name = "init", about = "Create a new clean read config file")]
+    #[command(name = "init", about = "Create a clean read config file")]
+    Init(ReadCleaningInitArgs),
     /// Clean raw reads
-    #[command(name = "run", about = "Perform read cleaning")]
-    Clean(CleanArgs),
+    #[command(name = "run", about = "Clean raw reads")]
+    Clean(ReadCleaningArgs),
 }
 
 #[derive(Args)]
-pub struct CleanArgs {
+pub struct ReadCleaningInitArgs {
+    /// Input directory containing raw reads
+    #[arg(short, long, help = "Input directory containing raw reads")]
+    pub dir: PathBuf,
+    #[command(flatten)]
+    pub common: CommonInitArgs,
+}
+
+#[derive(Args)]
+pub struct ReadCleaningArgs {
     /// Path to the raw read config file
     #[arg(short, long, help = "Path to the raw read config file")]
     pub config: PathBuf,

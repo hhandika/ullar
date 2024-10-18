@@ -1,6 +1,7 @@
 //! Clean raw read files using Fastp
 pub mod configs;
 pub mod fastp;
+pub mod init;
 pub mod reports;
 
 use std::fs;
@@ -10,7 +11,7 @@ use colored::Colorize;
 use comfy_table::Table;
 use configs::CleanReadConfig;
 
-use crate::cli::commands::clean::CleanArgs;
+use crate::cli::commands::clean::ReadCleaningArgs;
 use crate::helper::common;
 use crate::helper::fastq::FastqConfigCheck;
 use crate::helper::files::PathCheck;
@@ -50,7 +51,7 @@ impl<'a> ReadCleaner<'a> {
 
     /// Initialize a new ReadCleaner instance
     /// from command line arguments
-    pub fn from_arg(args: &'a CleanArgs) -> Self {
+    pub fn from_arg(args: &'a ReadCleaningArgs) -> Self {
         Self {
             config_path: &args.config,
             output_dir: &args.output,
