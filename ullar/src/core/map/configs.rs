@@ -17,7 +17,7 @@ use crate::{
     types::{SupportedFormats, Task},
 };
 
-pub const DEFAULT_LOCUS_CONFIG: &str = "mapped_contig";
+pub const DEFAULT_REF_MAPPING_CONFIG: &str = "reference_mapping";
 
 pub const CONTIG_REGEX: &str = r"(?i)(contig*)";
 

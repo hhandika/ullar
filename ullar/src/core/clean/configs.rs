@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::helper::configs::generate_config_output_path;
 use crate::types::reads::FastqReads;
 
-pub const DEFAULT_RAW_READ_CONFIG: &str = "raw_read";
+pub const DEFAULT_READ_CLEANING_CONFIG: &str = "read_cleaning";
 
 pub enum FileMatchingStrategy {
     Regex,
@@ -59,7 +59,7 @@ impl CleanReadConfig {
     }
 
     pub fn to_yaml(&self) -> Result<PathBuf, Box<dyn Error>> {
-        let output_path = generate_config_output_path(DEFAULT_RAW_READ_CONFIG);
+        let output_path = generate_config_output_path(DEFAULT_READ_CLEANING_CONFIG);
         let writer = std::fs::File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
         Ok(output_path)

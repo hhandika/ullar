@@ -6,16 +6,11 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
+use crate::{core::deps::DepMetadata, helper::configs::generate_config_output_path};
 use crate::{helper::files::FileMetadata, types::alignments::AlignmentFiles};
 
-use crate::{core::deps::DepMetadata, helper::configs::generate_config_output_path};
-
 pub const DEFAULT_TREE_PREFIX: &str = "tree";
-pub const DEFAULT_TREE_CONFIG_DIR: &str = "configs";
-/// Default alignment config straight from the aligner
-pub const DEFAULT_RAW_ALIGNMENT_CONFIG: &str = "raw_alignment";
-/// Default alignment config after cleaning
-pub const DEFAULT_CLEANED_ALIGNMENT_CONFIG: &str = "cleaned_alignment";
+pub const DEFAULT_ML_INFERENCE_CONFIG: &str = "ml_inference";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct TreeInferenceConfig {
@@ -52,18 +47,10 @@ impl TreeInferenceConfig {
     }
 
     pub fn to_yaml(&self) -> Result<PathBuf, Box<dyn Error>> {
-        let output_path = generate_config_output_path(self.get_config_filename());
+        let output_path = generate_config_output_path(DEFAULT_ML_INFERENCE_CONFIG);
         let writer = File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
         Ok(output_path)
-    }
-
-    fn get_config_filename(&self) -> &str {
-        if self.cleaned {
-            DEFAULT_CLEANED_ALIGNMENT_CONFIG
-        } else {
-            DEFAULT_RAW_ALIGNMENT_CONFIG
-        }
     }
 }
 

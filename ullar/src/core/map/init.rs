@@ -20,7 +20,7 @@ use crate::{
     types::map::MappingQueryFormat,
 };
 
-use super::configs::{MappedContigConfig, SampleNameSource, DEFAULT_LOCUS_CONFIG};
+use super::configs::{MappedContigConfig, SampleNameSource, DEFAULT_REF_MAPPING_CONFIG};
 
 pub struct InitMappingConfig<'a> {
     /// Query directory containing query sequences
@@ -49,7 +49,7 @@ impl Default for InitMappingConfig<'_> {
             query_format: MappingQueryFormat::Contig,
             name_source: "file",
             reference_path: Path::new(""),
-            config_name: DEFAULT_LOCUS_CONFIG,
+            config_name: DEFAULT_REF_MAPPING_CONFIG,
             refname_regex: UCE_REGEX,
             sample_name_regex: CONTIG_SAMPLE_REGEX,
         }

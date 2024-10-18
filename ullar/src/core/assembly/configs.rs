@@ -13,7 +13,7 @@ use crate::{
     types::{reads::FastqReads, Task},
 };
 
-pub const DEFAULT_CLEANED_READ_CONFIG: &str = "cleaned_read";
+pub const DEFAULT_ASSEMBLY_CONFIG: &str = "denovo_assembly";
 
 #[derive(Debug, Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -66,7 +66,7 @@ impl AssemblyConfig {
         &mut self,
         reports: &[CleanReadReport],
     ) -> Result<PathBuf, Box<dyn std::error::Error>> {
-        let output_dir = generate_config_output_path(DEFAULT_CLEANED_READ_CONFIG);
+        let output_dir = generate_config_output_path(DEFAULT_ASSEMBLY_CONFIG);
         self.samples = self.parse_fastp_report(reports);
         self.get_sample_counts();
         self.get_file_counts();
