@@ -77,13 +77,13 @@ ullar --version
 #### Generate a config file
 
 ```bash
-ullar new /raw_read_dir
+ullar clean init /raw_read_dir
 ```
 
 To check the config file:
 
 ```bash
-cat configs/raw_read.yaml
+cat configs/clean_read.yaml
 ```
 
 The default argument assume your file has simple names:
@@ -121,19 +121,19 @@ ullar new /raw_read_dir --re-sample='([a-zA-Z0-9]+)_R1.fastq.gz'
 By default, ULLAR is using dry-run mode.
 
 ```bash
-ullar clean -c configs/raw_read.yaml
+ullar clean -c configs/read_cleaning.yaml
 ```
 
 To run the cleaning process:
 
 ```bash
-ullar clean -c configs/raw_read.yaml --process
+ullar clean -c configs/read_cleaning.yaml --process
 ```
 
 It will first check the config file and the hash values match the raw reads. For a fresh run, you can skip the hash check:
 
 ```bash
-ullar clean -c configs/raw_read.yaml --process --skip-config-check
+ullar clean -c configs/read_cleaning.yaml --process --skip-config-check
 ```
 
 #### De Novo Assembly
@@ -141,7 +141,7 @@ ullar clean -c configs/raw_read.yaml --process --skip-config-check
 ULLAR uses SPAdes for de novo assembly. To run the assembly:
 
 ```bash
-ullar assemble -c configs/assembly.yaml --process
+ullar assemble -c configs/denovo_assembly.yaml --process
 ```
 
 #### Reference Mapping
@@ -149,5 +149,5 @@ ullar assemble -c configs/assembly.yaml --process
 ULLAR uses LASTZ for reference mapping. To run the reference mapping:
 
 ```bash
-ullar map -c configs/map.yaml --process
+ullar map -c configs/reference_mapping.yaml --process
 ```

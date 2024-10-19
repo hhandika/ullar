@@ -204,7 +204,7 @@ impl SystemInfo {
 
     fn get_memory(&mut self) {
         let total_memory = self.info.total_memory();
-        self.total_memory = Size::from_bytes(total_memory as u64).to_string();
+        self.total_memory = Size::from_bytes(total_memory).to_string();
     }
 
     fn get_timestamp(&mut self) {
