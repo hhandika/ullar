@@ -29,7 +29,7 @@ use super::{deps::mafft::MafftMetadata, tree::configs::TreeInferenceConfig};
 
 pub const DEFAULT_ALIGNMENT_OUTPUT_DIR: &str = "alignments";
 
-pub struct Alignment<'a> {
+pub struct SequenceAlignment<'a> {
     /// Path to the alignment config file
     pub config_path: &'a Path,
     /// Output directory to store the alignments
@@ -39,7 +39,7 @@ pub struct Alignment<'a> {
     task: Task,
 }
 
-impl<'a> Alignment<'a> {
+impl<'a> SequenceAlignment<'a> {
     /// Initialize a new Alignment instance
     /// with the given parameters
     pub fn new(config_path: &'a Path, output_dir: &'a Path) -> Self {
@@ -47,7 +47,7 @@ impl<'a> Alignment<'a> {
             config_path,
             output_dir,
             runner: RunnerOptions::default(),
-            task: Task::AligningSequences,
+            task: Task::SequenceAlignment,
         }
     }
     /// Initialize a new Alignment instance
@@ -57,7 +57,7 @@ impl<'a> Alignment<'a> {
             config_path: &args.config,
             output_dir: &args.output,
             runner: RunnerOptions::from_arg(&args.common),
-            task: Task::AligningSequences,
+            task: Task::SequenceAlignment,
         }
     }
 
@@ -74,10 +74,7 @@ impl<'a> Alignment<'a> {
         let spinner = common::init_spinner();
         spinner.set_message("Parsing config file");
         let config = self.parse_config().expect("Failed to parse config");
-        spinner.finish_with_message(format!(
-            "{} Finished parsing config file\n",
-            "✔".green()
-        ));
+        spinner.finish_with_message(format!("{} Finished parsing config file\n", "✔".green()));
         self.log_input(&config);
         PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
         let reports = self.par_align(&config.contigs);

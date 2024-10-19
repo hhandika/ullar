@@ -1,5 +1,7 @@
 # Release Notes
 
+## v0.4.0
+
 ## v0.3.1
 
 - Fix CI/CD issues.
