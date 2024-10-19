@@ -55,17 +55,15 @@ impl IqtreeMetadata {
         Self { metadata: None }
     }
 
-    pub fn get(&self) -> Self {
+    pub fn get(&self) -> Option<DepMetadata> {
         let version_data: Option<String> = self.get_iqtree();
         if version_data.is_none() {
-            return Self { metadata: None };
+            return None;
         }
 
         match version_data {
-            Some(v) => Self {
-                metadata: self.metadata(&v),
-            },
-            None => Self { metadata: None },
+            Some(v) => self.metadata(&v),
+            None => None,
         }
     }
 

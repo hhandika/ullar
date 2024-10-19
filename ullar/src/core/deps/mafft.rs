@@ -6,7 +6,7 @@ use super::DepMetadata;
 pub const MAFFT_EXE: &str = "mafft";
 
 pub struct MafftMetadata {
-    pub metadata: Option<DepMetadata>,
+    name: String,
 }
 
 impl Default for MafftMetadata {
@@ -17,20 +17,20 @@ impl Default for MafftMetadata {
 
 impl MafftMetadata {
     pub fn new() -> Self {
-        Self { metadata: None }
+        Self {
+            name: "MAFFT".to_string(),
+        }
     }
 
-    pub fn get(&self) -> Self {
+    pub fn get(&self) -> Option<DepMetadata> {
         let version_data: Option<String> = self.get_mafft();
         if version_data.is_none() {
-            return Self { metadata: None };
+            return None;
         }
 
         match version_data {
-            Some(v) => Self {
-                metadata: self.metadata(&v),
-            },
-            None => Self { metadata: None },
+            Some(v) => self.metadata(&v),
+            None => None,
         }
     }
 
@@ -62,11 +62,10 @@ impl MafftMetadata {
 
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {
         let version = self.capture_version(version_data);
-        let executable = "mafft".to_string();
         Some(DepMetadata {
-            name: "MAFFT".to_string(),
+            name: self.name.clone(),
             version,
-            executable,
+            executable: MAFFT_EXE.to_string(),
         })
     }
 

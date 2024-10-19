@@ -156,7 +156,7 @@ impl<'a> ReadCleaner<'a> {
         let fastp_dep = FastpMetadata::new().get();
         let mut metadata = Vec::new();
 
-        if let Some(fastp) = fastp_dep.metadata {
+        if let Some(fastp) = fastp_dep {
             metadata.push(fastp);
         }
         let mut config = AssemblyConfig::new(
@@ -203,7 +203,7 @@ impl<'a> ReadCleaner<'a> {
 
     fn log_fastp_info(&self) {
         let deps = FastpMetadata::new().get();
-        match deps.metadata {
+        match deps {
             Some(dep) => log::info!("{:18}: {} v{}\n", "Cleaner", dep.name, dep.version),
             None => log::info!("{:18}: {}\n", "Cleaner", "fastp"),
         }

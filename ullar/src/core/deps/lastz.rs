@@ -8,7 +8,7 @@ use super::{re_capture_version, DepMetadata};
 pub const LASTZ_EXE: &str = "lastz";
 
 pub struct LastzMetadata {
-    pub metadata: Option<DepMetadata>,
+    version: Option<String>,
 }
 
 impl Default for LastzMetadata {
@@ -19,21 +19,16 @@ impl Default for LastzMetadata {
 
 impl LastzMetadata {
     pub fn new() -> Self {
-        Self { metadata: None }
-    }
-
-    pub fn get(&self) -> Self {
-        let version: Option<String> = self.get_lastz();
-        match version {
-            Some(v) => Self {
-                metadata: self.metadata(&v),
-            },
-            None => Self { metadata: None },
+        Self {
+            version: version!(LASTZ_EXE),
         }
     }
 
-    fn get_lastz(&self) -> Option<String> {
-        version!(LASTZ_EXE)
+    pub fn get(&self) -> Option<DepMetadata> {
+        match &self.version {
+            Some(v) => self.metadata(&v),
+            None => None,
+        }
     }
 
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {

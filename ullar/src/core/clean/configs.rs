@@ -3,6 +3,7 @@ use std::{error::Error, path::Path};
 
 use serde::{Deserialize, Serialize};
 
+use crate::core::deps::DepMetadata;
 use crate::helper::configs::generate_config_output_path;
 use crate::types::reads::FastqReads;
 
@@ -20,6 +21,7 @@ pub struct CleanReadConfig {
     pub sample_counts: usize,
     pub file_counts: usize,
     pub read_matching: ReadMatching,
+    pub dependencies: DepMetadata,
     pub samples: Vec<FastqReads>,
 }
 
@@ -34,6 +36,7 @@ impl Default for CleanReadConfig {
                 regex: None,
                 character_split: None,
             },
+            dependencies: DepMetadata::default(),
             samples: Vec::new(),
         }
     }
@@ -54,6 +57,7 @@ impl CleanReadConfig {
             file_counts,
             file_extension,
             read_matching,
+            dependencies: DepMetadata::default(),
             samples,
         }
     }

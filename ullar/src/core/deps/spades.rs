@@ -21,13 +21,11 @@ impl SpadesMetadata {
         Self { metadata: None }
     }
 
-    pub fn get(&self) -> Self {
+    pub fn get(&self) -> Option<DepMetadata> {
         let version: Option<String> = self.get_spades();
         match version {
-            Some(v) => Self {
-                metadata: self.metadata(&v),
-            },
-            None => Self { metadata: None },
+            Some(v) => self.metadata(&v),
+            None => None,
         }
     }
 
