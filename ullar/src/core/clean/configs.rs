@@ -16,7 +16,7 @@ pub enum FileMatchingStrategy {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct CleanReadConfig {
+pub struct ReadConfig {
     pub input_dir: PathBuf,
     pub file_extension: String,
     pub sample_counts: usize,
@@ -26,7 +26,7 @@ pub struct CleanReadConfig {
     pub samples: Vec<FastqReads>,
 }
 
-impl Default for CleanReadConfig {
+impl Default for ReadConfig {
     fn default() -> Self {
         Self {
             input_dir: PathBuf::new(),
@@ -43,7 +43,7 @@ impl Default for CleanReadConfig {
     }
 }
 
-impl CleanReadConfig {
+impl ReadConfig {
     pub fn new(
         input_dir: &Path,
         file_extension: String,
@@ -83,7 +83,7 @@ impl CleanReadConfig {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Default, Deserialize)]
 pub struct ReadMatching {
     #[serde(skip_serializing_if = "Option::is_none")]
     regex: Option<String>,

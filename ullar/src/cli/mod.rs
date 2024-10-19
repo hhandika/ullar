@@ -131,8 +131,8 @@ impl<'a> CleanArgParser<'a> {
     }
 
     fn init(&self, args: &ReadCleaningInitArgs) {
-        let mut parser = ReadCleaningInit::from_arg(args);
-        parser.execute().expect("Failed to execute new command");
+        let mut init = ReadCleaningInit::from_arg(args);
+        init.init().expect("Failed to execute new command");
     }
 }
 
@@ -153,7 +153,9 @@ impl<'a> AssemblyArgParser<'a> {
     }
 
     fn init(&self, args: &AssemblyInitArgs) {
-        AssemblyInit::new(args).init();
+        AssemblyInit::from_arg(args)
+            .init()
+            .expect("Failed to execute new command");
     }
 
     fn assemble(&self, args: &AssemblyArgs) {

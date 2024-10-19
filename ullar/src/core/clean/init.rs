@@ -6,11 +6,13 @@ use std::{error::Error, path::Path};
 use colored::Colorize;
 
 use crate::cli::commands::clean::ReadCleaningInitArgs;
-use crate::core::clean::configs::{CleanReadConfig, ReadMatching};
+use crate::core::clean::configs::ReadMatching;
 use crate::helper::common;
 use crate::helper::files::FileFinder;
 use crate::types::reads::{FastqReads, ReadAssignment, SampleNameFormat};
 use crate::types::SupportedFormats;
+
+use super::configs::ReadConfig;
 
 pub struct ReadCleaningInit<'a> {
     dir: &'a Path,
@@ -39,7 +41,7 @@ impl<'a> ReadCleaningInit<'a> {
         }
     }
 
-    pub fn execute(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn init(&mut self) -> Result<(), Box<dyn Error>> {
         self.log_input();
         let spin = common::init_spinner();
         spin.set_message("Finding files...");
@@ -81,7 +83,7 @@ impl<'a> ReadCleaningInit<'a> {
     ) -> Result<PathBuf, Box<dyn Error>> {
         let strategy: ReadMatching = self.get_read_matching_strategy();
         let extension = self.file_extension();
-        let mut config = CleanReadConfig::new(
+        let mut config = ReadConfig::new(
             self.dir,
             extension,
             records.len(),
@@ -112,11 +114,7 @@ impl<'a> ReadCleaningInit<'a> {
     fn log_input(&self) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Directory", self.dir.display());
-        log::info!(
-            "{:18}: {}\n",
-            "Sample name format",
-            self.sample_name_format.to_string()
-        );
+        log::info!("{:18}: {}\n", "Sample name format", self.sample_name_format);
     }
 
     fn log_output(&self, output_path: &Path, record_counts: usize, file_counts: usize) {
