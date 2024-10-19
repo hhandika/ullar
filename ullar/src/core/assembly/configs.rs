@@ -9,8 +9,8 @@ use serde::Serialize;
 
 use crate::{
     core::{clean::reports::CleanReadReport, deps::DepMetadata},
-    helper::configs::{generate_config_output_path, PreviousStep},
-    types::{reads::FastqReads, Task},
+    helper::configs::generate_config_output_path,
+    types::reads::FastqReads,
 };
 
 pub const DEFAULT_ASSEMBLY_CONFIG: &str = "denovo_assembly";
@@ -23,7 +23,7 @@ pub struct AssemblyConfig {
     pub input_init_dir: PathBuf,
     pub sample_counts: usize,
     pub file_counts: usize,
-    pub previous_step: PreviousStep,
+    pub dependencies: DepMetadata,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub override_args: Option<String>,
     pub samples: Vec<FastqReads>,
@@ -36,7 +36,7 @@ impl Default for AssemblyConfig {
             input_init_dir: PathBuf::new(),
             sample_counts: 0,
             file_counts: 0,
-            previous_step: PreviousStep::default(),
+            dependencies: DepMetadata::default(),
             override_args: None,
             samples: Vec::new(),
         }
@@ -47,8 +47,6 @@ impl AssemblyConfig {
     pub fn new(
         config_path: Option<PathBuf>,
         input_init_dir: &Path,
-        task: Task,
-        dependencies: Vec<DepMetadata>,
         override_args: Option<String>,
     ) -> Self {
         Self {
@@ -56,7 +54,7 @@ impl AssemblyConfig {
             input_init_dir: input_init_dir.to_path_buf(),
             sample_counts: 0,
             file_counts: 0,
-            previous_step: PreviousStep::with_dependencies(task, dependencies),
+            dependencies: DepMetadata::default(),
             override_args,
             samples: Vec::new(),
         }

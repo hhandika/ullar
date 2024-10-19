@@ -7,7 +7,7 @@ use super::{re_capture_version, DepMetadata};
 pub const FASTP_EXE: &str = "fastp";
 
 pub struct FastpMetadata {
-    pub metadata: Option<DepMetadata>,
+    version: Option<String>,
 }
 
 impl Default for FastpMetadata {
@@ -18,19 +18,16 @@ impl Default for FastpMetadata {
 
 impl FastpMetadata {
     pub fn new() -> Self {
-        Self { metadata: None }
-    }
-
-    pub fn get(&self) -> Option<DepMetadata> {
-        let version: Option<String> = self.get_fastp();
-        match version {
-            Some(version) => self.metadata(&version),
-            None => None,
+        Self {
+            version: version!(FASTP_EXE),
         }
     }
 
-    fn get_fastp(&self) -> Option<String> {
-        version!(FASTP_EXE)
+    pub fn get(&self) -> Option<DepMetadata> {
+        match &self.version {
+            Some(version) => self.metadata(version),
+            None => None,
+        }
     }
 
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {

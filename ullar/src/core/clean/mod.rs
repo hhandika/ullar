@@ -12,6 +12,8 @@ use colored::Colorize;
 use comfy_table::Table;
 use configs::{CleanReadConfig, DEFAULT_READ_CLEANING_CONFIG};
 
+use self::reports::CleanReadReport;
+use super::deps::fastp::FastpMetadata;
 use crate::cli::commands::clean::ReadCleaningArgs;
 use crate::helper::common;
 use crate::helper::configs::{CONFIG_EXTENSION, DEFAULT_CONFIG_DIR};
@@ -21,11 +23,6 @@ use crate::helper::tracker::ProcessingTracker;
 use crate::types::reads::FastqReads;
 use crate::types::runner::RunnerOptions;
 use crate::types::Task;
-
-use self::reports::CleanReadReport;
-
-use super::assembly::configs::AssemblyConfig;
-use super::deps::fastp::FastpMetadata;
 
 pub const DEFAULT_CLEAN_READ_OUTPUT_DIR: &str = "cleaned_reads";
 
@@ -71,7 +68,9 @@ impl<'a> ReadCleaner<'a> {
 
     /// Clean raw read files using Fastp
     pub fn clean(&self) {
-        let config = self.parse_config().expect("Failed to parse config");
+        let config = self
+            .parse_config()
+            .expect("Failed to parse config. Try to create a new config.");
         self.log_input(&config);
         PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
         let spinner = common::init_spinner();
@@ -97,10 +96,10 @@ impl<'a> ReadCleaner<'a> {
         }
 
         let reports = self.clean_reads(&config.samples);
-        let config_path = self
-            .write_output_config(&reports)
-            .expect("Failed to write clean read config");
-        self.log_final_output(&config_path);
+        // let config_path = self
+        //     .write_output_config(&reports)
+        //     .expect("Failed to write clean read config");
+        self.log_final_output(&reports);
     }
 
     fn clean_reads(&self, samples: &[FastqReads]) -> Vec<CleanReadReport> {
@@ -146,31 +145,23 @@ impl<'a> ReadCleaner<'a> {
         Ok(config)
     }
 
-    // Prepare config for De Novo Assembly
-    fn write_output_config(
-        &self,
-        reports: &[CleanReadReport],
-    ) -> Result<PathBuf, Box<dyn std::error::Error>> {
-        let spin = common::init_spinner();
-        spin.set_message("Writing output config");
-        let fastp_dep = FastpMetadata::new().get();
-        let mut metadata = Vec::new();
+    // // Prepare config for De Novo Assembly
+    // fn write_output_config(
+    //     &self,
+    //     reports: &[CleanReadReport],
+    // ) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    //     let spin = common::init_spinner();
+    //     spin.set_message("Writing output config");
+    //     let mut config = AssemblyConfig::new(
+    //         Some(self.config_path.to_path_buf()),
+    //         self.output_dir,
+    //         self.runner.override_args.map(|s| s.to_string()),
+    //     );
 
-        if let Some(fastp) = fastp_dep {
-            metadata.push(fastp);
-        }
-        let mut config = AssemblyConfig::new(
-            Some(self.config_path.to_path_buf()),
-            self.output_dir,
-            self.task,
-            metadata,
-            self.runner.override_args.map(|s| s.to_string()),
-        );
-
-        let output = config.to_yaml(reports);
-        spin.finish_with_message(format!("{} Finished writing output config\n", "✔".green()));
-        output
-    }
+    //     let output = config.to_yaml(reports);
+    //     spin.finish_with_message(format!("{} Finished writing output config\n", "✔".green()));
+    //     output
+    // }
 
     fn log_unprocessed(&self) {
         let msg1 = "Samples were not processed";
@@ -195,10 +186,10 @@ impl<'a> ReadCleaner<'a> {
         self.log_fastp_info();
     }
 
-    fn log_final_output(&self, config_path: &Path) {
+    fn log_final_output(&self, reports: &[CleanReadReport]) {
         log::info!("{}", "\nOutput".cyan());
         log::info!("{:18}: {}", "Directory", self.output_dir.display());
-        log::info!("{:18}: {}\n", "Config file", config_path.display());
+        log::info!("{:18}: {}", "Total processed", reports.len());
     }
 
     fn log_fastp_info(&self) {

@@ -22,6 +22,9 @@ pub enum Dependency {
     Iqtree,
 }
 
+/// Check the version of the given executable
+/// If the executable is not found, return None
+/// Otherwise, return the version string
 #[macro_export]
 macro_rules! version {
     ($exe: ident) => {{
@@ -48,22 +51,6 @@ pub struct DepMetadata {
     pub version: String,
     pub executable: String,
 }
-
-// impl DepMetadata {
-//     pub fn get(dependency: Dependency) -> Self {
-//         let dep: Option<DepMetadata> = match dependency {
-//             Dependency::Fastp => FastpMetadata::new().get(),
-//             Dependency::Spades => SpadesMetadata::new().get(),
-//             Dependency::Lastz => LastzMetadata::new().get(),
-//             Dependency::Mafft => MafftMetadata::new().get(),
-//             Dependency::Iqtree => IqtreeMetadata::new().get(),
-//         };
-//         match dep {
-//             Some(metadata) => metadata,
-//             None => DepMetadata::default(),
-//         }
-//     }
-// }
 
 pub struct DependencyCheck {
     fastp: Option<DepMetadata>,
