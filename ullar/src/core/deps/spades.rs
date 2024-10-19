@@ -7,7 +7,7 @@ use super::{re_capture_version, DepMetadata};
 pub const SPADES_EXE: &str = "spades.py";
 
 pub struct SpadesMetadata {
-    pub metadata: Option<DepMetadata>,
+    version: Option<String>,
 }
 
 impl Default for SpadesMetadata {
@@ -18,19 +18,16 @@ impl Default for SpadesMetadata {
 
 impl SpadesMetadata {
     pub fn new() -> Self {
-        Self { metadata: None }
-    }
-
-    pub fn get(&self) -> Option<DepMetadata> {
-        let version: Option<String> = self.get_spades();
-        match version {
-            Some(v) => self.metadata(&v),
-            None => None,
+        Self {
+            version: version!(SPADES_EXE),
         }
     }
 
-    fn get_spades(&self) -> Option<String> {
-        version!(SPADES_EXE)
+    pub fn get(&self) -> Option<DepMetadata> {
+        match &self.version {
+            Some(version) => self.metadata(version),
+            None => None,
+        }
     }
 
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {

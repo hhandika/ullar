@@ -22,7 +22,7 @@ pub struct CleanReadConfig {
     pub sample_counts: usize,
     pub file_counts: usize,
     pub read_matching: ReadMatching,
-    pub dependencies: Option<DepMetadata>,
+    pub dependencies: DepMetadata,
     pub samples: Vec<FastqReads>,
 }
 
@@ -37,7 +37,7 @@ impl Default for CleanReadConfig {
                 regex: None,
                 character_split: None,
             },
-            dependencies: None,
+            dependencies: DepMetadata::default(),
             samples: Vec::new(),
         }
     }
@@ -58,7 +58,7 @@ impl CleanReadConfig {
             file_counts,
             file_extension,
             read_matching,
-            dependencies: None,
+            dependencies: DepMetadata::default(),
             samples,
         }
     }
@@ -72,7 +72,14 @@ impl CleanReadConfig {
     }
 
     fn get_dependency(&mut self) {
-        self.dependencies = FastpMetadata::new().get();
+        let dep = FastpMetadata::new().get();
+
+        match dep {
+            Some(metadata) => self.dependencies = metadata,
+            None => {
+                panic!("Fastp dependency not found. Please, install fastp first");
+            }
+        }
     }
 }
 

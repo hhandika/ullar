@@ -26,7 +26,7 @@ impl LastzMetadata {
 
     pub fn get(&self) -> Option<DepMetadata> {
         match &self.version {
-            Some(v) => self.metadata(&v),
+            Some(version) => self.metadata(version),
             None => None,
         }
     }

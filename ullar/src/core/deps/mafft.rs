@@ -1,3 +1,4 @@
+use crate::version;
 use std::process::Command;
 
 use super::DepMetadata;
@@ -50,14 +51,7 @@ impl MafftMetadata {
     /// Get the version of mafft unix
     #[cfg(target_family = "unix")]
     fn get_mafft(&self) -> Option<String> {
-        let output = Command::new(MAFFT_EXE).arg("--version").output();
-        match output {
-            Err(_) => None,
-            Ok(output) => {
-                let version = String::from_utf8_lossy(&output.stderr);
-                Some(version.to_string())
-            }
-        }
+        version!(MAFFT_EXE)
     }
 
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {
