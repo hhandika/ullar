@@ -4,9 +4,13 @@
 
 ULLAR, named after _ular_, which means snakes in Indonesian/Malay, stands for an Ultrafast, scaLable, Accessible, and Reproducible pipeline for phylogenomics. Our goal with ULLAR is to develop a pipeline that is lightweight and requires minimal learning curve. We wants a scalable pipeline that can be used by evolutionary biologists with limited bioinformatics background and technical supports. Whenever possible, ULLAR feature will run native on Windows as well as Linux and MacOS.
 
-## Getting Started
+## Development Status
 
-ULLAR is currently under development. We are working on the pipeline's core components. You can try the pipeline by following the installation guide below. This guideline assume familiarity with the command line interface and basic bioinformatics tools.
+ULLAR is currently under development. We are working on the pipeline's core components. You should expect command changes in the future release. If you use ULLAR in publication, we recommend stating the exact version of the app. For manual compilation, we recommend to also state the commit hash number.
+
+## Try ULLAR
+
+You can try the pipeline by following the installation guide below. This guideline assume familiarity of using command line app and basic bioinformatics tools.
 
 ### Installation
 
@@ -16,7 +20,7 @@ Currently, ULLAR installation requires Rust. Follow Rust installation guide [her
 cargo install --git https://github.com/hhandika/ullar.git
 ```
 
-<!-- Another option is to install ULLAR pre-compiled binary. You can download the latest release from the [release page](https://github.com/hhandika/ullar/releases/latest). Available binaries:
+Another option is to install ULLAR pre-compiled binary. You can download the latest release from the [release page](https://github.com/hhandika/ullar/releases/latest). Available binaries:
 
 | OS      | Download                                                                                                                                                                                                                             |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -40,7 +44,7 @@ or our home directory that is in the PATH if you don't have root access:
 
 ```bash
 cp ullar ~/bin
-``` -->
+```
 
 SEGUL provide a detailed installation guide on installing Rust based software [here](https://www.segul.app/docs/installation/install_source)
 
@@ -77,20 +81,13 @@ ullar --version
 #### Generate a config file
 
 ```bash
-ullar clean init /raw_read_dir
+ullar new -d /raw_read_dir
 ```
 
 To check the config file:
 
 ```bash
 cat configs/clean_read.yaml
-```
-
-The default argument assume your file has simple names:
-
-```text
-- sample1_R1.fastq.gz
-- sample1_R2.fastq.gz
 ```
 
 For more descriptive names, you can use the `--sample-name descriptive` argument:
@@ -110,6 +107,19 @@ Example of descriptive names:
 - genus1_species2_locality_R2.fastq.gz
 ```
 
+If your file naming is simple, you can use the `--sample-name simple` argument:
+
+```bash
+ullar new /raw_read_dir --sample-name simple
+```
+
+Example of simple names:
+
+```text
+- sample1_R1.fastq.gz
+- sample1_R2.fastq.gz
+```
+
 You can also supply your own regular expression to extract the sample name:
 
 ```bash
@@ -118,22 +128,20 @@ ullar new /raw_read_dir --re-sample='([a-zA-Z0-9]+)_R1.fastq.gz'
 
 #### Cleaning raw reads
 
-By default, ULLAR is using dry-run mode.
-
 ```bash
-ullar clean -c configs/read_cleaning.yaml
+ullar clean init -c configs/read_cleaning.yaml
 ```
 
 To run the cleaning process:
 
 ```bash
-ullar clean -c configs/read_cleaning.yaml --process
+ullar clean run -c configs/read_cleaning.yaml
 ```
 
 It will first check the config file and the hash values match the raw reads. For a fresh run, you can skip the hash check:
 
 ```bash
-ullar clean -c configs/read_cleaning.yaml --process --skip-config-check
+ullar clean -c configs/read_cleaning.yaml --skip-config-check
 ```
 
 #### De Novo Assembly
@@ -141,7 +149,7 @@ ullar clean -c configs/read_cleaning.yaml --process --skip-config-check
 ULLAR uses SPAdes for de novo assembly. To run the assembly:
 
 ```bash
-ullar assemble -c configs/denovo_assembly.yaml --process
+ullar assemble -c configs/denovo_assembly.yaml
 ```
 
 #### Reference Mapping
@@ -149,5 +157,13 @@ ullar assemble -c configs/denovo_assembly.yaml --process
 ULLAR uses LASTZ for reference mapping. To run the reference mapping:
 
 ```bash
-ullar map -c configs/reference_mapping.yaml --process
+ullar map run -c configs/reference_mapping.yaml
+```
+
+#### Sequence Alignment
+
+ULLAR uses MAFFT for sequence alignment. To run the sequence alignment:
+
+```bash
+ullar align run -c configs/sequence_alignment.yaml
 ```
