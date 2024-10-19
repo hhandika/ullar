@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 use colored::Colorize;
 use comfy_table::Table;
-use configs::{CleanReadConfig, DEFAULT_READ_CLEANING_CONFIG};
+use configs::{ReadConfig, DEFAULT_READ_CLEANING_CONFIG};
 
 use self::reports::CleanReadReport;
 use super::deps::fastp::FastpMetadata;
@@ -133,10 +133,10 @@ impl<'a> ReadCleaner<'a> {
         reports
     }
 
-    fn parse_config(&self) -> Result<CleanReadConfig, Box<dyn std::error::Error>> {
+    fn parse_config(&self) -> Result<ReadConfig, Box<dyn std::error::Error>> {
         let content = fs::read_to_string(&self.config_path)
             .with_context(|| format!("Input config path: {}", self.config_path.display()))?;
-        let config: CleanReadConfig = serde_yaml::from_str(&content)?;
+        let config: ReadConfig = serde_yaml::from_str(&content)?;
 
         if config.sample_counts != config.samples.len() {
             return Err("Sample counts do not match the number of samples".into());
@@ -177,7 +177,7 @@ impl<'a> ReadCleaner<'a> {
         log::info!("\n{}", table);
     }
 
-    fn log_input(&self, config: &CleanReadConfig) {
+    fn log_input(&self, config: &ReadConfig) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config file", self.config_path.display());
         log::info!("{:18}: {}", "Sample counts", config.sample_counts);

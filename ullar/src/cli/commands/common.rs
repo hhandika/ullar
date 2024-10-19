@@ -16,7 +16,7 @@ pub struct CommonRunnerArgs {
         help = "Check the config file without processing samples"
     )]
     pub dry_run: bool,
-    /// Optional parameters for the assembly process
+    /// Optional parameters for runner
     #[arg(
         long,
         require_equals = true,
@@ -77,6 +77,13 @@ pub struct CommonInitArgs {
         help = "Specify file extension to match raw read files. Support regex."
     )]
     pub extension: Option<String>,
+    /// Optional parameters for runner
+    #[arg(
+        long,
+        require_equals = true,
+        help = "Optional parameters for the assembly process"
+    )]
+    pub override_args: Option<String>,
     /// Specify regex to match sample names
     /// Default used internal regex based on name format.
     #[arg(
