@@ -9,10 +9,11 @@ use std::path::{Path, PathBuf};
 
 use colored::Colorize;
 use comfy_table::Table;
-use configs::CleanReadConfig;
+use configs::{CleanReadConfig, DEFAULT_READ_CLEANING_CONFIG};
 
 use crate::cli::commands::clean::ReadCleaningArgs;
 use crate::helper::common;
+use crate::helper::configs::DEFAULT_CONFIG_DIR;
 use crate::helper::fastq::FastqConfigCheck;
 use crate::helper::files::PathCheck;
 use crate::helper::tracker::ProcessingTracker;
@@ -29,7 +30,7 @@ pub const DEFAULT_CLEAN_READ_OUTPUT_DIR: &str = "cleaned_reads";
 
 pub struct ReadCleaner<'a> {
     /// Path to the raw read config file
-    pub config_path: &'a Path,
+    pub config_path: PathBuf,
     /// Output directory to store the cleaned reads
     pub output_dir: &'a Path,
     /// Runner options
@@ -40,9 +41,9 @@ pub struct ReadCleaner<'a> {
 impl<'a> ReadCleaner<'a> {
     /// Initialize a new ReadCleaner instance
     /// with the given parameters
-    pub fn new(config_path: &'a Path, output_dir: &'a Path) -> Self {
+    pub fn new<P: AsRef<Path>>(config_path: P, output_dir: &'a Path) -> Self {
         Self {
-            config_path,
+            config_path: config_path.as_ref().to_path_buf(),
             output_dir,
             runner: RunnerOptions::default(),
             task: Task::CleanReads,
@@ -52,8 +53,13 @@ impl<'a> ReadCleaner<'a> {
     /// Initialize a new ReadCleaner instance
     /// from command line arguments
     pub fn from_arg(args: &'a ReadCleaningArgs) -> Self {
+        let config_path: PathBuf = match &args.config {
+            Some(path) => path.to_owned(),
+            None => PathBuf::from(DEFAULT_CONFIG_DIR).join(DEFAULT_READ_CLEANING_CONFIG),
+        };
+
         Self {
-            config_path: &args.config,
+            config_path,
             output_dir: &args.output,
             runner: RunnerOptions::from_arg(&args.common),
             task: Task::CleanReads,
@@ -126,7 +132,7 @@ impl<'a> ReadCleaner<'a> {
     }
 
     fn parse_config(&self) -> Result<CleanReadConfig, Box<dyn std::error::Error>> {
-        let content = fs::read_to_string(self.config_path)?;
+        let content = fs::read_to_string(&self.config_path)?;
         let config: CleanReadConfig = serde_yaml::from_str(&content)?;
 
         if config.sample_counts != config.samples.len() {

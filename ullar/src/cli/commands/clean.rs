@@ -29,7 +29,7 @@ pub struct ReadCleaningInitArgs {
 pub struct ReadCleaningArgs {
     /// Path to the raw read config file
     #[arg(short, long, help = "Path to the raw read config file")]
-    pub config: PathBuf,
+    pub config: Option<PathBuf>,
     /// Share command across features
     #[command(flatten)]
     pub common: CommonRunnerArgs,
