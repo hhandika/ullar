@@ -14,6 +14,14 @@ pub mod lastz;
 pub mod mafft;
 pub mod spades;
 
+pub enum Dependency {
+    Fastp,
+    Spades,
+    Lastz,
+    Mafft,
+    Iqtree,
+}
+
 #[macro_export]
 macro_rules! version {
     ($exe: ident) => {{
@@ -34,12 +42,35 @@ macro_rules! version {
     }};
 }
 
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct DepMetadata {
+    pub name: String,
+    pub version: String,
+    pub executable: String,
+}
+
+// impl DepMetadata {
+//     pub fn get(dependency: Dependency) -> Self {
+//         let dep: Option<DepMetadata> = match dependency {
+//             Dependency::Fastp => FastpMetadata::new().get(),
+//             Dependency::Spades => SpadesMetadata::new().get(),
+//             Dependency::Lastz => LastzMetadata::new().get(),
+//             Dependency::Mafft => MafftMetadata::new().get(),
+//             Dependency::Iqtree => IqtreeMetadata::new().get(),
+//         };
+//         match dep {
+//             Some(metadata) => metadata,
+//             None => DepMetadata::default(),
+//         }
+//     }
+// }
+
 pub struct DependencyCheck {
-    fastp: FastpMetadata,
-    spades: SpadesMetadata,
-    lastz: LastzMetadata,
-    mafft: MafftMetadata,
-    iqtree: IqtreeMetadata,
+    fastp: Option<DepMetadata>,
+    spades: Option<DepMetadata>,
+    lastz: Option<DepMetadata>,
+    mafft: Option<DepMetadata>,
+    iqtree: Option<DepMetadata>,
 }
 
 impl Default for DependencyCheck {
@@ -51,11 +82,11 @@ impl Default for DependencyCheck {
 impl DependencyCheck {
     pub fn new() -> Self {
         Self {
-            fastp: FastpMetadata::new(),
-            spades: SpadesMetadata::new(),
-            lastz: LastzMetadata::new(),
-            mafft: MafftMetadata::new(),
-            iqtree: IqtreeMetadata::new(),
+            fastp: FastpMetadata::new().get(),
+            spades: SpadesMetadata::new().get(),
+            lastz: LastzMetadata::new().get(),
+            mafft: MafftMetadata::new().get(),
+            iqtree: IqtreeMetadata::new().get(),
         }
     }
 
@@ -78,8 +109,7 @@ impl DependencyCheck {
 
     fn log_read_cleaning(&mut self, table: &mut Table) {
         let feature = "Read cleaning";
-        self.fastp = FastpMetadata::new().get();
-        match &self.fastp.metadata {
+        match &self.fastp {
             Some(metadata) => {
                 let cells = self.get_cell(feature, "fastp", &metadata.version, true);
                 table.add_row(cells);
@@ -93,8 +123,7 @@ impl DependencyCheck {
 
     fn log_denovo_assembly(&mut self, table: &mut Table) {
         let feature = "De novo assembly";
-        self.spades = SpadesMetadata::new().get();
-        match &self.spades.metadata {
+        match &self.spades {
             Some(metadata) => {
                 let cells = self.get_cell(feature, "SPAdes", &metadata.version, true);
                 table.add_row(cells);
@@ -108,8 +137,7 @@ impl DependencyCheck {
 
     fn log_contig_mapping(&mut self, table: &mut Table) {
         let feature = "Contig mapping";
-        self.lastz = LastzMetadata::new().get();
-        match &self.lastz.metadata {
+        match &self.lastz {
             Some(metadata) => {
                 let cells = self.get_cell(feature, "LASTZ", &metadata.version, true);
                 table.add_row(cells);
@@ -123,8 +151,7 @@ impl DependencyCheck {
 
     fn log_sequence_alignment(&mut self, table: &mut Table) {
         let feature = "Sequence alignment";
-        self.mafft = MafftMetadata::new().get();
-        match &self.mafft.metadata {
+        match &self.mafft {
             Some(metadata) => {
                 let cells = self.get_cell(feature, "MAFFT", &metadata.version, true);
                 table.add_row(cells);
@@ -138,8 +165,7 @@ impl DependencyCheck {
 
     fn log_phylogenetic_inference(&mut self, table: &mut Table) {
         let feature = "Phylogenetic inference";
-        self.iqtree = IqtreeMetadata::new().get();
-        match &self.iqtree.metadata {
+        match &self.iqtree {
             Some(metadata) => {
                 let cells = self.get_cell(feature, "IQ-TREE", &metadata.version, true);
                 table.add_row(cells);
@@ -168,13 +194,6 @@ impl DependencyCheck {
             Cell::new("[ERROR]").fg(Color::Red)
         }
     }
-}
-
-#[derive(Debug, Serialize, Deserialize, Default)]
-pub struct DepMetadata {
-    pub name: String,
-    pub version: String,
-    pub executable: String,
 }
 
 fn re_capture_version(version: &str) -> String {

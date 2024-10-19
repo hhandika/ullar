@@ -21,13 +21,11 @@ impl FastpMetadata {
         Self { metadata: None }
     }
 
-    pub fn get(&self) -> Self {
+    pub fn get(&self) -> Option<DepMetadata> {
         let version: Option<String> = self.get_fastp();
         match version {
-            Some(v) => Self {
-                metadata: self.metadata(&v),
-            },
-            None => Self { metadata: None },
+            Some(version) => self.metadata(&version),
+            None => None,
         }
     }
 

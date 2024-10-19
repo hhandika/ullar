@@ -138,7 +138,7 @@ impl<'a> SequenceAlignment<'a> {
         spin.set_message("Writing output config");
         let mafft_dep = MafftMetadata::new().get();
         let mut metadata = Vec::new();
-        if let Some(dep) = mafft_dep.metadata {
+        if let Some(dep) = mafft_dep {
             metadata.push(dep);
         }
 
@@ -163,7 +163,7 @@ impl<'a> SequenceAlignment<'a> {
 
     fn log_mafft_info(&self) {
         let dep = MafftMetadata::new().get();
-        match dep.metadata {
+        match dep {
             Some(mafft) => log::info!("{:18}: {} v{}", "Aligner", "MAFFT", mafft.version),
             None => log::info!("{:18}: {}", "Aligner", "MAFFT"),
         }

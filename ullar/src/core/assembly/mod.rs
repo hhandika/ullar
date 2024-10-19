@@ -179,7 +179,7 @@ impl<'a> Assembly<'a> {
 
     fn log_spade_info(&self) {
         let deps = SpadesMetadata::new().get();
-        match deps.metadata {
+        match deps {
             Some(dep) => log::info!("{:18}: {} v{}\n", "Assembler", dep.name, dep.version),
             None => log::info!("{:18}: {}\n", "Assembler", "SPAdes".to_string()),
         }
