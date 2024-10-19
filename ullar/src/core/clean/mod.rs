@@ -7,13 +7,14 @@ pub mod reports;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use anyhow::Context;
 use colored::Colorize;
 use comfy_table::Table;
 use configs::{CleanReadConfig, DEFAULT_READ_CLEANING_CONFIG};
 
 use crate::cli::commands::clean::ReadCleaningArgs;
 use crate::helper::common;
-use crate::helper::configs::DEFAULT_CONFIG_DIR;
+use crate::helper::configs::{CONFIG_EXTENSION, DEFAULT_CONFIG_DIR};
 use crate::helper::fastq::FastqConfigCheck;
 use crate::helper::files::PathCheck;
 use crate::helper::tracker::ProcessingTracker;
@@ -55,7 +56,9 @@ impl<'a> ReadCleaner<'a> {
     pub fn from_arg(args: &'a ReadCleaningArgs) -> Self {
         let config_path: PathBuf = match &args.config {
             Some(path) => path.to_owned(),
-            None => PathBuf::from(DEFAULT_CONFIG_DIR).join(DEFAULT_READ_CLEANING_CONFIG),
+            None => PathBuf::from(DEFAULT_CONFIG_DIR)
+                .join(DEFAULT_READ_CLEANING_CONFIG)
+                .with_extension(CONFIG_EXTENSION),
         };
 
         Self {
@@ -132,7 +135,8 @@ impl<'a> ReadCleaner<'a> {
     }
 
     fn parse_config(&self) -> Result<CleanReadConfig, Box<dyn std::error::Error>> {
-        let content = fs::read_to_string(&self.config_path)?;
+        let content = fs::read_to_string(&self.config_path)
+            .with_context(|| format!("Input config path: {}", self.config_path.display()))?;
         let config: CleanReadConfig = serde_yaml::from_str(&content)?;
 
         if config.sample_counts != config.samples.len() {
