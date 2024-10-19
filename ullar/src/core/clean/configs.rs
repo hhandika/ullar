@@ -3,6 +3,7 @@ use std::{error::Error, path::Path};
 
 use serde::{Deserialize, Serialize};
 
+use crate::core::deps::fastp::FastpMetadata;
 use crate::core::deps::DepMetadata;
 use crate::helper::configs::generate_config_output_path;
 use crate::types::reads::FastqReads;
@@ -21,7 +22,7 @@ pub struct CleanReadConfig {
     pub sample_counts: usize,
     pub file_counts: usize,
     pub read_matching: ReadMatching,
-    pub dependencies: DepMetadata,
+    pub dependencies: Option<DepMetadata>,
     pub samples: Vec<FastqReads>,
 }
 
@@ -36,7 +37,7 @@ impl Default for CleanReadConfig {
                 regex: None,
                 character_split: None,
             },
-            dependencies: DepMetadata::default(),
+            dependencies: None,
             samples: Vec::new(),
         }
     }
@@ -57,16 +58,21 @@ impl CleanReadConfig {
             file_counts,
             file_extension,
             read_matching,
-            dependencies: DepMetadata::default(),
+            dependencies: None,
             samples,
         }
     }
 
-    pub fn to_yaml(&self) -> Result<PathBuf, Box<dyn Error>> {
+    pub fn to_yaml(&mut self) -> Result<PathBuf, Box<dyn Error>> {
+        self.get_dependency();
         let output_path = generate_config_output_path(DEFAULT_READ_CLEANING_CONFIG);
         let writer = std::fs::File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
         Ok(output_path)
+    }
+
+    fn get_dependency(&mut self) {
+        self.dependencies = FastpMetadata::new().get();
     }
 }
 
