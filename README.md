@@ -2,11 +2,11 @@
 
 ![ci](https://github.com/hhandika/ullar/workflows/tests/badge.svg)
 
-ULLAR, named after _ular_, which means snakes in Indonesian/Malay, stands for an Ultrafast, scaLable, Accessible, and Reproducible pipeline for phylogenomics. Our goal with ULLAR is to develop a pipeline that is lightweight and requires minimal learning curve. We wants a scalable pipeline that can be used by evolutionary biologists with limited bioinformatics background and technical supports. Whenever possible, ULLAR feature will run native on Windows as well as Linux and MacOS.
+ULLAR, named after _ular_, which means snakes in the Indonesian language, stands for an Ultrafast, scaLable, Accessible, and Reproducible pipeline for phylogenomics. Our goal with ULLAR is to develop a lightweight and scalable pipeline that requires a minimal learning curve. In addition to Linux and MacOS, the typical supported operating systems for bioinformatics, whenever possible, ULLAR will run natively on Windows.
 
 ## Development Status
 
-ULLAR is currently under development. We are working on the pipeline's core components. You should expect command changes in the future release. If you use ULLAR in publication, we recommend stating the exact version of the app. For manual compilation, we recommend to also state the commit hash number.
+ULLAR is currently under development. We are working on the pipeline's core components. You should expect command changes in the future release. If you use ULLAR in publication, we recommend stating the exact version of the app. For manual compilation, we recommend to also state the commit hash number. For example, `ULLAR v0.3.0 (commit: f18ac98)`.
 
 ## Try ULLAR
 
