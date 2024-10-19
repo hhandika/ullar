@@ -9,7 +9,9 @@ use std::{fmt::Display, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 
-/// Data type for each feature
+/// Task data type
+/// Represents the type of task to be executed
+/// by the pipeline
 #[derive(Debug, PartialEq, Clone, Copy, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Task {
@@ -31,7 +33,7 @@ pub enum Task {
     /// Locus alignment task
     /// Performs multiple sequence alignment on mapped loci
     /// Current implementation uses MAFFT
-    AligningSequences,
+    SequenceAlignment,
     /// Alignment quality control task
     /// Filters and cleans multiple sequence alignment
     /// Also generates summary statistics for the alignment
@@ -53,7 +55,7 @@ impl Display for Task {
             Task::CleanReads => write!(f, "Read Cleaning"),
             Task::Assembly => write!(f, "De Novo Assembly"),
             Task::ContigMapping => write!(f, "Contig Mapping"),
-            Task::AligningSequences => write!(f, "Locus Alignment"),
+            Task::SequenceAlignment => write!(f, "Sequence Alignment"),
             Task::AlignmentQc => write!(f, "Alignment Quality Control"),
             Task::TreeInference => write!(f, "Tree Inference"),
             Task::Unknown => write!(f, "Unknown"),
@@ -70,7 +72,7 @@ impl FromStr for Task {
             "CleanReads" => Ok(Task::CleanReads),
             "Assembly" => Ok(Task::Assembly),
             "ReadMapping" => Ok(Task::ContigMapping),
-            "AligningSequences" => Ok(Task::AligningSequences),
+            "AligningSequences" => Ok(Task::SequenceAlignment),
             "AlignmentQc" => Ok(Task::AlignmentQc),
             "TreeInference" => Ok(Task::TreeInference),
             "Unknown" => Ok(Task::Unknown),

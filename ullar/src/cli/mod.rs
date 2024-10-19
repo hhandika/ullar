@@ -15,7 +15,7 @@ use std::{path::PathBuf, time::Instant};
 
 use crate::{
     core::{
-        alignment::{init::AlignmentInit, Alignment},
+        alignment::{init::AlignmentInit, SequenceAlignment},
         assembly::{init::AssemblyInit, Assembly},
         clean::{init::ReadCleaningInit, ReadCleaner},
         deps::DependencyCheck,
@@ -202,6 +202,6 @@ impl<'a> AlignmentArgParser<'a> {
     }
 
     fn run(&self, args: &AlignmentArgs) {
-        Alignment::from_arg(args).align();
+        SequenceAlignment::from_arg(args).align();
     }
 }
