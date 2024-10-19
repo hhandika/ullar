@@ -81,7 +81,7 @@ impl<'a> ReadCleaningInit<'a> {
     ) -> Result<PathBuf, Box<dyn Error>> {
         let strategy: ReadMatching = self.get_read_matching_strategy();
         let extension = self.file_extension();
-        let config = CleanReadConfig::new(
+        let mut config = CleanReadConfig::new(
             self.dir,
             extension,
             records.len(),
