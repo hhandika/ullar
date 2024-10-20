@@ -19,7 +19,7 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Run cargo check
+      - name: Run cargo check --package ullar
         uses: dtolnay/rust-toolchain@stable
       - run: cargo check
 
@@ -39,7 +39,7 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Run cargo test
+      - name: Run cargo test --package ullar
         uses: actions-rs/cargo@v1
         with:
           command: test
