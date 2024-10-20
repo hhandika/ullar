@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::core::deps::fastp::FastpMetadata;
 use crate::core::deps::DepMetadata;
 use crate::helper::configs::generate_config_output_path;
+use crate::helper::fastq::FastqConfigSummary;
 use crate::types::reads::FastqReads;
 
 pub const DEFAULT_READ_CLEANING_CONFIG: &str = "read_cleaning";
@@ -16,63 +17,49 @@ pub enum FileMatchingStrategy {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ReadConfig {
+pub struct CleanReadConfig {
     pub input_dir: PathBuf,
-    pub file_extension: String,
-    pub sample_counts: usize,
-    pub file_counts: usize,
-    pub read_matching: ReadMatching,
+    #[serde(flatten)]
+    pub input_summary: FastqConfigSummary,
     pub dependencies: DepMetadata,
     pub samples: Vec<FastqReads>,
 }
 
-impl Default for ReadConfig {
+impl Default for CleanReadConfig {
     fn default() -> Self {
         Self {
             input_dir: PathBuf::new(),
-            file_extension: String::new(),
-            sample_counts: 0,
-            file_counts: 0,
-            read_matching: ReadMatching {
-                regex: None,
-                character_split: None,
-            },
+            input_summary: FastqConfigSummary::default(),
             dependencies: DepMetadata::default(),
             samples: Vec::new(),
         }
     }
 }
 
-impl ReadConfig {
+impl CleanReadConfig {
     pub fn new(
         input_dir: &Path,
-        file_extension: String,
-        sample_counts: usize,
-        file_counts: usize,
-        read_matching: ReadMatching,
+        input_summary: FastqConfigSummary,
         samples: Vec<FastqReads>,
     ) -> Self {
         Self {
             input_dir: input_dir.to_path_buf(),
-            sample_counts,
-            file_counts,
-            file_extension,
-            read_matching,
+            input_summary,
             dependencies: DepMetadata::default(),
             samples,
         }
     }
 
-    pub fn to_yaml(&mut self) -> Result<PathBuf, Box<dyn Error>> {
-        self.get_dependency();
+    pub fn to_yaml(&mut self, override_args: Option<&str>) -> Result<PathBuf, Box<dyn Error>> {
+        self.get_dependency(override_args);
         let output_path = generate_config_output_path(DEFAULT_READ_CLEANING_CONFIG);
         let writer = std::fs::File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
         Ok(output_path)
     }
 
-    fn get_dependency(&mut self) {
-        let dep = FastpMetadata::new().get();
+    fn get_dependency(&mut self, override_args: Option<&str>) {
+        let dep = FastpMetadata::new(override_args).get();
 
         match dep {
             Some(metadata) => self.dependencies = metadata,
@@ -81,37 +68,4 @@ impl ReadConfig {
             }
         }
     }
-}
-
-#[derive(Debug, Serialize, Default, Deserialize)]
-pub struct ReadMatching {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    regex: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    character_split: Option<ReadMatchingCharacterSplit>,
-}
-
-impl ReadMatching {
-    pub fn regex(regex: String) -> Self {
-        Self {
-            regex: Some(regex),
-            character_split: None,
-        }
-    }
-
-    pub fn character_split(separator: char, word_counts: usize) -> Self {
-        Self {
-            regex: None,
-            character_split: Some(ReadMatchingCharacterSplit {
-                separator,
-                word_counts,
-            }),
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ReadMatchingCharacterSplit {
-    separator: char,
-    word_counts: usize,
 }

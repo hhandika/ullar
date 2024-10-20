@@ -136,7 +136,7 @@ impl<'a> SequenceAlignment<'a> {
     fn write_output_config(&self, report: MafftReport) -> Result<PathBuf, Box<dyn Error>> {
         let spin = common::init_spinner();
         spin.set_message("Writing output config");
-        let mafft_dep = MafftMetadata::new().get();
+        let mafft_dep = MafftMetadata::new(None).get();
         let mut metadata = Vec::new();
         if let Some(dep) = mafft_dep {
             metadata.push(dep);
@@ -162,7 +162,7 @@ impl<'a> SequenceAlignment<'a> {
     }
 
     fn log_mafft_info(&self) {
-        let dep = MafftMetadata::new().get();
+        let dep = MafftMetadata::new(None).get();
         match dep {
             Some(mafft) => log::info!("{:18}: {} v{}", "Aligner", "MAFFT", mafft.version),
             None => log::info!("{:18}: {}", "Aligner", "MAFFT"),

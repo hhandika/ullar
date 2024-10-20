@@ -62,13 +62,8 @@ pub struct CommonInitArgs {
     pub sample_name: String,
     /// Word length for sample names
     /// Default used 3: genus_species_museumNumber
-    #[arg(
-        short,
-        long,
-        default_value_t = 3,
-        help = "Word length for sample names"
-    )]
-    pub length: usize,
+    #[arg(short, long, help = "Word length for sample names")]
+    pub length: Option<usize>,
     /// Specify regex to match raw read file names
     /// Default used internal regex to match fastq and fastq.gz files
     #[arg(

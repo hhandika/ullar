@@ -7,20 +7,16 @@ use super::{re_capture_version, DepMetadata};
 /// Lastz executable.
 pub const LASTZ_EXE: &str = "lastz";
 
-pub struct LastzMetadata {
+pub struct LastzMetadata<'a> {
     version: Option<String>,
+    override_args: Option<&'a str>,
 }
 
-impl Default for LastzMetadata {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl LastzMetadata {
-    pub fn new() -> Self {
+impl<'a> LastzMetadata<'a> {
+    pub fn new(override_args: Option<&'a str>) -> Self {
         Self {
             version: version!(LASTZ_EXE),
+            override_args,
         }
     }
 
@@ -37,6 +33,7 @@ impl LastzMetadata {
             name: "LASTZ".to_string(),
             version: version.to_string(),
             executable: LASTZ_EXE.to_string(),
+            override_args: self.override_args.map(|s| s.to_string()),
         })
     }
 }

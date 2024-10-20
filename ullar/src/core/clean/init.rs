@@ -6,21 +6,18 @@ use std::{error::Error, path::Path};
 use colored::Colorize;
 
 use crate::cli::commands::clean::ReadCleaningInitArgs;
-use crate::core::clean::configs::ReadMatching;
+use crate::cli::commands::common::CommonInitArgs;
 use crate::helper::common;
+use crate::helper::fastq::{FastqConfigSummary, ReadAssignmentStrategy};
 use crate::helper::files::FileFinder;
 use crate::types::reads::{FastqReads, ReadAssignment, SampleNameFormat};
 use crate::types::SupportedFormats;
 
-use super::configs::ReadConfig;
+use super::configs::CleanReadConfig;
 
 pub struct ReadCleaningInit<'a> {
     dir: &'a Path,
-    extension: Option<&'a str>,
-    separator: Option<char>,
-    length: usize,
-    re_sample: Option<&'a str>,
-    is_recursive: bool,
+    common: &'a CommonInitArgs,
     sample_name_format: SampleNameFormat,
 }
 
@@ -28,11 +25,7 @@ impl<'a> ReadCleaningInit<'a> {
     pub fn from_arg(args: &'a ReadCleaningInitArgs) -> Self {
         Self {
             dir: args.dir.as_path(),
-            extension: args.common.extension.as_deref(),
-            separator: args.common.separator,
-            length: args.common.length,
-            re_sample: args.common.re_sample.as_deref(),
-            is_recursive: args.common.recursive,
+            common: &args.common,
             sample_name_format: args
                 .common
                 .sample_name
@@ -47,7 +40,7 @@ impl<'a> ReadCleaningInit<'a> {
         spin.set_message("Finding files...");
         let format = SupportedFormats::Fastq;
         self.match_sample_name_format();
-        let files = FileFinder::new(self.dir, &format).find(self.is_recursive)?;
+        let files = FileFinder::new(self.dir, &format).find(self.common.recursive)?;
         let file_count = files.len();
         spin.set_message(format!(
             "Found {} files. Assigning reads and generating hash for matching files...",
@@ -67,7 +60,7 @@ impl<'a> ReadCleaningInit<'a> {
     }
 
     fn match_sample_name_format(&mut self) {
-        if let Some(regex) = self.re_sample {
+        if let Some(regex) = &self.common.re_sample {
             self.sample_name_format = SampleNameFormat::Custom(regex.to_string());
         }
     }
@@ -81,34 +74,15 @@ impl<'a> ReadCleaningInit<'a> {
         records: Vec<FastqReads>,
         file_counts: usize,
     ) -> Result<PathBuf, Box<dyn Error>> {
-        let strategy: ReadMatching = self.get_read_matching_strategy();
-        let extension = self.file_extension();
-        let mut config = ReadConfig::new(
-            self.dir,
-            extension,
-            records.len(),
-            file_counts,
-            strategy,
-            records.to_vec(),
-        );
-        let output_path = config.to_yaml()?;
+        let strategy = self.get_read_matching_strategy();
+        let input_summary = FastqConfigSummary::new(records.len(), file_counts, strategy);
+        let mut config = CleanReadConfig::new(self.dir, input_summary, records.to_vec());
+        let output_path = config.to_yaml(self.common.override_args.as_deref())?;
         Ok(output_path)
     }
 
-    fn file_extension(&self) -> String {
-        if let Some(extension) = self.extension {
-            extension.to_string()
-        } else {
-            String::from("default")
-        }
-    }
-
-    fn get_read_matching_strategy(&self) -> ReadMatching {
-        if let Some(separator) = self.separator {
-            ReadMatching::character_split(separator, self.length)
-        } else {
-            ReadMatching::regex(self.sample_name_format.to_string())
-        }
+    fn get_read_matching_strategy(&self) -> ReadAssignmentStrategy {
+        ReadAssignmentStrategy::from_arg(self.common)
     }
 
     fn log_input(&self) {

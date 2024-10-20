@@ -45,11 +45,28 @@ macro_rules! version {
     }};
 }
 
+pub fn check_dependency_match(dep: &DepMetadata, version: &str) {
+    if dep.version != version {
+        log::warn!(
+            "\n{} Version mismatch for {}. Expected: {}, Found: {}",
+            "Warning:".yellow(),
+            dep.name,
+            dep.version,
+            version
+        );
+    }
+}
+
+/// Data structure to store dependency metadata
+/// Shared by all dependencies
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct DepMetadata {
     pub name: String,
     pub version: String,
     pub executable: String,
+    /// Additional arguments/flags for the executable
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub override_args: Option<String>,
 }
 
 pub struct DependencyCheck {
@@ -60,19 +77,23 @@ pub struct DependencyCheck {
     iqtree: Option<DepMetadata>,
 }
 
-impl Default for DependencyCheck {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl DependencyCheck {
     pub fn new() -> Self {
         Self {
-            fastp: FastpMetadata::new().get(),
-            spades: SpadesMetadata::new().get(),
-            lastz: LastzMetadata::new().get(),
-            mafft: MafftMetadata::new().get(),
+            fastp: FastpMetadata::new(None).get(),
+            spades: SpadesMetadata::new(None).get(),
+            lastz: LastzMetadata::new(None).get(),
+            mafft: MafftMetadata::new(None).get(),
+            iqtree: IqtreeMetadata::new().get(),
+        }
+    }
+
+    pub fn with_override_args(override_args: Option<&str>) -> Self {
+        Self {
+            fastp: FastpMetadata::new(override_args).get(),
+            spades: SpadesMetadata::new(override_args).get(),
+            lastz: LastzMetadata::new(override_args).get(),
+            mafft: MafftMetadata::new(override_args).get(),
             iqtree: IqtreeMetadata::new().get(),
         }
     }

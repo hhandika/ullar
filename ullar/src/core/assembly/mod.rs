@@ -13,7 +13,7 @@ use crate::{
 
 use self::reports::SpadeReports;
 
-use super::deps::spades::SpadesMetadata;
+use super::deps::{check_dependency_match, spades::SpadesMetadata, DepMetadata};
 
 pub mod configs;
 pub mod init;
@@ -80,7 +80,7 @@ impl<'a> Assembly<'a> {
         self.log_input(&config);
         PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
         let spinner = common::init_spinner();
-        let mut check = FastqConfigCheck::new(config.sample_counts);
+        let mut check = FastqConfigCheck::new(config.input_summary.sample_counts);
         if self.runner.skip_config_check {
             spinner.finish_with_message("Skipping config data check\n");
         } else {
@@ -165,10 +165,9 @@ impl<'a> Assembly<'a> {
     fn log_input(&self, config: &AssemblyConfig) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config path", self.config_path.display());
-        log::info!("{:18}: {}", "Sample counts", config.sample_counts);
-        log::info!("{:18}: {}", "File counts", config.file_counts);
+        config.input_summary.log_summary();
         log::info!("{:18}: {}", "Task", self.task);
-        self.log_spade_info();
+        self.log_spade_info(&config.dependencies);
     }
 
     fn log_output(&self) {
@@ -177,11 +176,14 @@ impl<'a> Assembly<'a> {
         log::info!("{:18}: {}", "Output directory", output_dir.display());
     }
 
-    fn log_spade_info(&self) {
-        let deps = SpadesMetadata::new().get();
+    fn log_spade_info(&self, dependency: &DepMetadata) {
+        let deps = SpadesMetadata::new(None).get();
         match deps {
-            Some(dep) => log::info!("{:18}: {} v{}\n", "Assembler", dep.name, dep.version),
-            None => log::info!("{:18}: {}\n", "Assembler", "SPAdes".to_string()),
+            Some(dep) => {
+                log::info!("{:18}: {} v{}\n", "Assembler", dep.name, dep.version);
+                check_dependency_match(dependency, &dep.version);
+            }
+            None => panic!("Failed to find SPAdes"),
         }
     }
 }
