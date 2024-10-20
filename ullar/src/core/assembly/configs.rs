@@ -8,7 +8,10 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    core::{clean::reports::CleanReadReport, deps::DepMetadata},
+    core::{
+        clean::reports::CleanReadReport,
+        deps::{spades::SpadesMetadata, DepMetadata},
+    },
     helper::{configs::generate_config_output_path, fastq::FastqConfigSummary},
     types::reads::FastqReads,
 };
@@ -50,7 +53,11 @@ impl AssemblyConfig {
         }
     }
 
-    pub fn to_yaml(&mut self) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    pub fn to_yaml(
+        &mut self,
+        override_args: Option<&str>,
+    ) -> Result<PathBuf, Box<dyn std::error::Error>> {
+        self.get_dependency(override_args);
         let output_dir = generate_config_output_path(DEFAULT_ASSEMBLY_CONFIG);
         let writer = fs::File::create(&output_dir)?;
         serde_yaml::to_writer(&writer, self)?;
@@ -61,6 +68,7 @@ impl AssemblyConfig {
         &mut self,
         reports: &[CleanReadReport],
     ) -> Result<PathBuf, Box<dyn std::error::Error>> {
+        self.get_dependency(None);
         self.get_sample_counts();
         self.get_file_counts();
         self.samples = self.parse_fastp_report(reports);
@@ -68,6 +76,17 @@ impl AssemblyConfig {
         let writer = fs::File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
         Ok(output_path)
+    }
+
+    fn get_dependency(&mut self, override_args: Option<&str>) {
+        let dep = SpadesMetadata::new(override_args).get();
+
+        match dep {
+            Some(metadata) => self.dependencies = metadata,
+            None => {
+                panic!("SPAdes not found. Please, install spades first");
+            }
+        }
     }
 
     fn parse_fastp_report(&self, reports: &[CleanReadReport]) -> Vec<FastqReads> {

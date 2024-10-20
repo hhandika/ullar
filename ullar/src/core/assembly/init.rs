@@ -49,7 +49,14 @@ impl<'a> AssemblyInit<'a> {
         let spin = common::init_spinner();
         spin.set_message("Finding files...");
         let format = SupportedFormats::Fastq;
+        self.match_sample_name_format();
         let files = FileFinder::new(self.input_dir, &format).find(self.common.recursive)?;
+
+        if files.is_empty() {
+            spin.finish_with_message("No files found. Try recursive search! Exiting...");
+            return Ok(());
+        }
+
         let file_count = files.len();
         spin.set_message(format!(
             "Found {} files. Assigning reads and generating hash for matching files...",
@@ -71,6 +78,12 @@ impl<'a> AssemblyInit<'a> {
         Ok(())
     }
 
+    fn match_sample_name_format(&mut self) {
+        if let Some(regex) = &self.common.re_sample {
+            self.sample_name_format = SampleNameFormat::Custom(regex.to_string());
+        }
+    }
+
     fn assign_reads(&self, files: &[PathBuf]) -> Vec<FastqReads> {
         ReadAssignment::new(files, &self.sample_name_format).assign()
     }
@@ -83,7 +96,7 @@ impl<'a> AssemblyInit<'a> {
         let strategy = ReadAssignmentStrategy::from_arg(&self.common);
         let input_summary = FastqConfigSummary::new(records.len(), file_counts, strategy);
         let mut config = AssemblyConfig::new(self.input_dir, input_summary, records.to_vec());
-        let output_path = config.to_yaml()?;
+        let output_path = config.to_yaml(self.common.override_args.as_deref())?;
         Ok(output_path)
     }
 
