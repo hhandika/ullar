@@ -5,42 +5,32 @@ use std::{
 };
 
 use rayon::prelude::*;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
-    core::{
-        clean::{configs::ReadMatching, reports::CleanReadReport},
-        deps::DepMetadata,
-    },
-    helper::configs::generate_config_output_path,
+    core::{clean::reports::CleanReadReport, deps::DepMetadata},
+    helper::{configs::generate_config_output_path, fastq::FastqConfigSummary},
     types::reads::FastqReads,
 };
 
 pub const DEFAULT_ASSEMBLY_CONFIG: &str = "denovo_assembly";
 
-#[derive(Debug, Serialize, serde::Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct AssemblyConfig {
     /// Use clean output directory
-    pub input_init_dir: PathBuf,
-    pub sample_counts: usize,
-    pub file_counts: usize,
-    pub read_matching: ReadMatching,
+    pub input_dir: PathBuf,
+    pub input_summary: FastqConfigSummary,
     pub dependencies: DepMetadata,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub override_args: Option<String>,
     pub samples: Vec<FastqReads>,
 }
 
 impl Default for AssemblyConfig {
     fn default() -> Self {
         Self {
-            input_init_dir: PathBuf::new(),
-            sample_counts: 0,
-            file_counts: 0,
-            read_matching: ReadMatching::default(),
+            input_dir: PathBuf::new(),
+            input_summary: FastqConfigSummary::default(),
             dependencies: DepMetadata::default(),
-            override_args: None,
             samples: Vec::new(),
         }
     }
@@ -49,32 +39,37 @@ impl Default for AssemblyConfig {
 impl AssemblyConfig {
     pub fn new(
         input_init_dir: &Path,
-        sample_counts: usize,
-        file_counts: usize,
-        read_matching: ReadMatching,
+        input_summary: FastqConfigSummary,
         samples: Vec<FastqReads>,
     ) -> Self {
         Self {
-            input_init_dir: input_init_dir.to_path_buf(),
-            sample_counts,
-            file_counts,
-            read_matching,
+            input_dir: input_init_dir.to_path_buf(),
+            input_summary,
             dependencies: DepMetadata::default(),
             samples,
-            override_args: None,
         }
     }
 
     pub fn to_yaml(&mut self) -> Result<PathBuf, Box<dyn std::error::Error>> {
         let output_dir = generate_config_output_path(DEFAULT_ASSEMBLY_CONFIG);
-        self.get_sample_counts();
-        self.get_file_counts();
         let writer = fs::File::create(&output_dir)?;
         serde_yaml::to_writer(&writer, self)?;
         Ok(output_dir)
     }
 
-    #[allow(dead_code)]
+    pub fn from_fastp_reports(
+        &mut self,
+        reports: &[CleanReadReport],
+    ) -> Result<PathBuf, Box<dyn std::error::Error>> {
+        self.get_sample_counts();
+        self.get_file_counts();
+        self.samples = self.parse_fastp_report(reports);
+        let output_path = generate_config_output_path(DEFAULT_ASSEMBLY_CONFIG);
+        let writer = fs::File::create(&output_path)?;
+        serde_yaml::to_writer(&writer, self)?;
+        Ok(output_path)
+    }
+
     fn parse_fastp_report(&self, reports: &[CleanReadReport]) -> Vec<FastqReads> {
         let (tx, rx) = channel();
         reports.par_iter().for_each_with(tx, |tx, report| {
@@ -95,12 +90,12 @@ impl AssemblyConfig {
     }
 
     fn get_sample_counts(&mut self) {
-        self.sample_counts = self.samples.len();
+        self.input_summary.sample_counts = self.samples.len();
     }
 
     fn get_file_counts(&mut self) {
         let read1 = self.samples.iter().filter(|s| s.read_1.is_some()).count();
         let read2 = self.samples.iter().filter(|s| s.read_2.is_some()).count();
-        self.file_counts = read1 + read2;
+        self.input_summary.file_counts = read1 + read2;
     }
 }

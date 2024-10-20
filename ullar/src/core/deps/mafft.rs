@@ -6,20 +6,16 @@ use super::DepMetadata;
 /// Default MAFFT executable for Unix systems
 pub const MAFFT_EXE: &str = "mafft";
 
-pub struct MafftMetadata {
+pub struct MafftMetadata<'a> {
     name: String,
+    override_args: Option<&'a str>,
 }
 
-impl Default for MafftMetadata {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl MafftMetadata {
-    pub fn new() -> Self {
+impl<'a> MafftMetadata<'a> {
+    pub fn new(override_args: Option<&'a str>) -> Self {
         Self {
             name: "MAFFT".to_string(),
+            override_args,
         }
     }
 
@@ -60,6 +56,7 @@ impl MafftMetadata {
             name: self.name.clone(),
             version,
             executable: MAFFT_EXE.to_string(),
+            override_args: self.override_args.map(|s| s.to_string()),
         })
     }
 

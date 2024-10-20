@@ -2,8 +2,43 @@ use std::sync::mpsc;
 
 use colored::Colorize;
 use rayon::prelude::*;
+use serde::{Deserialize, Serialize};
 
-use crate::types::reads::{FastqReads, ReadChecker};
+use crate::{
+    cli::commands::common::CommonInitArgs,
+    types::reads::{FastqReads, ReadChecker},
+};
+
+#[derive(Debug, Serialize, Default, Deserialize)]
+pub struct FastqConfigSummary {
+    /// Total samples input
+    pub sample_counts: usize,
+    /// Total files input
+    pub file_counts: usize,
+    /// How reads are assigned to samples
+    pub read_assignment: ReadAssignmentStrategy,
+}
+
+impl FastqConfigSummary {
+    /// Initialize a new ConfigSummary instance
+    pub fn new(
+        sample_counts: usize,
+        file_counts: usize,
+        read_assignment: ReadAssignmentStrategy,
+    ) -> Self {
+        Self {
+            sample_counts,
+            file_counts,
+            read_assignment,
+        }
+    }
+
+    pub fn log_summary(&self) {
+        log::info!("{:18}: {}", "Total samples", self.sample_counts);
+        log::info!("{:18}: {}", "Total files", self.file_counts);
+        log::info!("{:18}: {:?}", "Read assignment", self.read_assignment);
+    }
+}
 
 pub struct FastqConfigCheck {
     /// Total samples input
@@ -61,6 +96,53 @@ impl FastqConfigCheck {
 
         if self.failed_samples > 0 {
             log::info!("{:18}: {}", "Fail", self.failed_samples);
+        }
+    }
+}
+
+/// Read assignment strategy
+/// determines how reads are assigned to samples
+/// based on the sample name format
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "strategy")]
+pub enum ReadAssignmentStrategy {
+    /// Assign reads based on a regular expression
+    Regex { format: String },
+    /// Custom Regex
+    CustomRegex { pattern: String },
+    /// Assign reads based on a character split
+    /// with a separator and separator counts
+    CharacterSplit { separator: char, length: usize },
+}
+
+impl Default for ReadAssignmentStrategy {
+    fn default() -> Self {
+        Self::Regex {
+            format: "descriptive".to_string(),
+        }
+    }
+}
+
+impl ReadAssignmentStrategy {
+    pub fn from_arg(common: &CommonInitArgs) -> Self {
+        if let Some(regex) = &common.re_sample {
+            Self::CustomRegex {
+                pattern: regex.to_string(),
+            }
+        } else {
+            Self::match_strategy(common.separator, common.length, &common.sample_name)
+        }
+    }
+
+    fn match_strategy(separator: Option<char>, length: Option<usize>, regex: &str) -> Self {
+        match separator {
+            Some(sep) => Self::CharacterSplit {
+                separator: sep,
+                length: length.unwrap_or(1),
+            },
+            None => Self::Regex {
+                format: regex.to_string(),
+            },
         }
     }
 }

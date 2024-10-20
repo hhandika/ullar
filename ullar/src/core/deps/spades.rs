@@ -6,20 +6,16 @@ use super::{re_capture_version, DepMetadata};
 
 pub const SPADES_EXE: &str = "spades.py";
 
-pub struct SpadesMetadata {
+pub struct SpadesMetadata<'a> {
     version: Option<String>,
+    override_args: Option<&'a str>,
 }
 
-impl Default for SpadesMetadata {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl SpadesMetadata {
-    pub fn new() -> Self {
+impl<'a> SpadesMetadata<'a> {
+    pub fn new(override_args: Option<&'a str>) -> Self {
         Self {
             version: version!(SPADES_EXE),
+            override_args,
         }
     }
 
@@ -37,6 +33,7 @@ impl SpadesMetadata {
             name: "SPAdes".to_string(),
             version: version.to_string(),
             executable,
+            override_args: self.override_args.map(|s| s.to_string()),
         })
     }
 }

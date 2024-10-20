@@ -86,6 +86,7 @@ impl IqtreeMetadata {
             name,
             version,
             executable,
+            override_args: None,
         })
     }
 

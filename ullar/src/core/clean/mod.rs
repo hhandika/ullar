@@ -10,11 +10,13 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 use colored::Colorize;
 use comfy_table::Table;
-use configs::{ReadConfig, DEFAULT_READ_CLEANING_CONFIG};
+use configs::{CleanReadConfig, DEFAULT_READ_CLEANING_CONFIG};
 
 use self::reports::CleanReadReport;
 use super::deps::fastp::FastpMetadata;
+use super::deps::DepMetadata;
 use crate::cli::commands::clean::ReadCleaningArgs;
+use crate::core::deps::check_dependency_match;
 use crate::helper::common;
 use crate::helper::configs::{CONFIG_EXTENSION, DEFAULT_CONFIG_DIR};
 use crate::helper::fastq::FastqConfigCheck;
@@ -24,6 +26,7 @@ use crate::types::reads::FastqReads;
 use crate::types::runner::RunnerOptions;
 use crate::types::Task;
 
+pub const DEFAULT_RAW_READS_DIR: &str = "raw_reads";
 pub const DEFAULT_CLEAN_READ_OUTPUT_DIR: &str = "cleaned_reads";
 
 pub struct ReadCleaner<'a> {
@@ -74,7 +77,7 @@ impl<'a> ReadCleaner<'a> {
         self.log_input(&config);
         PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
         let spinner = common::init_spinner();
-        let mut check = FastqConfigCheck::new(config.sample_counts);
+        let mut check = FastqConfigCheck::new(config.input_summary.sample_counts);
         if self.runner.skip_config_check {
             spinner.finish_with_message("Skipping config data check\n");
         } else {
@@ -133,12 +136,12 @@ impl<'a> ReadCleaner<'a> {
         reports
     }
 
-    fn parse_config(&self) -> Result<ReadConfig, Box<dyn std::error::Error>> {
+    fn parse_config(&self) -> Result<CleanReadConfig, Box<dyn std::error::Error>> {
         let content = fs::read_to_string(&self.config_path)
             .with_context(|| format!("Input config path: {}", self.config_path.display()))?;
-        let config: ReadConfig = serde_yaml::from_str(&content)?;
+        let config: CleanReadConfig = serde_yaml::from_str(&content)?;
 
-        if config.sample_counts != config.samples.len() {
+        if config.input_summary.sample_counts != config.samples.len() {
             return Err("Sample counts do not match the number of samples".into());
         }
 
@@ -177,13 +180,17 @@ impl<'a> ReadCleaner<'a> {
         log::info!("\n{}", table);
     }
 
-    fn log_input(&self, config: &ReadConfig) {
+    fn log_input(&self, config: &CleanReadConfig) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config file", self.config_path.display());
-        log::info!("{:18}: {}", "Sample counts", config.sample_counts);
-        log::info!("{:18}: {}", "File counts", config.file_counts);
+        log::info!(
+            "{:18}: {}",
+            "Sample counts",
+            config.input_summary.sample_counts
+        );
+        log::info!("{:18}: {}", "File counts", config.input_summary.file_counts);
         log::info!("{:18}: {}", "Task", self.task);
-        self.log_fastp_info();
+        self.log_fastp_info(&config.dependencies);
     }
 
     fn log_final_output(&self, reports: &[CleanReadReport]) {
@@ -192,11 +199,14 @@ impl<'a> ReadCleaner<'a> {
         log::info!("{:18}: {}", "Total processed", reports.len());
     }
 
-    fn log_fastp_info(&self) {
-        let deps = FastpMetadata::new().get();
+    fn log_fastp_info(&self, dependency: &DepMetadata) {
+        let deps = FastpMetadata::new(None).get();
         match deps {
-            Some(dep) => log::info!("{:18}: {} v{}\n", "Cleaner", dep.name, dep.version),
-            None => log::info!("{:18}: {}\n", "Cleaner", "fastp"),
+            Some(dep) => {
+                log::info!("{:18}: {} v{}\n", "Cleaner", dep.name, dep.version);
+                check_dependency_match(dependency, &dep.version);
+            }
+            None => panic!("Failed to find Fastp"),
         }
     }
 }

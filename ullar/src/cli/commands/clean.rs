@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::{Args, Subcommand};
 
-use crate::core::clean::DEFAULT_CLEAN_READ_OUTPUT_DIR;
+use crate::core::clean::{DEFAULT_CLEAN_READ_OUTPUT_DIR, DEFAULT_RAW_READS_DIR};
 
 use super::common::{CommonInitArgs, CommonRunnerArgs};
 
@@ -19,7 +19,7 @@ pub(crate) enum ReadCleaningSubcommand {
 #[derive(Args)]
 pub struct ReadCleaningInitArgs {
     /// Input directory containing raw reads
-    #[arg(short, long, help = "Input directory containing raw reads")]
+    #[arg(short, long, default_value = DEFAULT_RAW_READS_DIR, help = "Input directory containing raw reads")]
     pub dir: PathBuf,
     #[command(flatten)]
     pub common: CommonInitArgs,
