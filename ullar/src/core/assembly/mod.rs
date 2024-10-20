@@ -1,13 +1,24 @@
-use std::{error::Error, fs, path::Path, time::Instant};
+use std::{
+    error::Error,
+    fs,
+    path::{Path, PathBuf},
+    time::Instant,
+};
 
 use colored::Colorize;
 use comfy_table::Table;
-use configs::AssemblyConfig;
+use configs::{AssemblyConfig, DEFAULT_ASSEMBLY_CONFIG};
 use spades::SpadeRunner;
 
 use crate::{
     cli::commands::assembly::AssemblyArgs,
-    helper::{common, fastq::FastqConfigCheck, files::PathCheck, tracker::ProcessingTracker},
+    helper::{
+        common,
+        configs::{CONFIG_EXTENSION, DEFAULT_CONFIG_DIR},
+        fastq::FastqConfigCheck,
+        files::PathCheck,
+        tracker::ProcessingTracker,
+    },
     types::{reads::FastqReads, runner::RunnerOptions, Task},
 };
 
@@ -24,7 +35,7 @@ pub const DEFAULT_ASSEMBLY_OUTPUT_DIR: &str = "assemblies";
 
 pub struct Assembly<'a> {
     /// Path to the assembly config file
-    pub config_path: &'a Path,
+    pub config_path: PathBuf,
     /// Should the SHA256 checksum be checked
     /// before assembling the files
     pub ignore_checksum: bool,
@@ -43,15 +54,15 @@ pub struct Assembly<'a> {
 impl<'a> Assembly<'a> {
     /// Initialize a new Assembly instance
     /// with the given parameters
-    pub fn new(
-        config_path: &'a Path,
+    pub fn new<P: AsRef<Path>>(
+        config_path: P,
         ignore_checksum: bool,
         output_dir: &'a Path,
         keep_intermediates: bool,
         rename_contigs: bool,
     ) -> Self {
         Self {
-            config_path,
+            config_path: config_path.as_ref().to_path_buf(),
             ignore_checksum,
             output_dir,
             keep_intermediates,
@@ -63,8 +74,14 @@ impl<'a> Assembly<'a> {
     /// Initialize a new Assembly instance
     /// from the command line arguments
     pub fn from_arg(args: &'a AssemblyArgs) -> Self {
+        let config_path = match &args.config {
+            Some(path) => path.to_owned(),
+            None => PathBuf::from(DEFAULT_CONFIG_DIR)
+                .join(DEFAULT_ASSEMBLY_CONFIG)
+                .with_extension(CONFIG_EXTENSION),
+        };
         Self {
-            config_path: &args.config,
+            config_path: config_path,
             ignore_checksum: args.common.ignore_checksum,
             output_dir: &args.output,
             keep_intermediates: args.keep_intermediates,
@@ -106,7 +123,7 @@ impl<'a> Assembly<'a> {
     }
 
     fn parse_config(&self) -> Result<AssemblyConfig, Box<dyn Error>> {
-        let content = fs::read_to_string(self.config_path)?;
+        let content = fs::read_to_string(&self.config_path)?;
         let config: AssemblyConfig = serde_yaml::from_str(&content)?;
         Ok(config)
     }

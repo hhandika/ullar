@@ -29,7 +29,7 @@ pub struct AssemblyInitArgs {
 pub struct AssemblyArgs {
     /// Path to the assembly config file
     #[arg(short, long, help = "Path to the assembly config file")]
-    pub config: PathBuf,
+    pub config: Option<PathBuf>,
     /// Output directory to store the assemblies
     #[arg(short, long, default_value = DEFAULT_ASSEMBLY_OUTPUT_DIR,
         help = "Output directory to store the assemblies")]

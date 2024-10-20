@@ -74,15 +74,11 @@ impl<'a> ReadCleaningInit<'a> {
         records: Vec<FastqReads>,
         file_counts: usize,
     ) -> Result<PathBuf, Box<dyn Error>> {
-        let strategy = self.get_read_matching_strategy();
+        let strategy = ReadAssignmentStrategy::from_arg(self.common);
         let input_summary = FastqConfigSummary::new(records.len(), file_counts, strategy);
         let mut config = CleanReadConfig::new(self.dir, input_summary, records.to_vec());
         let output_path = config.to_yaml(self.common.override_args.as_deref())?;
         Ok(output_path)
-    }
-
-    fn get_read_matching_strategy(&self) -> ReadAssignmentStrategy {
-        ReadAssignmentStrategy::from_arg(self.common)
     }
 
     fn log_input(&self) {
