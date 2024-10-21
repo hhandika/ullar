@@ -53,7 +53,12 @@ impl<'a> AssemblyInit<'a> {
         let files = FileFinder::new(self.input_dir, &format).find(self.common.recursive)?;
 
         if files.is_empty() {
-            spin.finish_with_message("No files found. Try recursive search! Exiting...");
+            spin.finish_with_message(format!(
+                "{} No files found in {}. \
+                Try using the --recursive flag if files are in subdirectories.",
+                "✖".red(),
+                self.input_dir.display()
+            ));
             return Ok(());
         }
 
@@ -63,18 +68,16 @@ impl<'a> AssemblyInit<'a> {
             file_count
         ));
 
-        let records = self.assign_reads(&files);
-        let record_count = records.len();
+        let samples = self.assign_reads(&files);
+        let sample_count = samples.len();
         spin.set_message(format!(
             "Found {} samples of {} files. Writing config file...",
-            record_count, file_count
+            sample_count, file_count
         ));
 
-        let config_path = self.write_config(records, file_count)?;
-        spin.finish_with_message(format!(
-            "Config file generated at: {}",
-            config_path.display()
-        ));
+        let config_path = self.write_config(samples, file_count)?;
+        spin.finish_with_message(format!("{} Finished creating a config file\n", "✔".green()));
+        self.log_output(&config_path, sample_count, file_count);
         Ok(())
     }
 
@@ -102,7 +105,26 @@ impl<'a> AssemblyInit<'a> {
 
     fn log_input(&self) {
         log::info!("{}", "Input".cyan());
-        log::info!("Directory: {:?}", self.input_dir);
+        log::info!("{:18}: {}", "Directory", self.input_dir.display());
         log::info!("{:18}: {}\n", "Sample name format", self.common.sample_name);
+    }
+
+    fn log_output(&self, output_path: &Path, record_counts: usize, file_counts: usize) {
+        let config_filename = output_path
+            .file_name()
+            .expect("Failed to get config file name")
+            .to_string_lossy();
+        log::info!("{}", "Output".cyan());
+        log::info!(
+            "{:18}: {}",
+            "Directory",
+            output_path
+                .parent()
+                .unwrap_or(Path::new("Unknown"))
+                .display()
+        );
+        log::info!("{:18}: {}", "Config file", config_filename);
+        log::info!("{:18}: {}", "Sample counts", record_counts);
+        log::info!("{:18}: {}", "File counts", file_counts);
     }
 }
