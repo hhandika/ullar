@@ -1,3 +1,4 @@
+#[cfg(target_family = "unix")]
 use crate::version;
 use std::process::Command;
 
