@@ -25,7 +25,7 @@ use crate::{
     types::{runner::RunnerOptions, Task},
 };
 
-use super::{deps::mafft::MafftMetadata, tree::configs::TreeInferenceConfig};
+use super::deps::mafft::MafftMetadata;
 
 pub const DEFAULT_ALIGNMENT_OUTPUT_DIR: &str = "alignments";
 
@@ -78,10 +78,7 @@ impl<'a> SequenceAlignment<'a> {
         self.log_input(&config);
         PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
         let reports = self.par_align(&config.contigs);
-        let config_output_path = self
-            .write_output_config(reports)
-            .expect("Failed to write output config");
-        self.log_final_output(&config_output_path);
+        self.log_final_output(&reports);
     }
 
     fn parse_config(&self) -> Result<AlignmentConfig, Box<dyn Error>> {
@@ -133,32 +130,15 @@ impl<'a> SequenceAlignment<'a> {
         self.log_mafft_info();
     }
 
-    fn write_output_config(&self, report: MafftReport) -> Result<PathBuf, Box<dyn Error>> {
-        let spin = common::init_spinner();
-        spin.set_message("Writing output config");
-        let mafft_dep = MafftMetadata::new(None).get();
-        let mut metadata = Vec::new();
-        if let Some(dep) = mafft_dep {
-            metadata.push(dep);
-        }
-
-        let config = TreeInferenceConfig::new(
-            Some(self.config_path.to_path_buf()),
-            self.output_dir,
-            false,
-            metadata,
-            self.runner.override_args.map(|s| s.to_string()),
-            report.alignments,
-        );
-        let output = config.to_yaml()?;
-        spin.finish_with_message(format!("{} Finished writing output config\n", "✔".green()));
-        Ok(output)
-    }
-
-    fn log_final_output(&self, config_path: &Path) {
+    fn log_final_output(&self, reports: &MafftReport) {
         log::info!("{}", "Output".cyan());
         log::info!("{:18}: {}", "Directory", self.output_dir.display());
-        log::info!("{:18}: {}", "Config file", config_path.display());
+        log::info!("{:18}: {}", "File counts", reports.alignments.file_counts);
+        log::info!(
+            "{:18}: {}",
+            "Sample counts",
+            reports.alignments.sample_counts
+        );
     }
 
     fn log_mafft_info(&self) {

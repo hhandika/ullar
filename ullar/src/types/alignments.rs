@@ -16,14 +16,13 @@ impl AlignmentFiles {
     pub fn new(
         sample_counts: usize,
         file_counts: usize,
-        concatenated: bool,
         alignments: Vec<FileMetadata>,
         partition: Option<FileMetadata>,
     ) -> Self {
         Self {
             sample_counts,
             file_counts,
-            concatenated,
+            concatenated: partition.is_some(),
             alignments,
             partition,
         }

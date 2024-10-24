@@ -104,7 +104,7 @@ impl FastqConfigCheck {
 /// determines how reads are assigned to samples
 /// based on the sample name format
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "strategy")]
+#[serde(tag = "strategy", rename_all = "snake_case")]
 pub enum ReadAssignmentStrategy {
     /// Assign reads based on a regular expression
     Regex { format: String },

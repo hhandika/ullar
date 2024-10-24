@@ -4,10 +4,32 @@ use clap::Args;
 
 use crate::core::tree::DEFAULT_PHYLO_OUTPUT_DIR;
 
-use super::common::CommonRunnerArgs;
+use super::common::{CommonInitArgs, CommonRunnerArgs};
 
 #[derive(Args)]
-pub struct TreeArgs {
+pub struct TreeInferenceInitArgs {
+    /// Input directory containing the alignment files
+    #[arg(
+        short,
+        long,
+        default_value = DEFAULT_PHYLO_OUTPUT_DIR,
+        help = "Input directory containing the alignment files"
+    )]
+    pub dir: PathBuf,
+    /// Input format of the alignment files
+    #[arg(
+        short,
+        long,
+        default_value = "auto",
+        help = "Input format of the alignment files"
+    )]
+    pub input_format: String,
+    #[command(flatten)]
+    pub common: CommonInitArgs,
+}
+
+#[derive(Args)]
+pub struct TreeInferenceArgs {
     /// Path to the phylogenetic estimation config file
     #[arg(short, long, help = "Path to the phylogenetic estimation config file")]
     pub config: PathBuf,
