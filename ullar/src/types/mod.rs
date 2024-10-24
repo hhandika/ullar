@@ -7,6 +7,7 @@ pub mod runner;
 
 use std::{fmt::Display, str::FromStr};
 
+use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
 
 /// Task data type
@@ -240,9 +241,9 @@ impl FromStr for SymlinkFileSearchFormat {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Sequence)]
+#[serde(rename_all = "snake_case")]
 pub enum TreeInferenceMethod {
-    All,
     MLSpeciesTree,
     MLGeneTree,
     GeneSiteConcordance,
@@ -252,7 +253,6 @@ pub enum TreeInferenceMethod {
 impl Display for TreeInferenceMethod {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TreeInferenceMethod::All => write!(f, "ML + MSC"),
             TreeInferenceMethod::MLSpeciesTree => write!(f, "ML Species Tree"),
             TreeInferenceMethod::MLGeneTree => write!(f, "ML Gene Tree"),
             TreeInferenceMethod::GeneSiteConcordance => write!(f, "Gene Site Concordance Factor"),
@@ -266,7 +266,6 @@ impl FromStr for TreeInferenceMethod {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "all" | "All" => Ok(TreeInferenceMethod::All),
             "ml-species" => Ok(TreeInferenceMethod::MLSpeciesTree),
             "ml-gene" => Ok(TreeInferenceMethod::MLGeneTree),
             "gsc" => Ok(TreeInferenceMethod::GeneSiteConcordance),

@@ -4,12 +4,13 @@ use colored::Colorize;
 use configs::TreeInferenceConfig;
 
 use crate::{
-    cli::commands::tree::TreeArgs,
+    cli::commands::tree::TreeInferenceArgs,
     helper::common,
     types::{runner::RunnerOptions, Task, TreeInferenceMethod},
 };
 
 pub mod configs;
+pub mod init;
 pub mod iqtree;
 
 pub const DEFAULT_PHYLO_OUTPUT_DIR: &str = "phylogenetic_tree";
@@ -23,8 +24,6 @@ pub struct TreeEstimation<'a> {
     pub ignore_checksum: bool,
     /// Parent output directory
     pub output_dir: &'a Path,
-    /// Tree inference method
-    pub method: TreeInferenceMethod,
     /// Runner options
     pub runner: RunnerOptions<'a>,
     #[allow(dead_code)]
@@ -34,17 +33,11 @@ pub struct TreeEstimation<'a> {
 impl<'a> TreeEstimation<'a> {
     /// Initialize a new TreeEstimation instance
     /// with the given parameters
-    pub fn new(
-        config_path: &'a Path,
-        ignore_checksum: bool,
-        output_dir: &'a Path,
-        method: TreeInferenceMethod,
-    ) -> Self {
+    pub fn new(config_path: &'a Path, ignore_checksum: bool, output_dir: &'a Path) -> Self {
         Self {
             config_path,
             ignore_checksum,
             output_dir,
-            method,
             runner: RunnerOptions::default(),
             task: Task::TreeInference,
         }
@@ -52,15 +45,11 @@ impl<'a> TreeEstimation<'a> {
 
     /// Initialize a new TreeEstimation instance
     /// from command line arguments
-    pub fn from_arg(args: &'a TreeArgs) -> Self {
+    pub fn from_arg(args: &'a TreeInferenceArgs) -> Self {
         Self {
             config_path: &args.config,
             ignore_checksum: args.common.ignore_checksum,
             output_dir: &args.output,
-            method: args
-                .method
-                .parse()
-                .expect("Failed to parse tree inference method. Supported methods: all, ml, msc"),
             runner: RunnerOptions::from_arg(&args.common),
             task: Task::TreeInference,
         }
@@ -69,7 +58,13 @@ impl<'a> TreeEstimation<'a> {
     pub fn run(&self) {
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
-        self.run_tree_inference();
+        if config.method.is_empty() {
+            log::warn!(
+                "{} No tree inference method specified in the config files. Using all methods",
+                "Warning:".yellow()
+            );
+        }
+        self.run_tree_inference(&config.method);
     }
 
     fn parse_config(&self) -> Result<TreeInferenceConfig, Box<dyn Error>> {
@@ -81,18 +76,21 @@ impl<'a> TreeEstimation<'a> {
     fn log_input(&self, config: &TreeInferenceConfig) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config file", self.config_path.display());
-        log::info!("{:18}: {}", "Sample counts", config.sample_counts);
-        log::info!("{:18}: {}", "File counts", config.file_counts);
+        log::info!("{:18}: {}", "Sample counts", config.data.sample_counts);
+        log::info!("{:18}: {}", "File counts", config.data.file_counts);
     }
 
-    fn run_tree_inference(&self) {
-        match self.method {
-            TreeInferenceMethod::All => self.infer_all_trees(),
-            TreeInferenceMethod::MLSpeciesTree => self.infer_ml_tree(),
-            TreeInferenceMethod::MLGeneTree => self.infer_ml_gene_tree(),
-            TreeInferenceMethod::GeneSiteConcordance => self.infer_gsc_tree(),
-            TreeInferenceMethod::MSCSpeciesTree => self.infer_msc_tree(),
-        }
+    fn run_tree_inference(&self, methods: &[TreeInferenceMethod]) {
+        if methods.len() > 1 || methods.is_empty() {
+            self.infer_all_trees();
+        } else {
+            match methods[0] {
+                TreeInferenceMethod::MLSpeciesTree => self.infer_ml_tree(),
+                TreeInferenceMethod::MLGeneTree => self.infer_ml_gene_tree(),
+                TreeInferenceMethod::GeneSiteConcordance => self.infer_gsc_tree(),
+                TreeInferenceMethod::MSCSpeciesTree => self.infer_msc_tree(),
+            }
+        };
     }
 
     fn infer_all_trees(&self) {
