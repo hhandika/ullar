@@ -24,6 +24,12 @@ pub struct TreeInferenceInitArgs {
         help = "Input format of the alignment files"
     )]
     pub input_format: String,
+    /// Path to the partition file
+    #[arg(short, long, help = "Path to the partition file")]
+    pub partition: Option<PathBuf>,
+    /// Phylogenetic tree inference method
+    #[arg(short, long, help = "Phylogenetic tree inference method")]
+    pub method: Option<String>,
     #[command(flatten)]
     pub common: CommonInitArgs,
 }

@@ -1,3 +1,9 @@
+use std::path::{Path, PathBuf};
+
+use segul::helper::{
+    finder::IDs,
+    types::{DataType, InputFmt},
+};
 use serde::{Deserialize, Serialize};
 
 use crate::helper::files::FileMetadata;
@@ -28,10 +34,39 @@ impl AlignmentFiles {
         }
     }
 
+    pub fn from_sequence_files(
+        sequences: &[PathBuf],
+        format: &InputFmt,
+        datatype: &DataType,
+        partition: Option<&Path>,
+    ) -> Self {
+        let metadata = sequences
+            .iter()
+            .map(|f| {
+                let mut meta = FileMetadata::new();
+                meta.get(f);
+                meta
+            })
+            .collect::<Vec<FileMetadata>>();
+        let file_counts = metadata.len();
+        let sample_counts = IDs::new(sequences, format, datatype).id_unique().len();
+        let partition = partition.map(|p| {
+            let mut meta = FileMetadata::new();
+            meta.get(p);
+            meta
+        });
+        Self {
+            sample_counts,
+            file_counts,
+            concatenated: partition.is_some(),
+            alignments: metadata,
+            partition,
+        }
+    }
+
     /// Get raw alignment files from aligner
-    pub fn get_raw(&mut self, alignments: Vec<FileMetadata>, sample_counts: usize) {
-        self.alignments = alignments;
-        self.sample_counts = sample_counts;
-        self.file_counts = self.alignments.len();
+    pub fn get(alignments: Vec<FileMetadata>, sample_counts: usize) -> Self {
+        let file_counts = alignments.len();
+        Self::new(sample_counts, file_counts, alignments, None)
     }
 }

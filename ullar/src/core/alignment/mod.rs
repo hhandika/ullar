@@ -77,7 +77,7 @@ impl<'a> SequenceAlignment<'a> {
         spinner.finish_with_message(format!("{} Finished parsing config file\n", "✔".green()));
         self.log_input(&config);
         PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
-        let reports = self.par_align(&config.contigs);
+        let reports = self.par_align(&config.sequences);
         self.log_final_output(&reports);
     }
 
