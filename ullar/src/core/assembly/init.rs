@@ -54,11 +54,11 @@ impl<'a> AssemblyInit<'a> {
 
         if files.is_empty() {
             spin.finish_with_message(format!(
-                "{} No files found in {}. \
-                Try using the --recursive flag if files are in subdirectories.",
+                "{} No files found in {}!",
                 "✖".red(),
                 self.input_dir.display()
             ));
+            self.log_empty_input();
             return Ok(());
         }
 
@@ -79,6 +79,22 @@ impl<'a> AssemblyInit<'a> {
         spin.finish_with_message(format!("{} Finished creating a config file\n", "✔".green()));
         self.log_output(&config_path, sample_count, file_count);
         Ok(())
+    }
+
+    fn log_empty_input(&self) {
+        if !self.input_dir.exists() {
+            log::error!(
+                "\nInput directory does not exist: {}",
+                self.input_dir.display()
+            );
+            log::error!("Use the --dir arg to specify a valid directory.");
+        } else {
+            log::error!(
+                "\nTry to use --recursive flag \
+                to search for files in subdirectories of {}",
+                self.input_dir.display()
+            );
+        }
     }
 
     fn match_sample_name_format(&mut self) {
