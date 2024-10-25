@@ -2,17 +2,23 @@ use std::error::Error;
 use std::path::{Path, PathBuf};
 
 use colored::Colorize;
-// use segul::helper::finder::SeqFileFinder;
-use segul::helper::types::InputFmt;
+use enum_iterator::all;
+use segul::helper::finder::SeqFileFinder;
+use segul::helper::types::{DataType, InputFmt};
 
 use crate::cli::commands::common::CommonInitArgs;
 use crate::cli::commands::tree::TreeInferenceInitArgs;
+use crate::types::alignments::AlignmentFiles;
+use crate::types::TreeInferenceMethod;
 
-use super::configs::TreeInferenceConfig;
+use super::configs::{TreeData, TreeInferenceConfig};
 
 pub struct TreeInferenceInit<'a> {
     pub input_dir: &'a Path,
     pub input_format: InputFmt,
+    pub datatype: DataType,
+    pub partition: Option<&'a Path>,
+    pub method: Option<&'a str>,
     pub common: &'a CommonInitArgs,
 }
 
@@ -24,6 +30,9 @@ impl<'a> TreeInferenceInit<'a> {
                 .input_format
                 .parse::<InputFmt>()
                 .expect("Invalid input format"),
+            datatype: DataType::Dna,
+            partition: args.partition.as_deref(),
+            method: args.method.as_deref(),
             common: &args.common,
         }
     }
@@ -35,11 +44,16 @@ impl<'a> TreeInferenceInit<'a> {
     }
 
     fn write_config(&self) -> Result<(PathBuf, TreeInferenceConfig), Box<dyn Error>> {
-        // let alignment_files = SeqFileFinder::new(self.input_dir).find(&self.input_format);
-        // let alignments = AlignmentFiles::new(alignment_files);
-        // let data = TreeData::new(alignment_files);
-        let config =
-            TreeInferenceConfig::new(self.input_dir, vec![], vec![], None, Default::default());
+        let files = SeqFileFinder::new(self.input_dir).find(&self.input_format);
+        let alignments = AlignmentFiles::from_sequence_files(
+            &files,
+            &self.input_format,
+            &self.datatype,
+            self.partition,
+        );
+        let methods = self.parse_method();
+        let data = TreeData::new(alignments);
+        let config = TreeInferenceConfig::new(self.input_dir, methods, data);
         if config.data.alignments.alignments.is_empty() {
             return Err(
                 "No sequence found in the input directory. Please, check input is FASTA".into(),
@@ -47,6 +61,16 @@ impl<'a> TreeInferenceInit<'a> {
         }
         let output_path = config.to_yaml()?;
         Ok((output_path, config))
+    }
+
+    fn parse_method(&self) -> Vec<TreeInferenceMethod> {
+        if let Some(method) = self.method {
+            vec![method
+                .parse::<TreeInferenceMethod>()
+                .expect("Invalid method")]
+        } else {
+            all::<TreeInferenceMethod>().collect()
+        }
     }
 
     fn log_input(&self) {

@@ -4,7 +4,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use enum_iterator::all;
 use serde::{Deserialize, Serialize};
 
 use crate::types::alignments::AlignmentFiles;
@@ -19,31 +18,18 @@ pub const DEFAULT_ML_INFERENCE_CONFIG: &str = "ml_inference";
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct TreeInferenceConfig {
     pub input_dir: PathBuf,
-    pub method: Vec<TreeInferenceMethod>,
+    pub methods: Vec<TreeInferenceMethod>,
     pub dependencies: Vec<DepMetadata>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub override_args: Option<String>,
     #[serde(flatten)]
     pub data: TreeData,
 }
 
 impl TreeInferenceConfig {
-    pub fn new(
-        input_dir: &Path,
-        method: Vec<TreeInferenceMethod>,
-        dependencies: Vec<DepMetadata>,
-        override_args: Option<String>,
-        data: TreeData,
-    ) -> Self {
+    pub fn new(input_dir: &Path, methods: Vec<TreeInferenceMethod>, data: TreeData) -> Self {
         Self {
             input_dir: input_dir.to_path_buf(),
-            method: if method.is_empty() {
-                all::<TreeInferenceMethod>().collect()
-            } else {
-                method
-            },
-            dependencies,
-            override_args,
+            methods,
+            dependencies: vec![],
             data,
         }
     }

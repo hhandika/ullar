@@ -38,7 +38,7 @@ impl MafftReport {
         assert!(!mafft_outputs.is_empty(), "No alignment files found");
         let metadata = self.get_metadata(mafft_outputs);
         let sample_counts = self.get_sample_count(&metadata);
-        self.alignments.get_raw(metadata, sample_counts);
+        self.alignments = AlignmentFiles::get(metadata, sample_counts);
     }
 
     fn get_metadata(&self, files: &[PathBuf]) -> Vec<FileMetadata> {

@@ -29,7 +29,7 @@ pub struct AlignmentConfig {
     pub previous_step: PreviousStep,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub override_args: Option<String>,
-    pub contigs: Vec<FileMetadata>,
+    pub sequences: Vec<FileMetadata>,
 }
 
 impl AlignmentConfig {
@@ -37,14 +37,14 @@ impl AlignmentConfig {
         task: Task,
         dependencies: Vec<DepMetadata>,
         override_args: Option<String>,
-        contigs: Vec<FileMetadata>,
+        sequences: Vec<FileMetadata>,
     ) -> Self {
         Self {
             file_summary: CandidateAlignmentSummary::default(),
             sample_counts: 0,
             previous_step: PreviousStep::with_dependencies(task, dependencies),
             override_args,
-            contigs,
+            sequences,
         }
     }
 
@@ -56,7 +56,7 @@ impl AlignmentConfig {
         }
         self.file_summary = sequence_files.summary;
         self.sample_counts = self.count_samples(&sequence_files.final_files);
-        self.contigs = self.get_metadata(&sequence_files.final_files);
+        self.sequences = self.get_metadata(&sequence_files.final_files);
     }
 
     /// Get raw loci files

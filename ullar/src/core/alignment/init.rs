@@ -40,7 +40,7 @@ impl<'a> AlignmentInit<'a> {
     fn write_config(&self) -> Result<(PathBuf, AlignmentConfig), Box<dyn Error>> {
         let mut config = AlignmentConfig::default();
         config.init(self.input_dir, None);
-        if config.contigs.is_empty() {
+        if config.sequences.is_empty() {
             return Err(
                 "No sequence found in the input directory. Please, check input is FASTA".into(),
             );
