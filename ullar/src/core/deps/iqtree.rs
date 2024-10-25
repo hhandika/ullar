@@ -40,41 +40,36 @@ impl FromStr for IqTreeVersion {
     }
 }
 
-pub struct IqtreeMetadata {
-    pub metadata: Option<DepMetadata>,
+pub struct IqtreeMetadata<'a> {
+    version: Option<String>,
+    override_args: Option<&'a str>,
 }
 
-impl Default for IqtreeMetadata {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl IqtreeMetadata {
-    pub fn new() -> Self {
-        Self { metadata: None }
-    }
-
-    pub fn get(&self) -> Option<DepMetadata> {
-        let version_data: Option<String> = self.get_iqtree();
-        if version_data.is_none() {
-            return None;
-        }
-
-        match version_data {
-            Some(v) => self.metadata(&v),
-            None => None,
-        }
-    }
-
-    fn get_iqtree(&self) -> Option<String> {
+impl<'a> IqtreeMetadata<'a> {
+    pub fn new(override_args: Option<&'a str>) -> Self {
         let version_1 = version!(IQTREE_EXE);
         let version_2 = version!(IQTREE2_EXE);
 
-        if version_1.is_some() {
-            version_1
-        } else {
+        let version = if version_2.is_some() {
             version_2
+        } else {
+            version_1
+        };
+
+        Self {
+            version,
+            override_args,
+        }
+    }
+
+    pub fn get(&self) -> Option<DepMetadata> {
+        if self.version.is_none() {
+            return None;
+        }
+
+        match &self.version {
+            Some(v) => self.metadata(&v),
+            None => None,
         }
     }
 
@@ -86,7 +81,7 @@ impl IqtreeMetadata {
             name,
             version,
             executable,
-            override_args: None,
+            override_args: self.override_args.map(|s| s.to_string()),
         })
     }
 

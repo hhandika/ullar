@@ -53,13 +53,13 @@ impl<'a> TreeInferenceInit<'a> {
         );
         let methods = self.parse_method();
         let data = TreeData::new(alignments);
-        let config = TreeInferenceConfig::new(self.input_dir, methods, data);
+        let mut config = TreeInferenceConfig::new(self.input_dir, methods, data);
         if config.data.alignments.alignments.is_empty() {
             return Err(
                 "No sequence found in the input directory. Please, check input is FASTA".into(),
             );
         }
-        let output_path = config.to_yaml()?;
+        let output_path = config.to_yaml(self.common.override_args.as_deref())?;
         Ok((output_path, config))
     }
 

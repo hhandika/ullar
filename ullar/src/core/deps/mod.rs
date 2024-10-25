@@ -84,7 +84,7 @@ impl DependencyCheck {
             spades: SpadesMetadata::new(None).get(),
             lastz: LastzMetadata::new(None).get(),
             mafft: MafftMetadata::new(None).get(),
-            iqtree: IqtreeMetadata::new().get(),
+            iqtree: IqtreeMetadata::new(None).get(),
         }
     }
 
@@ -94,7 +94,7 @@ impl DependencyCheck {
             spades: SpadesMetadata::new(override_args).get(),
             lastz: LastzMetadata::new(override_args).get(),
             mafft: MafftMetadata::new(override_args).get(),
-            iqtree: IqtreeMetadata::new().get(),
+            iqtree: IqtreeMetadata::new(override_args).get(),
         }
     }
 
