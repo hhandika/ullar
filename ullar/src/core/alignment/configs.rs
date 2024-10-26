@@ -4,6 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use rayon::prelude::*;
 use segul::helper::{
     finder::{IDs, SeqFileFinder},
     types::{DataType, InputFmt},
@@ -88,7 +89,7 @@ impl AlignmentConfig {
 
     fn get_metadata(&self, sequence_files: &[PathBuf]) -> Vec<FileMetadata> {
         sequence_files
-            .iter()
+            .par_iter()
             .map(|f| {
                 let mut file = FileMetadata::new();
                 file.get(f);

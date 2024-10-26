@@ -6,6 +6,7 @@ use std::{
     str::FromStr,
 };
 
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -159,7 +160,7 @@ impl MappedContigConfig {
             "No sequence files found in the input directory"
         );
         sequence_files
-            .iter()
+            .par_iter()
             .map(|f| {
                 let mut file = ContigFiles::new();
                 file.parse(f, &self.name_source);
