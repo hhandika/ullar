@@ -2,6 +2,9 @@
 
 ## v0.4.0
 
+- Add tree inference support.
+- Make config filename more consistent.
+
 ## v0.3.1
 
 - Fix CI/CD issues.
