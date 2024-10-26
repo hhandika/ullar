@@ -8,6 +8,7 @@ use segul::helper::types::{DataType, InputFmt};
 
 use crate::cli::commands::common::CommonInitArgs;
 use crate::cli::commands::tree::TreeInferenceInitArgs;
+use crate::helper::common;
 use crate::types::alignments::AlignmentFiles;
 use crate::types::TreeInferenceMethod;
 
@@ -39,26 +40,43 @@ impl<'a> TreeInferenceInit<'a> {
 
     pub fn init(&self) {
         self.log_input();
-        let (path, config) = self.write_config().expect("Failed to write config");
+        let spin = common::init_spinner();
+        spin.set_message("Finding alignments...");
+        let alignments = self.find_alignments();
+        if alignments.file_counts == 0 {
+            spin.finish_with_message(format!(
+                "{} No alignment files found in {}. \n\
+                Try using the --recursive flag if files are in subdirectories.",
+                "✖".red(),
+                self.input_dir.display()
+            ));
+            return;
+        }
+        spin.set_message("Writing config...");
+        let (path, config) = self
+            .write_config(alignments)
+            .expect("Failed to write config");
+        spin.finish_with_message(format!("{} Finished creating a config file\n", "✔".green()));
         self.log_final_output(&path, &config);
     }
 
-    fn write_config(&self) -> Result<(PathBuf, TreeInferenceConfig), Box<dyn Error>> {
+    fn find_alignments(&self) -> AlignmentFiles {
         let files = SeqFileFinder::new(self.input_dir).find(&self.input_format);
-        let alignments = AlignmentFiles::from_sequence_files(
+        AlignmentFiles::from_sequence_files(
             &files,
             &self.input_format,
             &self.datatype,
             self.partition,
-        );
+        )
+    }
+
+    fn write_config(
+        &self,
+        alignments: AlignmentFiles,
+    ) -> Result<(PathBuf, TreeInferenceConfig), Box<dyn Error>> {
         let methods = self.parse_method();
-        let data = TreeData::new(alignments);
+        let data = TreeData::from_alignments(alignments);
         let mut config = TreeInferenceConfig::new(self.input_dir, methods, data);
-        if config.data.alignments.alignments.is_empty() {
-            return Err(
-                "No sequence found in the input directory. Please, check input is FASTA".into(),
-            );
-        }
         let output_path = config.to_yaml(self.common.override_args.as_deref())?;
         Ok((output_path, config))
     }
@@ -84,10 +102,10 @@ impl<'a> TreeInferenceInit<'a> {
             .parent()
             .expect("Failed to get parent directory");
         let filename = output_path.file_name().expect("Failed to get file name");
-        log::info!("{}", "Output".cyan());
+        log::info!("\n{}", "Output".cyan());
         log::info!("{:18}: {}", "Directory", parent.display());
-        log::info!("{:18}: {}", "Config file", filename.to_string_lossy());
-        log::info!("{:18}: {}\n", "Alignment counts", config.data.file_counts);
+        log::info!("{:18}: {}", "Filename", filename.to_string_lossy());
         log::info!("{:18}: {}", "Sample counts", config.data.sample_counts);
+        log::info!("{:18}: {}", "File counts", config.data.file_counts);
     }
 }

@@ -66,7 +66,7 @@ pub struct TreeData {
 }
 
 impl TreeData {
-    pub fn new(alignments: AlignmentFiles) -> Self {
+    pub fn from_alignments(alignments: AlignmentFiles) -> Self {
         Self {
             sample_counts: alignments.sample_counts,
             file_counts: alignments.file_counts,

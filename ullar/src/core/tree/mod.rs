@@ -55,7 +55,7 @@ impl<'a> TreeEstimation<'a> {
         }
     }
 
-    pub fn run(&self) {
+    pub fn infer(&self) {
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
         if config.methods.is_empty() {

@@ -15,7 +15,7 @@ use clean::ReadCleaningSubcommand;
 use deps::DepsSubcommand;
 use map::MapSubcommand;
 use new::NewArgs;
-use tree::TreeInferenceArgs;
+use tree::TreeInferenceSubcommand;
 use utils::UtilSubCommand;
 
 #[derive(Parser)]
@@ -62,8 +62,8 @@ pub(crate) enum UllarSubcommand {
     #[command(subcommand, name = "align", about = "Align sequences")]
     Alignment(AlignmentSubcommand),
     /// Phylogenetic tree estimation
-    #[command(name = "tree", about = "Estimate phylogenetic tree")]
-    Tree(TreeInferenceArgs),
+    #[command(subcommand, name = "tree", about = "Estimate phylogenetic tree")]
+    Tree(TreeInferenceSubcommand),
     /// For checking dependencies
     #[command(subcommand, name = "deps", about = "Check and manage dependencies")]
     Deps(DepsSubcommand),

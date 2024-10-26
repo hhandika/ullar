@@ -1,10 +1,20 @@
 use std::path::PathBuf;
 
-use clap::Args;
+use clap::{Args, Subcommand};
 
 use crate::core::tree::DEFAULT_PHYLO_OUTPUT_DIR;
 
 use super::common::{CommonInitArgs, CommonRunnerArgs};
+
+#[derive(Subcommand)]
+pub(crate) enum TreeInferenceSubcommand {
+    /// Create tree inference config file
+    #[command(name = "init", about = "Create tree inference config file")]
+    Init(TreeInferenceInitArgs),
+    /// Run tree inference
+    #[command(name = "run", about = "Run tree inference")]
+    Run(TreeInferenceArgs),
+}
 
 #[derive(Args)]
 pub struct TreeInferenceInitArgs {
