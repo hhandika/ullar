@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use rayon::prelude::*;
 use segul::helper::{
     finder::IDs,
     types::{DataType, InputFmt},
@@ -41,7 +42,7 @@ impl AlignmentFiles {
         partition: Option<&Path>,
     ) -> Self {
         let metadata = sequences
-            .iter()
+            .par_iter()
             .map(|f| {
                 let mut meta = FileMetadata::new();
                 meta.get(f);

@@ -7,6 +7,7 @@ use commands::{
     clean::{ReadCleaningInitArgs, ReadCleaningSubcommand},
     deps::DepsSubcommand,
     map::MapSubcommand,
+    tree::TreeInferenceSubcommand,
     utils::{ScannerSubcommand, UtilSubCommand},
     UllarCli, UllarSubcommand,
 };
@@ -20,7 +21,7 @@ use crate::{
         clean::{init::ReadCleaningInit, ReadCleaner},
         deps::DependencyCheck,
         map::{init::InitMappingConfig, ContigMapping},
-        tree::TreeEstimation,
+        tree::{init::TreeInferenceInit, TreeEstimation},
         utils::{checksum::Sha256Executor, scan::ReadScanner},
     },
     helper::{self, common::PrettyHeader},
@@ -73,7 +74,7 @@ impl Cli {
             UllarSubcommand::Assemble(subcommand) => AssemblyArgParser::new(subcommand).parse(),
             UllarSubcommand::Map(subcommand) => MapArgParser::new(subcommand).parse(),
             UllarSubcommand::Alignment(subcommand) => AlignmentArgParser::new(subcommand).parse(),
-            UllarSubcommand::Tree(tree_args) => TreeEstimation::from_arg(tree_args).run(),
+            UllarSubcommand::Tree(subcommand) => TreeArgParser::new(subcommand).parse(),
             UllarSubcommand::Deps(subcommand) => self.parse_dependencies(subcommand),
             UllarSubcommand::Utils(util_args) => self.parse_utils(util_args),
         }
@@ -205,5 +206,23 @@ impl<'a> AlignmentArgParser<'a> {
 
     fn run(&self, args: &AlignmentArgs) {
         SequenceAlignment::from_arg(args).align();
+    }
+}
+
+struct TreeArgParser<'a> {
+    subcommand: &'a TreeInferenceSubcommand,
+}
+impl<'a> TreeArgParser<'a> {
+    fn new(subcommand: &'a TreeInferenceSubcommand) -> Self {
+        Self { subcommand }
+    }
+
+    fn parse(&self) {
+        match self.subcommand {
+            TreeInferenceSubcommand::Init(args) => TreeInferenceInit::from_arg(args).init(),
+            TreeInferenceSubcommand::Run(args) => {
+                TreeEstimation::from_arg(args).infer();
+            }
+        }
     }
 }
