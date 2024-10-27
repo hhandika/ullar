@@ -76,8 +76,12 @@ impl<'a> TreeEstimation<'a> {
     fn log_input(&self, config: &TreeInferenceConfig) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config file", self.config_path.display());
-        log::info!("{:18}: {}", "Sample counts", config.data.sample_counts);
-        log::info!("{:18}: {}", "File counts", config.data.file_counts);
+        log::info!(
+            "{:18}: {}",
+            "Sample counts",
+            config.alignments.sample_counts
+        );
+        log::info!("{:18}: {}", "File counts", config.alignments.file_counts);
     }
 
     fn run_tree_inference(&self, methods: &[TreeInferenceMethod]) {
