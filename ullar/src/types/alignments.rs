@@ -14,7 +14,7 @@ pub struct AlignmentFiles {
     pub sample_counts: usize,
     pub file_counts: usize,
     pub concatenated: bool,
-    pub alignments: Vec<FileMetadata>,
+    pub files: Vec<FileMetadata>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub partition: Option<FileMetadata>,
 }
@@ -23,14 +23,14 @@ impl AlignmentFiles {
     pub fn new(
         sample_counts: usize,
         file_counts: usize,
-        alignments: Vec<FileMetadata>,
+        files: Vec<FileMetadata>,
         partition: Option<FileMetadata>,
     ) -> Self {
         Self {
             sample_counts,
             file_counts,
             concatenated: partition.is_some(),
-            alignments,
+            files,
             partition,
         }
     }
@@ -41,7 +41,7 @@ impl AlignmentFiles {
         datatype: &DataType,
         partition: Option<&Path>,
     ) -> Self {
-        let metadata = sequences
+        let files = sequences
             .par_iter()
             .map(|f| {
                 let mut meta = FileMetadata::new();
@@ -49,7 +49,7 @@ impl AlignmentFiles {
                 meta
             })
             .collect::<Vec<FileMetadata>>();
-        let file_counts = metadata.len();
+        let file_counts = files.len();
         let sample_counts = IDs::new(sequences, format, datatype).id_unique().len();
         let partition = partition.map(|p| {
             let mut meta = FileMetadata::new();
@@ -60,7 +60,7 @@ impl AlignmentFiles {
             sample_counts,
             file_counts,
             concatenated: partition.is_some(),
-            alignments: metadata,
+            files,
             partition,
         }
     }

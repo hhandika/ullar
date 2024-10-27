@@ -12,7 +12,7 @@ use crate::helper::common;
 use crate::types::alignments::AlignmentFiles;
 use crate::types::TreeInferenceMethod;
 
-use super::configs::{TreeData, TreeInferenceConfig};
+use super::configs::TreeInferenceConfig;
 
 pub struct TreeInferenceInit<'a> {
     pub input_dir: &'a Path,
@@ -75,8 +75,7 @@ impl<'a> TreeInferenceInit<'a> {
         alignments: AlignmentFiles,
     ) -> Result<(PathBuf, TreeInferenceConfig), Box<dyn Error>> {
         let methods = self.parse_method();
-        let data = TreeData::from_alignments(alignments);
-        let mut config = TreeInferenceConfig::new(self.input_dir, methods, data);
+        let mut config = TreeInferenceConfig::new(self.input_dir, methods, alignments);
         let output_path = config.to_yaml(self.common.override_args.as_deref())?;
         Ok((output_path, config))
     }
@@ -105,7 +104,11 @@ impl<'a> TreeInferenceInit<'a> {
         log::info!("\n{}", "Output".cyan());
         log::info!("{:18}: {}", "Directory", parent.display());
         log::info!("{:18}: {}", "Filename", filename.to_string_lossy());
-        log::info!("{:18}: {}", "Sample counts", config.data.sample_counts);
-        log::info!("{:18}: {}", "File counts", config.data.file_counts);
+        log::info!(
+            "{:18}: {}",
+            "Sample counts",
+            config.alignments.sample_counts
+        );
+        log::info!("{:18}: {}", "File counts", config.alignments.file_counts);
     }
 }

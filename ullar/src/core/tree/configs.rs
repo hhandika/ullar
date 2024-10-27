@@ -21,16 +21,20 @@ pub struct TreeInferenceConfig {
     pub methods: Vec<TreeInferenceMethod>,
     pub dependencies: Vec<DepMetadata>,
     #[serde(flatten)]
-    pub data: TreeData,
+    pub alignments: AlignmentFiles,
 }
 
 impl TreeInferenceConfig {
-    pub fn new(input_dir: &Path, methods: Vec<TreeInferenceMethod>, data: TreeData) -> Self {
+    pub fn new(
+        input_dir: &Path,
+        methods: Vec<TreeInferenceMethod>,
+        alignments: AlignmentFiles,
+    ) -> Self {
         Self {
             input_dir: input_dir.to_path_buf(),
             methods,
             dependencies: Vec::new(),
-            data,
+            alignments,
         }
     }
 
@@ -54,23 +58,6 @@ impl TreeInferenceConfig {
                 And will prioritize iqtree2 if both are installed."
                 );
             }
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Default, Deserialize)]
-pub struct TreeData {
-    pub sample_counts: usize,
-    pub file_counts: usize,
-    pub alignments: AlignmentFiles,
-}
-
-impl TreeData {
-    pub fn from_alignments(alignments: AlignmentFiles) -> Self {
-        Self {
-            sample_counts: alignments.sample_counts,
-            file_counts: alignments.file_counts,
-            alignments,
         }
     }
 }
