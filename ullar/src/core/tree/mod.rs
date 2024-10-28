@@ -89,10 +89,10 @@ impl<'a> TreeEstimation<'a> {
             self.infer_all_trees();
         } else {
             match methods[0] {
-                TreeInferenceMethod::MLSpeciesTree => self.infer_ml_tree(),
-                TreeInferenceMethod::MLGeneTree => self.infer_ml_gene_tree(),
+                TreeInferenceMethod::MlSpeciesTree => self.infer_ml_tree(),
+                TreeInferenceMethod::MlGeneTree => self.infer_ml_gene_tree(),
                 TreeInferenceMethod::GeneSiteConcordance => self.infer_gsc_tree(),
-                TreeInferenceMethod::MSCSpeciesTree => self.infer_msc_tree(),
+                TreeInferenceMethod::MscSpeciesTree => self.infer_msc_tree(),
             }
         };
     }
