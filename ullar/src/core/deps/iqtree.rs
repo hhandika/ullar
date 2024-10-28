@@ -1,44 +1,10 @@
-use core::fmt;
-use std::{
-    fmt::{Display, Formatter},
-    process::Command,
-    str::FromStr,
-};
+use std::process::Command;
 
 use super::{re_capture_version, DepMetadata};
 use crate::version;
 
 pub const IQTREE2_EXE: &str = "iqtree2";
 pub const IQTREE_EXE: &str = "iqtree";
-
-pub enum IqTreeVersion {
-    Auto,
-    V1,
-    V2,
-}
-
-impl Display for IqTreeVersion {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match self {
-            IqTreeVersion::Auto => write!(f, "auto"),
-            IqTreeVersion::V1 => write!(f, "iqtree"),
-            IqTreeVersion::V2 => write!(f, "iqtree2"),
-        }
-    }
-}
-
-impl FromStr for IqTreeVersion {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "auto" => Ok(IqTreeVersion::Auto),
-            "iqtree" => Ok(IqTreeVersion::V1),
-            "iqtree2" => Ok(IqTreeVersion::V2),
-            _ => Err("Invalid IQ-TREE version".to_string()),
-        }
-    }
-}
 
 pub struct IqtreeMetadata<'a> {
     version: Option<String>,
