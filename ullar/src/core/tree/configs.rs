@@ -20,7 +20,6 @@ pub struct TreeInferenceConfig {
     pub input_dir: PathBuf,
     pub methods: Vec<TreeInferenceMethod>,
     pub dependencies: Vec<DepMetadata>,
-    #[serde(flatten)]
     pub alignments: AlignmentFiles,
 }
 

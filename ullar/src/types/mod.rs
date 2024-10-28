@@ -244,19 +244,19 @@ impl FromStr for SymlinkFileSearchFormat {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Sequence)]
 #[serde(rename_all = "snake_case")]
 pub enum TreeInferenceMethod {
-    MLSpeciesTree,
-    MLGeneTree,
+    MlSpeciesTree,
+    MlGeneTree,
     GeneSiteConcordance,
-    MSCSpeciesTree,
+    MscSpeciesTree,
 }
 
 impl Display for TreeInferenceMethod {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TreeInferenceMethod::MLSpeciesTree => write!(f, "ML Species Tree"),
-            TreeInferenceMethod::MLGeneTree => write!(f, "ML Gene Tree"),
+            TreeInferenceMethod::MlSpeciesTree => write!(f, "ML Species Tree"),
+            TreeInferenceMethod::MlGeneTree => write!(f, "ML Gene Tree"),
             TreeInferenceMethod::GeneSiteConcordance => write!(f, "Gene Site Concordance Factor"),
-            TreeInferenceMethod::MSCSpeciesTree => write!(f, "MSC Species Tree"),
+            TreeInferenceMethod::MscSpeciesTree => write!(f, "MSC Species Tree"),
         }
     }
 }
@@ -266,10 +266,10 @@ impl FromStr for TreeInferenceMethod {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "ml-species" => Ok(TreeInferenceMethod::MLSpeciesTree),
-            "ml-gene" => Ok(TreeInferenceMethod::MLGeneTree),
+            "ml-species" => Ok(TreeInferenceMethod::MlSpeciesTree),
+            "ml-gene" => Ok(TreeInferenceMethod::MlGeneTree),
             "gsc" => Ok(TreeInferenceMethod::GeneSiteConcordance),
-            "msc" => Ok(TreeInferenceMethod::MSCSpeciesTree),
+            "msc" => Ok(TreeInferenceMethod::MscSpeciesTree),
             _ => Err(format!("Unknown tree inference method: {}", s)),
         }
     }
