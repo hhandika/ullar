@@ -1,13 +1,23 @@
-use std::{error::Error, fs, path::Path};
+use std::{
+    error::Error,
+    fs,
+    path::{Path, PathBuf},
+};
 
 use colored::Colorize;
-use configs::TreeInferenceConfig;
+use configs::{TreeInferenceConfig, DEFAULT_ML_INFERENCE_CONFIG};
+use iqtree::MlIqTree;
 
 use crate::{
     cli::commands::tree::TreeInferenceArgs,
-    helper::common,
+    helper::{
+        common,
+        configs::{CONFIG_EXTENSION, DEFAULT_CONFIG_DIR},
+    },
     types::{runner::RunnerOptions, Task, TreeInferenceMethod},
 };
+
+use super::deps::DepMetadata;
 
 pub mod configs;
 pub mod init;
@@ -19,7 +29,7 @@ pub const DEFAULT_MSC_OUTPUT_DIR: &str = "msc_aster";
 
 pub struct TreeEstimation<'a> {
     /// Path to raw read config file
-    pub config_path: &'a Path,
+    pub config_path: PathBuf,
     /// Checksum verification flag
     pub ignore_checksum: bool,
     /// Parent output directory
@@ -33,9 +43,13 @@ pub struct TreeEstimation<'a> {
 impl<'a> TreeEstimation<'a> {
     /// Initialize a new TreeEstimation instance
     /// with the given parameters
-    pub fn new(config_path: &'a Path, ignore_checksum: bool, output_dir: &'a Path) -> Self {
+    pub fn new<P: AsRef<Path>>(
+        config_path: P,
+        ignore_checksum: bool,
+        output_dir: &'a Path,
+    ) -> Self {
         Self {
-            config_path,
+            config_path: config_path.as_ref().to_path_buf(),
             ignore_checksum,
             output_dir,
             runner: RunnerOptions::default(),
@@ -46,8 +60,14 @@ impl<'a> TreeEstimation<'a> {
     /// Initialize a new TreeEstimation instance
     /// from command line arguments
     pub fn from_arg(args: &'a TreeInferenceArgs) -> Self {
+        let config_path = match &args.config {
+            Some(path) => path.to_owned(),
+            None => PathBuf::from(DEFAULT_CONFIG_DIR)
+                .join(DEFAULT_ML_INFERENCE_CONFIG)
+                .with_extension(CONFIG_EXTENSION),
+        };
         Self {
-            config_path: &args.config,
+            config_path,
             ignore_checksum: args.common.ignore_checksum,
             output_dir: &args.output,
             runner: RunnerOptions::from_arg(&args.common),
@@ -64,11 +84,11 @@ impl<'a> TreeEstimation<'a> {
                 "Warning:".yellow()
             );
         }
-        self.run_tree_inference(&config.methods);
+        self.run_tree_inference(&config.methods, &config);
     }
 
     fn parse_config(&self) -> Result<TreeInferenceConfig, Box<dyn Error>> {
-        let content = fs::read_to_string(self.config_path)?;
+        let content = fs::read_to_string(&self.config_path)?;
         let config: TreeInferenceConfig = serde_yaml::from_str(&content)?;
         Ok(config)
     }
@@ -81,15 +101,15 @@ impl<'a> TreeEstimation<'a> {
             "Sample counts",
             config.alignments.sample_counts
         );
-        log::info!("{:18}: {}", "File counts", config.alignments.file_counts);
+        log::info!("{:18}: {}\n", "File counts", config.alignments.file_counts);
     }
 
-    fn run_tree_inference(&self, methods: &[TreeInferenceMethod]) {
+    fn run_tree_inference(&self, methods: &[TreeInferenceMethod], config: &TreeInferenceConfig) {
         if methods.len() > 1 || methods.is_empty() {
-            self.infer_all_trees();
+            self.infer_all_trees(config);
         } else {
             match methods[0] {
-                TreeInferenceMethod::MlSpeciesTree => self.infer_ml_tree(),
+                TreeInferenceMethod::MlSpeciesTree => self.infer_ml_tree(config),
                 TreeInferenceMethod::MlGeneTree => self.infer_ml_gene_tree(),
                 TreeInferenceMethod::GeneSiteConcordance => self.infer_gsc_tree(),
                 TreeInferenceMethod::MscSpeciesTree => self.infer_msc_tree(),
@@ -97,16 +117,24 @@ impl<'a> TreeEstimation<'a> {
         };
     }
 
-    fn infer_all_trees(&self) {
-        self.infer_ml_tree();
-        self.infer_ml_gene_tree();
-        self.infer_gsc_tree();
-        self.infer_msc_tree();
+    fn infer_all_trees(&self, config: &TreeInferenceConfig) {
+        self.infer_ml_tree(config);
+        // self.infer_ml_gene_tree();
+        // self.infer_gsc_tree();
+        // self.infer_msc_tree();
     }
 
-    fn infer_ml_tree(&self) {
+    fn infer_ml_tree(&self, config: &TreeInferenceConfig) {
+        let prefix = "concat";
+        let iqtree: Option<&DepMetadata> = config
+            .dependencies
+            .iter()
+            .filter(|dep| dep.name == "iqtree")
+            .next();
         let spinner = common::init_spinner();
         spinner.set_message("Estimating ML species tree");
+        let ml_analyses = MlIqTree::new(&config.alignments, iqtree, &self.output_dir, prefix);
+        ml_analyses.infer(prefix);
         spinner.finish_with_message("Finished estimating ML species tree\n");
     }
 

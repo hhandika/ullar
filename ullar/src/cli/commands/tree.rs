@@ -48,7 +48,7 @@ pub struct TreeInferenceInitArgs {
 pub struct TreeInferenceArgs {
     /// Path to the phylogenetic estimation config file
     #[arg(short, long, help = "Path to the phylogenetic estimation config file")]
-    pub config: PathBuf,
+    pub config: Option<PathBuf>,
     /// Output directory to store the phylogenetic trees
     #[arg(short, long, default_value = DEFAULT_PHYLO_OUTPUT_DIR,
         help = "Output directory to store the phylogenetic trees")]
