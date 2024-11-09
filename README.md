@@ -1,4 +1,4 @@
-# ULLAR <img src="https://raw.githubusercontent.com/hhandika/ullar/main/assets/icons/ullar-icon.png" alt="ullar logo" align="right" width="150"/>
+# ULLAR <img src="https://raw.githubusercontent.com/hhandika/ullar/main/assets/icons/ullar-dark.png" alt="ullar logo" align="right" width="150"/>
 
 ![ci](https://github.com/hhandika/ullar/workflows/tests/badge.svg)
 
