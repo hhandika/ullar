@@ -18,7 +18,7 @@ use super::deps::DepMetadata;
 use crate::cli::commands::clean::ReadCleaningArgs;
 use crate::core::deps::check_dependency_match;
 use crate::helper::common;
-use crate::helper::configs::{CONFIG_EXTENSION, DEFAULT_CONFIG_DIR};
+use crate::helper::configs::{CONFIG_EXTENSION_TOML, DEFAULT_CONFIG_DIR};
 use crate::helper::fastq::FastqConfigCheck;
 use crate::helper::files::PathCheck;
 use crate::helper::tracker::ProcessingTracker;
@@ -58,7 +58,7 @@ impl<'a> ReadCleaner<'a> {
             Some(path) => path.to_owned(),
             None => PathBuf::from(DEFAULT_CONFIG_DIR)
                 .join(DEFAULT_READ_CLEANING_CONFIG)
-                .with_extension(CONFIG_EXTENSION),
+                .with_extension(CONFIG_EXTENSION_TOML),
         };
 
         Self {
@@ -147,24 +147,6 @@ impl<'a> ReadCleaner<'a> {
 
         Ok(config)
     }
-
-    // // Prepare config for De Novo Assembly
-    // fn write_output_config(
-    //     &self,
-    //     reports: &[CleanReadReport],
-    // ) -> Result<PathBuf, Box<dyn std::error::Error>> {
-    //     let spin = common::init_spinner();
-    //     spin.set_message("Writing output config");
-    //     let mut config = AssemblyConfig::new(
-    //         Some(self.config_path.to_path_buf()),
-    //         self.output_dir,
-    //         self.runner.override_args.map(|s| s.to_string()),
-    //     );
-
-    //     let output = config.to_yaml(reports);
-    //     spin.finish_with_message(format!("{} Finished writing output config\n", "✔".green()));
-    //     output
-    // }
 
     fn log_unprocessed(&self) {
         let msg1 = "Samples were not processed";

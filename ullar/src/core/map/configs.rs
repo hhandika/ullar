@@ -109,6 +109,42 @@ impl MappedContigConfig {
         }
     }
 
+    pub fn from_toml(config_path: &Path) -> Result<Self, Box<dyn Error>> {
+        let content = std::fs::read_to_string(config_path)?;
+        let ext = config_path.extension().unwrap_or_default();
+        if ext == "yaml" || ext == "yml" {
+            let config = serde_yaml::from_str(&content)?;
+            let toml = toml::to_string_pretty(&config)?;
+            let config_path = config_path.with_extension("toml");
+            std::fs::write(&config_path, toml)?;
+            log::info!(
+                "Converted YAML config to TOML format: {}",
+                config_path.display()
+            );
+            return Ok(config);
+        }
+        let config = toml::from_str(&content)?;
+        Ok(config)
+    }
+
+    pub fn to_toml(&mut self, file_name: &str, ref_path: &Path) -> Result<PathBuf, Box<dyn Error>> {
+        self.reference_data.get(ref_path);
+        let output_path = generate_config_output_path(file_name);
+        let toml = toml::to_string_pretty(&self)?;
+        std::fs::write(&output_path, toml)?;
+        Ok(output_path)
+    }
+
+    /// Get raw loci files
+    #[deprecated(since = "0.5.0", note = "Use `to_toml` instead")]
+    pub fn to_yaml(&mut self, file_name: &str, ref_path: &Path) -> Result<PathBuf, Box<dyn Error>> {
+        self.reference_data.get(ref_path);
+        let output_path = generate_config_output_path(file_name);
+        let writer = File::create(&output_path)?;
+        serde_yaml::to_writer(&writer, self)?;
+        Ok(output_path)
+    }
+
     pub fn from_contig_dir(&mut self, contig_dir: &Path, previous_step: Option<PreviousStep>) {
         let sequence_files = self.find_contig_files(contig_dir);
         if sequence_files.is_empty() {
@@ -136,15 +172,6 @@ impl MappedContigConfig {
             None => self.previous_step = PreviousStep::new(Task::Unknown),
         }
         self.contigs = self.get_metadata(contigs);
-    }
-
-    /// Get raw loci files
-    pub fn to_yaml(&mut self, file_name: &str, ref_path: &Path) -> Result<PathBuf, Box<dyn Error>> {
-        self.reference_data.get(ref_path);
-        let output_path = generate_config_output_path(file_name);
-        let writer = File::create(&output_path)?;
-        serde_yaml::to_writer(&writer, self)?;
-        Ok(output_path)
     }
 
     fn find_contig_files(&self, input_dir: &Path) -> Vec<PathBuf> {

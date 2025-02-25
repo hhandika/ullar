@@ -53,6 +53,26 @@ impl AssemblyConfig {
         }
     }
 
+    /// Load the assembly config from a TOML file
+    /// and return the AssemblyConfig instance
+    pub fn from_toml(config_path: &Path) -> Result<Self, Box<dyn std::error::Error>> {
+        let content = fs::read_to_string(config_path)?;
+        let ext = config_path.extension().unwrap_or_default();
+        if ext == "yaml" || ext == "yml" {
+            let config = serde_yaml::from_str(&content)?;
+            let toml = toml::to_string_pretty(&config)?;
+            let config_path = config_path.with_extension("toml");
+            fs::write(&config_path, toml)?;
+            log::info!(
+                "Converted YAML config to TOML format: {}",
+                config_path.display()
+            );
+            return Ok(config);
+        }
+        let config = toml::from_str(&content)?;
+        Ok(config)
+    }
+
     pub fn to_toml(
         &mut self,
         override_args: Option<&str>,

@@ -45,7 +45,7 @@ impl<'a> AlignmentInit<'a> {
                 "No sequence found in the input directory. Please, check input is FASTA".into(),
             );
         }
-        let output_path = config.to_yaml()?;
+        let output_path = config.to_toml()?;
         Ok((output_path, config))
     }
 

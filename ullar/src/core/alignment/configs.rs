@@ -1,6 +1,6 @@
 use std::{
     error::Error,
-    fs::File,
+    fs::{self, File},
     path::{Path, PathBuf},
 };
 
@@ -60,7 +60,33 @@ impl AlignmentConfig {
         self.sequences = self.get_metadata(&sequence_files.final_files);
     }
 
+    pub fn from_toml(config_path: &Path) -> Result<Self, Box<dyn Error>> {
+        let content = fs::read_to_string(config_path)?;
+        let ext = config_path.extension().unwrap_or_default();
+        if ext == "yaml" || ext == "yml" {
+            let config = serde_yaml::from_str(&content)?;
+            let toml = toml::to_string_pretty(&config)?;
+            let config_path = config_path.with_extension("toml");
+            fs::write(&config_path, toml)?;
+            log::info!(
+                "Converted YAML config to TOML format: {}",
+                config_path.display()
+            );
+            return Ok(config);
+        }
+        let config = toml::from_str(&content)?;
+        Ok(config)
+    }
+
+    pub fn to_toml(&self) -> Result<PathBuf, Box<dyn Error>> {
+        let output_path = generate_config_output_path(DEFAULT_ALIGNMENT_CONFIG);
+        let config = toml::to_string_pretty(self)?;
+        fs::write(&output_path, config)?;
+        Ok(output_path)
+    }
+
     /// Get raw loci files
+    #[deprecated(since = "0.4.0", note = "Use `to_toml` instead")]
     pub fn to_yaml(&self) -> Result<PathBuf, Box<dyn Error>> {
         let output_path = generate_config_output_path(DEFAULT_ALIGNMENT_CONFIG);
         let writer = File::create(&output_path)?;

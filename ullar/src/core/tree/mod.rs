@@ -12,7 +12,7 @@ use crate::{
     cli::commands::tree::TreeInferenceArgs,
     helper::{
         common,
-        configs::{CONFIG_EXTENSION, DEFAULT_CONFIG_DIR},
+        configs::{CONFIG_EXTENSION_TOML, DEFAULT_CONFIG_DIR},
     },
     types::{runner::RunnerOptions, Task, TreeInferenceMethod},
 };
@@ -64,7 +64,7 @@ impl<'a> TreeEstimation<'a> {
             Some(path) => path.to_owned(),
             None => PathBuf::from(DEFAULT_CONFIG_DIR)
                 .join(DEFAULT_ML_INFERENCE_CONFIG)
-                .with_extension(CONFIG_EXTENSION),
+                .with_extension(CONFIG_EXTENSION_TOML),
         };
         Self {
             config_path,

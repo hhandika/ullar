@@ -5,7 +5,6 @@ pub mod reports;
 
 use std::{
     error::Error,
-    fs,
     path::{Path, PathBuf},
     sync::mpsc,
 };
@@ -82,8 +81,7 @@ impl<'a> SequenceAlignment<'a> {
     }
 
     fn parse_config(&self) -> Result<AlignmentConfig, Box<dyn Error>> {
-        let content = fs::read_to_string(self.config_path)?;
-        let config: AlignmentConfig = serde_yaml::from_str(&content)?;
+        let config: AlignmentConfig = AlignmentConfig::from_toml(self.config_path)?;
 
         Ok(config)
     }

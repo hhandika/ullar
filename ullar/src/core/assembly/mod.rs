@@ -1,6 +1,5 @@
 use std::{
     error::Error,
-    fs,
     path::{Path, PathBuf},
     time::Instant,
 };
@@ -14,7 +13,7 @@ use crate::{
     cli::commands::assembly::AssemblyArgs,
     helper::{
         common,
-        configs::{CONFIG_EXTENSION, DEFAULT_CONFIG_DIR},
+        configs::{CONFIG_EXTENSION_TOML, DEFAULT_CONFIG_DIR},
         fastq::FastqConfigCheck,
         files::PathCheck,
         tracker::ProcessingTracker,
@@ -78,7 +77,7 @@ impl<'a> Assembly<'a> {
             Some(path) => path.to_owned(),
             None => PathBuf::from(DEFAULT_CONFIG_DIR)
                 .join(DEFAULT_ASSEMBLY_CONFIG)
-                .with_extension(CONFIG_EXTENSION),
+                .with_extension(CONFIG_EXTENSION_TOML),
         };
         Self {
             config_path: config_path,
@@ -123,8 +122,7 @@ impl<'a> Assembly<'a> {
     }
 
     fn parse_config(&self) -> Result<AssemblyConfig, Box<dyn Error>> {
-        let content = fs::read_to_string(&self.config_path)?;
-        let config: AssemblyConfig = serde_yaml::from_str(&content)?;
+        let config: AssemblyConfig = AssemblyConfig::from_toml(&self.config_path)?;
         Ok(config)
     }
 
