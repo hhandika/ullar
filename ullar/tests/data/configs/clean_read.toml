@@ -1,0 +1,27 @@
+input_dir = "datasets/rawreads/"
+sample_counts = 1
+file_counts = 2
+
+[read_assignment]
+strategy = "regex"
+format = "descriptive"
+
+[dependencies]
+name = "fastp"
+version = "0.23.4"
+executable = "fastp"
+
+[[samples]]
+sample_name = "Bunomys_chrysocomus_ABCD1234"
+
+[samples.read_1]
+file_name = "Bunomys_chrysocomus_ABCD1234_READ1.fq.gz"
+parent_dir = "datasets/rawreads"
+file_size = "239 MiB"
+sha256 = "e3f2f5e51b6cd56eebcafb808e55af2106050883e85df3dbaa836a32ddeaa306"
+
+[samples.read_2]
+file_name = "Bunomys_chrysocomus_ABCD1234_READ2.fq.gz"
+parent_dir = "datasets/rawreads"
+file_size = "264 MiB"
+sha256 = "f85b9f3e38048dd3c1626ae2fb8ff3ca98b5f4ede76f0ec8ac4b11ce495016aa"

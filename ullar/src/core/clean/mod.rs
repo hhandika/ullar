@@ -139,7 +139,7 @@ impl<'a> ReadCleaner<'a> {
     fn parse_config(&self) -> Result<CleanReadConfig, Box<dyn std::error::Error>> {
         let content = fs::read_to_string(&self.config_path)
             .with_context(|| format!("Input config path: {}", self.config_path.display()))?;
-        let config: CleanReadConfig = serde_yaml::from_str(&content)?;
+        let config: CleanReadConfig = toml::from_str(&content)?;
 
         if config.input_summary.sample_counts != config.samples.len() {
             return Err("Sample counts do not match the number of samples".into());
