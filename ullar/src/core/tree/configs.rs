@@ -37,6 +37,21 @@ impl TreeInferenceConfig {
         }
     }
 
+    pub fn from_toml(config_path: &Path) -> Result<Self, Box<dyn Error>> {
+        let content = std::fs::read_to_string(config_path)?;
+        let config = toml::from_str(&content)?;
+        Ok(config)
+    }
+
+    pub fn to_toml(&mut self, override_args: Option<&str>) -> Result<PathBuf, Box<dyn Error>> {
+        self.get_dependency(override_args);
+        let output_path = generate_config_output_path(DEFAULT_ML_INFERENCE_CONFIG);
+        let toml = toml::to_string_pretty(self)?;
+        std::fs::write(&output_path, toml)?;
+        Ok(output_path)
+    }
+
+    #[deprecated(since = "0.5.0", note = "Use `to_toml` instead")]
     pub fn to_yaml(&mut self, override_args: Option<&str>) -> Result<PathBuf, Box<dyn Error>> {
         self.get_dependency(override_args);
         let output_path = generate_config_output_path(DEFAULT_ML_INFERENCE_CONFIG);

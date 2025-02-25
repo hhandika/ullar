@@ -13,7 +13,7 @@ use crate::{
     cli::commands::map::MapInitArgs,
     helper::{
         common,
-        configs::{CONFIG_EXTENSION, DEFAULT_CONFIG_DIR},
+        configs::{CONFIG_EXTENSION_TOML, DEFAULT_CONFIG_DIR},
         files::PathCheck,
         regex::{CONTIG_SAMPLE_REGEX, UCE_REGEX},
     },
@@ -74,7 +74,7 @@ impl<'a> InitMappingConfig<'a> {
         self.log_input();
         let config_path = Path::new(DEFAULT_CONFIG_DIR)
             .join(self.config_name)
-            .with_extension(CONFIG_EXTENSION);
+            .with_extension(CONFIG_EXTENSION_TOML);
         PathCheck::new(&config_path, false, false).prompt_exists(false);
         let spinner = common::init_spinner();
         spinner.set_message("Initializing mapping configuration");
@@ -106,7 +106,7 @@ impl<'a> InitMappingConfig<'a> {
                 "No sequence found in the input directory. Please, check input is FASTA".into(),
             );
         }
-        let output_path = config.to_yaml(self.config_name, self.reference_path)?;
+        let output_path = config.to_toml(self.config_name, self.reference_path)?;
         Ok((output_path, config))
     }
 

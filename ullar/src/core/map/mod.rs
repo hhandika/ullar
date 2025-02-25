@@ -75,8 +75,7 @@ impl<'a> ContigMapping<'a> {
     }
 
     fn parse_config(&self) -> Result<MappedContigConfig, Box<dyn Error>> {
-        let config = std::fs::read_to_string(self.config_path)?;
-        let config: MappedContigConfig = serde_yaml::from_str(&config)?;
+        let config = MappedContigConfig::from_toml(self.config_path)?;
         Ok(config)
     }
 
