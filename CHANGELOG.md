@@ -1,5 +1,9 @@
 # Release Notes
 
+## Upcoming
+
+- Config file is now a TOML file instead of YAML.
+
 ## v0.4.0
 
 - Add tree inference support.
