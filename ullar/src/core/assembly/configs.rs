@@ -53,6 +53,20 @@ impl AssemblyConfig {
         }
     }
 
+    pub fn to_toml(
+        &mut self,
+        override_args: Option<&str>,
+    ) -> Result<PathBuf, Box<dyn std::error::Error>> {
+        self.get_dependency(override_args);
+        self.get_sample_counts();
+        self.get_file_counts();
+        let output_dir = generate_config_output_path(DEFAULT_ASSEMBLY_CONFIG);
+        let toml = toml::to_string_pretty(self)?;
+        fs::write(&output_dir, toml)?;
+        Ok(output_dir)
+    }
+
+    #[deprecated(since = "0.4.0", note = "Use from_toml instead")]
     pub fn to_yaml(
         &mut self,
         override_args: Option<&str>,
@@ -64,7 +78,7 @@ impl AssemblyConfig {
         Ok(output_dir)
     }
 
-    pub fn from_fastp_reports(
+    pub fn from_clean_read_config(
         &mut self,
         reports: &[CleanReadReport],
     ) -> Result<PathBuf, Box<dyn std::error::Error>> {
@@ -73,8 +87,8 @@ impl AssemblyConfig {
         self.get_file_counts();
         self.samples = self.parse_fastp_report(reports);
         let output_path = generate_config_output_path(DEFAULT_ASSEMBLY_CONFIG);
-        let writer = fs::File::create(&output_path)?;
-        serde_yaml::to_writer(&writer, self)?;
+        let toml = toml::to_string_pretty(self)?;
+        fs::write(&output_path, toml)?;
         Ok(output_path)
     }
 

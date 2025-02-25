@@ -85,7 +85,7 @@ impl<'a> ReadCleaningInit<'a> {
         let strategy = ReadAssignmentStrategy::from_arg(self.common);
         let input_summary = FastqConfigSummary::new(records.len(), file_counts, strategy);
         let mut config = CleanReadConfig::new(self.input_dir, input_summary, records.to_vec());
-        let output_path = config.to_yaml(self.common.override_args.as_deref())?;
+        let output_path = config.to_toml(self.common.override_args.as_deref())?;
         Ok(output_path)
     }
 
