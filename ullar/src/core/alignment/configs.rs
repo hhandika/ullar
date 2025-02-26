@@ -86,7 +86,7 @@ impl AlignmentConfig {
     }
 
     /// Get raw loci files
-    #[deprecated(since = "0.4.0", note = "Use `to_toml` instead")]
+    #[deprecated(since = "0.5.0", note = "Use `to_toml` instead")]
     pub fn to_yaml(&self) -> Result<PathBuf, Box<dyn Error>> {
         let output_path = generate_config_output_path(DEFAULT_ALIGNMENT_CONFIG);
         let writer = File::create(&output_path)?;
