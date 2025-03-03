@@ -96,7 +96,7 @@ impl<'a> Assembly<'a> {
         self.log_input(&config);
         PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
         let spinner = common::init_spinner();
-        let mut check = FastqConfigCheck::new(config.input_summary.sample_counts);
+        let mut check = FastqConfigCheck::new(config.input.sample_counts);
         if self.runner.skip_config_check {
             spinner.finish_with_message("Skipping config data check\n");
         } else {
@@ -180,7 +180,7 @@ impl<'a> Assembly<'a> {
     fn log_input(&self, config: &AssemblyConfig) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config path", self.config_path.display());
-        config.input_summary.log_summary();
+        config.input.log_summary();
         log::info!("{:18}: {}", "Task", self.task);
         self.log_spade_info(&config.dependencies);
     }

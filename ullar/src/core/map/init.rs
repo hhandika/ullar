@@ -20,12 +20,14 @@ use crate::{
     types::map::MappingQueryFormat,
 };
 
-use super::configs::{MappedContigConfig, SampleNameSource, DEFAULT_REF_MAPPING_CONFIG};
+use super::configs::{
+    ContigInput, ContigMappingConfig, SampleNameSource, DEFAULT_REF_MAPPING_CONFIG,
+};
 
 pub struct InitMappingConfig<'a> {
     /// Query directory containing query sequences
     pub query_dir: Option<&'a Path>,
-    /// Target directory containing target reference sequences
+    /// Query file paths
     pub query_paths: Option<&'a [PathBuf]>,
     /// Input query format
     pub query_format: MappingQueryFormat,
@@ -94,12 +96,13 @@ impl<'a> InitMappingConfig<'a> {
         }
     }
 
-    fn write_contig_config(&self) -> Result<(PathBuf, MappedContigConfig), Box<dyn Error>> {
+    fn write_contig_config(&self) -> Result<(PathBuf, ContigMappingConfig), Box<dyn Error>> {
         let name_source = self.get_sample_name_source();
-        let mut config = MappedContigConfig::init(name_source, self.refname_regex);
+        let input = ContigInput::new(name_source);
+        let mut config = ContigMappingConfig::init(input, self.refname_regex);
         match self.query_dir {
-            Some(dir) => config.from_contig_dir(dir, None),
-            None => config.from_contig_paths(&self.get_contig_paths(), None),
+            Some(dir) => config.from_contig_dir(dir),
+            None => config.from_contig_paths(&self.get_contig_paths()),
         }
         if config.contigs.is_empty() {
             return Err(
@@ -179,7 +182,7 @@ impl<'a> InitMappingConfig<'a> {
         );
     }
 
-    fn log_contig_output(&self, config: &MappedContigConfig) {
-        log::info!("{:18}: {}", "Sample counts", config.contig_file_counts);
+    fn log_contig_output(&self, config: &ContigMappingConfig) {
+        log::info!("{:18}: {}", "Sample counts", config.input.file_counts);
     }
 }
