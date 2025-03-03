@@ -14,7 +14,7 @@ use super::configs::AlignmentConfig;
 pub struct AlignmentInit<'a> {
     pub input_dir: &'a Path,
     pub output_dir: &'a Path,
-    pub input_fmt: Option<InputFmt>,
+    pub input_fmt: InputFmt,
 }
 
 impl<'a> AlignmentInit<'a> {
@@ -24,8 +24,8 @@ impl<'a> AlignmentInit<'a> {
             output_dir: &args.common.output,
             input_fmt: args
                 .input_fmt
-                .as_deref()
-                .map(|s| s.parse().expect("Invalid input format")),
+                .parse::<InputFmt>()
+                .expect("Invalid input format"),
         }
     }
 
@@ -45,7 +45,7 @@ impl<'a> AlignmentInit<'a> {
 
     fn write_config(&self) -> Result<(PathBuf, AlignmentConfig), Box<dyn Error>> {
         let mut config = AlignmentConfig::default();
-        config.init(self.input_dir, self.input_fmt.as_ref(), None);
+        config.init(self.input_dir, &self.input_fmt, None);
         if config.sequences.is_empty() {
             return Err(
                 "No sequence found in the input directory. Please, check input is FASTA".into(),
