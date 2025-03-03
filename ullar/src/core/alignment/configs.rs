@@ -23,6 +23,7 @@ pub const DEFAULT_ALIGNMENT_CONFIG: &str = "sequence_alignment";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AlignmentConfig {
+    #[serde(flatten)]
     pub app: UllarConfig,
     pub input: SequenceInput,
     pub dependencies: BTreeMap<String, DepMetadata>,

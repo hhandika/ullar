@@ -18,6 +18,7 @@ pub const DEFAULT_ML_INFERENCE_CONFIG: &str = "ml_inference";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct TreeInferenceConfig {
+    #[serde(flatten)]
     pub app: UllarConfig,
     pub input_dir: PathBuf,
     pub methods: Vec<TreeInferenceMethod>,
