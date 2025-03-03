@@ -57,7 +57,7 @@ impl<'a> IqtreeMetadata<'a> {
         Some(DepMetadata {
             name,
             version,
-            executable,
+            executable: Some(executable),
             override_args: self.override_args.map(|s| s.to_string()),
         })
     }

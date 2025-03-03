@@ -56,7 +56,7 @@ impl<'a> MafftMetadata<'a> {
         Some(DepMetadata {
             name: self.name.clone(),
             version,
-            executable: MAFFT_EXE.to_string(),
+            executable: Some(MAFFT_EXE.to_string()),
             override_args: self.override_args.map(|s| s.to_string()),
         })
     }

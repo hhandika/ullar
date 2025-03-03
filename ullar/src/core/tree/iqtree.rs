@@ -15,7 +15,7 @@ use segul::{
 };
 
 use crate::{
-    core::deps::{iqtree::IqtreeMetadata, DepMetadata},
+    core::deps::{iqtree::IQTREE2_EXE, DepMetadata},
     types::alignments::AlignmentFiles,
 };
 
@@ -90,7 +90,7 @@ impl<'a> MlIqTree<'a> {
 
     fn run_iqtree(&self, alignment: &Path, partition: &Path, output_path: &Path) -> Output {
         let iqtree = IqTree::new(self.iqtree_meta);
-        let mut out = Command::new(iqtree.get_executable_name());
+        let mut out = Command::new(IQTREE2_EXE);
         out.arg("-s")
             .arg(alignment)
             .arg("-q")
@@ -110,25 +110,13 @@ impl<'a> MlIqTree<'a> {
 }
 
 struct IqTree<'a> {
-    executable: Option<&'a str>,
     override_args: Option<&'a str>,
 }
 
 impl<'a> IqTree<'a> {
     fn new(meta: Option<&'a DepMetadata>) -> Self {
-        let executable = meta.map(|m| m.executable.as_str());
         let override_args = meta.and_then(|m| m.override_args.as_deref());
-        Self {
-            executable,
-            override_args,
-        }
-    }
-
-    fn get_executable_name(&self) -> String {
-        match self.executable {
-            Some(exe) => exe.to_string(),
-            None => self.try_get_executable(),
-        }
+        Self { override_args }
     }
 
     fn get_models(&self) -> String {
@@ -153,15 +141,6 @@ impl<'a> IqTree<'a> {
         let bs = re.captures(args).expect("Failed to capture thread value");
         bs.name("value").unwrap().as_str().to_string()
     }
-
-    fn try_get_executable(&self) -> String {
-        let meta = IqtreeMetadata::new(None);
-        let dep = meta.get();
-        match dep {
-            Some(d) => d.executable,
-            None => panic!("Failed to execute IQ-TREE. Please, check your IQ-TREE installation."),
-        }
-    }
 }
 
 #[cfg(test)]
@@ -171,7 +150,6 @@ mod tests {
     macro_rules! init {
         ($iqtree: ident) => {
             let $iqtree = IqTree {
-                executable: None,
                 override_args: None,
             };
         };

@@ -64,18 +64,19 @@ pub fn check_dependency_match(dep: &DepMetadata, version: &str) {
 pub struct DepMetadata {
     pub name: String,
     pub version: String,
-    pub executable: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub executable: Option<String>,
     /// Additional arguments/flags for the executable
     #[serde(skip_serializing_if = "Option::is_none")]
     pub override_args: Option<String>,
 }
 
 impl DepMetadata {
-    pub fn new(name: &str, version: &str, executable: &str) -> Self {
+    pub fn new(name: &str, version: &str, executable: Option<&str>) -> Self {
         Self {
             name: name.to_string(),
             version: version.to_string(),
-            executable: executable.to_string(),
+            executable: executable.map(|s| s.to_string()),
             override_args: None,
         }
     }

@@ -32,7 +32,7 @@ impl<'a> SpadesMetadata<'a> {
         Some(DepMetadata {
             name: "SPAdes".to_string(),
             version: version.to_string(),
-            executable,
+            executable: Some(executable),
             override_args: self.override_args.map(|s| s.to_string()),
         })
     }

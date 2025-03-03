@@ -32,7 +32,7 @@ impl<'a> LastzMetadata<'a> {
         Some(DepMetadata {
             name: "LASTZ".to_string(),
             version: version.to_string(),
-            executable: LASTZ_EXE.to_string(),
+            executable: Some(LASTZ_EXE.to_string()),
             override_args: self.override_args.map(|s| s.to_string()),
         })
     }
