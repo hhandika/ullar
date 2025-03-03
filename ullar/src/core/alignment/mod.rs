@@ -116,13 +116,21 @@ impl<'a> SequenceAlignment<'a> {
     fn log_input(&self, config: &AlignmentConfig) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config path", self.config_path.display());
-        log::info!("{:18}: {}", "Sample counts", config.sample_counts);
-        log::info!("{:18}: {}", "File found", config.file_summary.total_found);
-        log::info!("{:18}: {}", "File skipped", config.file_summary.skipped);
+        log::info!(
+            "{:18}: {}",
+            "Sample counts",
+            config.input_summary.sample_counts
+        );
+        log::info!("{:18}: {}", "File found", config.input_summary.total_files);
+        log::info!(
+            "{:18}: {}",
+            "File skipped",
+            config.input_summary.file_skipped
+        );
         log::info!(
             "{:18}: {}",
             "Final file count",
-            config.file_summary.final_count
+            config.input_summary.file_counts
         );
         log::info!("{:18}: {}", "Task", self.task);
         self.log_mafft_info();

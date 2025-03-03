@@ -16,6 +16,10 @@ pub fn get_api_version() -> String {
     crate_version!().to_string()
 }
 
+pub fn get_timestamp() -> String {
+    Local::now().format("%Y-%m-%d %H:%M:%S").to_string()
+}
+
 #[cfg(not(tarpaulin_include))]
 pub fn init_spinner() -> ProgressBar {
     let spin = ProgressBar::new_spinner();
@@ -153,7 +157,7 @@ impl SystemInfo {
             cores: 0,
             threads: 0,
             total_memory: String::new(),
-            timestamp: String::new(),
+            timestamp: get_timestamp(),
         }
     }
 
@@ -167,7 +171,6 @@ impl SystemInfo {
         self.get_cores();
         self.get_thread_count();
         self.get_memory();
-        self.get_timestamp();
     }
 
     pub fn get_system_info(&mut self) {
@@ -205,9 +208,5 @@ impl SystemInfo {
     fn get_memory(&mut self) {
         let total_memory = self.info.total_memory();
         self.total_memory = Size::from_bytes(total_memory).to_string();
-    }
-
-    fn get_timestamp(&mut self) {
-        self.timestamp = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
     }
 }

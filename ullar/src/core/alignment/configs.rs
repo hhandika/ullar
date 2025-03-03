@@ -5,16 +5,14 @@ use std::{
 };
 
 use rayon::prelude::*;
-use segul::helper::{
-    finder::{IDs, SeqFileFinder},
-    types::{DataType, InputFmt},
-};
+use segul::helper::{finder::SeqFileFinder, types::InputFmt};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     core::deps::DepMetadata,
     helper::{
         alignments::{CandidateAlignmentSummary, FilteredSequenceFiles},
+        common::get_timestamp,
         configs::{generate_config_output_path, PreviousStep},
         files::FileMetadata,
     },
@@ -25,11 +23,11 @@ pub const DEFAULT_ALIGNMENT_CONFIG: &str = "sequence_alignment";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AlignmentConfig {
-    pub file_summary: CandidateAlignmentSummary,
-    pub sample_counts: usize,
+    pub input_summary: CandidateAlignmentSummary,
     pub previous_step: PreviousStep,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub override_args: Option<String>,
+    pub timestamp: String,
     pub sequences: Vec<FileMetadata>,
 }
 
@@ -41,22 +39,26 @@ impl AlignmentConfig {
         sequences: Vec<FileMetadata>,
     ) -> Self {
         Self {
-            file_summary: CandidateAlignmentSummary::default(),
-            sample_counts: 0,
+            input_summary: CandidateAlignmentSummary::default(),
             previous_step: PreviousStep::with_dependencies(task, dependencies),
             override_args,
+            timestamp: get_timestamp(),
             sequences,
         }
     }
 
-    pub fn init(&mut self, input_dir: &Path, previous_step: Option<PreviousStep>) {
-        let sequence_files = self.find_files(input_dir);
+    pub fn init(
+        &mut self,
+        input_dir: &Path,
+        input_fmt: Option<&InputFmt>,
+        previous_step: Option<PreviousStep>,
+    ) {
+        let sequence_files = self.find_files(input_dir, input_fmt);
         match previous_step {
             Some(step) => self.previous_step = step,
             None => self.previous_step = PreviousStep::new(Task::Unknown),
         }
-        self.file_summary = sequence_files.summary;
-        self.sample_counts = self.count_samples(&sequence_files.final_files);
+        self.input_summary = sequence_files.summary;
         self.sequences = self.get_metadata(&sequence_files.final_files);
     }
 
@@ -94,23 +96,20 @@ impl AlignmentConfig {
         Ok(output_path)
     }
 
-    fn find_files(&self, input_dir: &Path) -> FilteredSequenceFiles {
-        let input_format = InputFmt::Fasta;
+    fn find_files(&self, input_dir: &Path, format: Option<&InputFmt>) -> FilteredSequenceFiles {
+        let input_format = format.unwrap_or(&InputFmt::Auto);
         let sequence_files = SeqFileFinder::new(input_dir).find_recursive_only(&input_format);
-        self.filter_problematic_contigs(&sequence_files)
+        self.filter_problematic_contigs(input_dir, &sequence_files)
     }
 
-    fn filter_problematic_contigs(&self, contigs: &[PathBuf]) -> FilteredSequenceFiles {
-        let mut filtered_contigs = FilteredSequenceFiles::new();
+    fn filter_problematic_contigs(
+        &self,
+        input_dir: &Path,
+        contigs: &[PathBuf],
+    ) -> FilteredSequenceFiles {
+        let mut filtered_contigs = FilteredSequenceFiles::new(input_dir);
         filtered_contigs.filter_single_sequence(contigs);
         filtered_contigs
-    }
-
-    fn count_samples(&self, sequence_files: &[PathBuf]) -> usize {
-        let format = InputFmt::Auto;
-        let datatype = DataType::Dna;
-        let unique_ids = IDs::new(sequence_files, &format, &datatype).id_unique();
-        unique_ids.len()
     }
 
     fn get_metadata(&self, sequence_files: &[PathBuf]) -> Vec<FileMetadata> {

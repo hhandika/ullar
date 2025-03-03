@@ -64,19 +64,19 @@ pub struct CommonInitArgs {
     /// Default used 3: genus_species_museumNumber
     #[arg(short, long, help = "Word length for sample names")]
     pub length: Option<usize>,
-    /// Specify regex to match raw read file names
+    /// Specify regex to match filenames
     /// Default used internal regex to match fastq and fastq.gz files
     #[arg(
         long,
         require_equals = true,
-        help = "Specify file extension to match raw read files. Support regex."
+        help = "Specify input file extension to match. Support regex."
     )]
     pub extension: Option<String>,
     /// Optional parameters for runner
     #[arg(
         long,
         require_equals = true,
-        help = "Optional parameters for the assembly process"
+        help = "Optional parameters for the runner"
     )]
     pub override_args: Option<String>,
     /// Specify regex to match sample names
