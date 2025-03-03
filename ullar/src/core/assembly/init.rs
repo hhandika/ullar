@@ -14,7 +14,7 @@ use crate::{
     cli::commands::{assembly::AssemblyInitArgs, common::CommonInitArgs},
     helper::{
         common,
-        fastq::{FastqConfigSummary, ReadAssignmentStrategy},
+        fastq::{FastqInput, ReadAssignmentStrategy},
         files::FileFinder,
     },
     types::{
@@ -113,8 +113,8 @@ impl<'a> AssemblyInit<'a> {
         file_counts: usize,
     ) -> Result<PathBuf, Box<dyn Error>> {
         let strategy = ReadAssignmentStrategy::from_arg(&self.common);
-        let input_summary = FastqConfigSummary::new(records.len(), file_counts, strategy);
-        let mut config = AssemblyConfig::new(self.input_dir, input_summary, records.to_vec());
+        let input_summary = FastqInput::new(self.input_dir, records.len(), file_counts, strategy);
+        let mut config = AssemblyConfig::new(input_summary, records.to_vec());
         let output_path = config.to_toml(self.common.override_args.as_deref())?;
         Ok(output_path)
     }

@@ -11,15 +11,15 @@ use serde::{Deserialize, Serialize};
 /// Data structure to filter
 ///     problematic contigs.
 #[derive(Debug, Default, Serialize, Deserialize)]
-pub struct FilteredSequenceFiles {
-    pub summary: CandidateAlignmentSummary,
+pub struct FilteredSequenceInput {
+    pub input: SequenceInput,
     pub final_files: Vec<PathBuf>,
 }
 
-impl FilteredSequenceFiles {
+impl FilteredSequenceInput {
     pub fn new(input_dir: &Path) -> Self {
         Self {
-            summary: CandidateAlignmentSummary::new(input_dir),
+            input: SequenceInput::new(input_dir),
             final_files: Vec::new(),
         }
     }
@@ -32,7 +32,7 @@ impl FilteredSequenceFiles {
             .map(|contig| contig.to_path_buf())
             .collect();
         let sample_count = self.count_samples(&self.final_files);
-        self.summary
+        self.input
             .count(total_found, self.final_files.len(), sample_count);
     }
 
@@ -59,7 +59,7 @@ impl FilteredSequenceFiles {
 }
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
-pub struct CandidateAlignmentSummary {
+pub struct SequenceInput {
     pub input_dir: PathBuf,
     pub sample_counts: usize,
     pub total_files: usize,
@@ -69,7 +69,7 @@ pub struct CandidateAlignmentSummary {
     pub file_counts: usize,
 }
 
-impl CandidateAlignmentSummary {
+impl SequenceInput {
     pub fn new(input_dir: &Path) -> Self {
         Self {
             input_dir: input_dir.to_path_buf(),
@@ -98,23 +98,23 @@ mod tests {
 
     #[test]
     fn test_candidate_alignment_summary() {
-        let mut summary = CandidateAlignmentSummary::new(Path::new("tests/data/alignments"));
-        summary.count(10, 2, 1);
-        assert_eq!(summary.total_files, 10);
-        assert_eq!(summary.file_skipped, 8);
-        assert_eq!(summary.file_counts, 2);
-        assert_eq!(summary.sample_counts, 1);
+        let mut input = SequenceInput::new(Path::new("tests/data/alignments"));
+        input.count(10, 2, 1);
+        assert_eq!(input.total_files, 10);
+        assert_eq!(input.file_skipped, 8);
+        assert_eq!(input.file_counts, 2);
+        assert_eq!(input.sample_counts, 1);
     }
 
     #[test]
     fn test_filtered_contigs() {
         let path = Path::new("tests/data/alignments");
         let files = SeqFileFinder::new(&path).find(&InputFmt::Auto);
-        let mut filter = FilteredSequenceFiles::new(path);
+        let mut filter = FilteredSequenceInput::new(path);
         filter.filter_single_sequence(&files);
-        assert_eq!(filter.summary.total_files, 4);
-        assert_eq!(filter.summary.file_skipped, 1);
+        assert_eq!(filter.input.total_files, 4);
+        assert_eq!(filter.input.file_skipped, 1);
         assert_eq!(filter.final_files.len(), 3);
-        assert_eq!(filter.summary.sample_counts, 3);
+        assert_eq!(filter.input.sample_counts, 3);
     }
 }

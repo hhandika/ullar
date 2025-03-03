@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::core::deps::fastp::FastpMetadata;
 use crate::core::deps::DepMetadata;
 use crate::helper::configs::generate_config_output_path;
-use crate::helper::fastq::FastqConfigSummary;
+use crate::helper::fastq::FastqInput;
 use crate::types::reads::FastqReads;
 
 pub const DEFAULT_READ_CLEANING_CONFIG: &str = "read_cleaning";
@@ -20,8 +20,7 @@ pub enum FileMatchingStrategy {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CleanReadConfig {
-    pub input_dir: PathBuf,
-    pub input_summary: FastqConfigSummary,
+    pub input: FastqInput,
     pub dependencies: DepMetadata,
     pub samples: Vec<FastqReads>,
 }
@@ -29,8 +28,7 @@ pub struct CleanReadConfig {
 impl Default for CleanReadConfig {
     fn default() -> Self {
         Self {
-            input_dir: PathBuf::new(),
-            input_summary: FastqConfigSummary::default(),
+            input: FastqInput::default(),
             dependencies: DepMetadata::default(),
             samples: Vec::new(),
         }
@@ -38,14 +36,9 @@ impl Default for CleanReadConfig {
 }
 
 impl CleanReadConfig {
-    pub fn new(
-        input_dir: &Path,
-        input_summary: FastqConfigSummary,
-        samples: Vec<FastqReads>,
-    ) -> Self {
+    pub fn new(input: FastqInput, samples: Vec<FastqReads>) -> Self {
         Self {
-            input_dir: input_dir.to_path_buf(),
-            input_summary,
+            input,
             dependencies: DepMetadata::default(),
             samples,
         }
@@ -111,8 +104,8 @@ mod tests {
         let input = PathBuf::from("datasets/rawreads/");
         let sample_name = "Bunomys_chrysocomus_ABCD1234";
 
-        assert_eq!(config.input_dir, input);
-        assert_eq!(config.input_summary.sample_counts, 1);
+        assert_eq!(config.input.input_dir, input);
+        assert_eq!(config.input.sample_counts, 1);
         assert_eq!(config.samples.len(), 1);
         assert_eq!(config.dependencies.name, "fastp");
         assert_eq!(config.dependencies.version, "0.23.4");

@@ -67,31 +67,19 @@ impl<'a> AlignmentInit<'a> {
         log::info!("{}", "Output".cyan());
         log::info!("{:18}: {}", "Config directory", self.output_dir.display());
         log::info!("{:18}: {}", "Config file", config_path.display());
-        log::info!(
-            "{:18}: {}",
-            "Sample counts",
-            config.input_summary.sample_counts
-        );
-        log::info!("{:18}: {}", "File found", config.input_summary.total_files);
-        log::info!(
-            "{:18}: {}",
-            "File skipped",
-            config.input_summary.file_skipped
-        );
-        log::info!(
-            "{:18}: {}\n",
-            "Final file count",
-            config.input_summary.file_counts
-        );
+        log::info!("{:18}: {}", "Sample counts", config.input.sample_counts);
+        log::info!("{:18}: {}", "File found", config.input.total_files);
+        log::info!("{:18}: {}", "File skipped", config.input.file_skipped);
+        log::info!("{:18}: {}\n", "Final file count", config.input.file_counts);
         self.log_info_skipped_msg(config);
     }
 
     fn log_info_skipped_msg(&self, config: &AlignmentConfig) {
-        if config.input_summary.file_skipped > 0 {
+        if config.input.file_skipped > 0 {
             let mut table = Table::new();
             let msg = format!(
                 "Skipped {} file(s) because it contains less than 2 sequences",
-                config.input_summary.file_skipped.to_string().yellow()
+                config.input.file_skipped.to_string().yellow()
             );
             table.add_row(vec![msg]);
             log::warn!("\n{}\n", table);

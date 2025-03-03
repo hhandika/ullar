@@ -8,7 +8,7 @@ use colored::Colorize;
 use crate::cli::commands::clean::ReadCleaningInitArgs;
 use crate::cli::commands::common::CommonInitArgs;
 use crate::helper::common;
-use crate::helper::fastq::{FastqConfigSummary, ReadAssignmentStrategy};
+use crate::helper::fastq::{FastqInput, ReadAssignmentStrategy};
 use crate::helper::files::FileFinder;
 use crate::types::reads::{FastqReads, ReadAssignment, SampleNameFormat};
 use crate::types::SupportedFormats;
@@ -83,8 +83,8 @@ impl<'a> ReadCleaningInit<'a> {
         file_counts: usize,
     ) -> Result<PathBuf, Box<dyn Error>> {
         let strategy = ReadAssignmentStrategy::from_arg(self.common);
-        let input_summary = FastqConfigSummary::new(records.len(), file_counts, strategy);
-        let mut config = CleanReadConfig::new(self.input_dir, input_summary, records.to_vec());
+        let input_summary = FastqInput::new(self.input_dir, records.len(), file_counts, strategy);
+        let mut config = CleanReadConfig::new(input_summary, records.to_vec());
         let output_path = config.to_toml(self.common.override_args.as_deref())?;
         Ok(output_path)
     }
