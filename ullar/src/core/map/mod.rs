@@ -72,7 +72,7 @@ impl<'a> ContigMapping<'a> {
 
     fn run_lastz(&self, config: &ContigMappingConfig) -> Vec<MappingData> {
         let lastz = LastzMapping::new(
-            &config.reference,
+            &config.sequence_reference,
             self.output_dir,
             self.runner.override_args,
         );
@@ -84,7 +84,7 @@ impl<'a> ContigMapping<'a> {
         data: &[MappingData],
         config: &ContigMappingConfig,
     ) -> FinalMappingSummary {
-        MappedContigWriter::new(data, self.output_dir, &config.reference).generate()
+        MappedContigWriter::new(data, self.output_dir, &config.sequence_reference).generate()
     }
 
     fn log_input(&self, file_count: usize, aligner: &Aligner) {
