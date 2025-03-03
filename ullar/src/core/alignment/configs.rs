@@ -1,4 +1,5 @@
 use std::{
+    collections::BTreeMap,
     error::Error,
     fs::{self, File},
     path::{Path, PathBuf},
@@ -9,55 +10,38 @@ use segul::helper::{finder::SeqFileFinder, types::InputFmt};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    core::deps::DepMetadata,
+    core::deps::{mafft::MafftMetadata, segul::get_segul_metadata, DepMetadata},
     helper::{
         alignments::{CandidateAlignmentSummary, FilteredSequenceFiles},
         common::get_timestamp,
-        configs::{generate_config_output_path, PreviousStep},
+        configs::generate_config_output_path,
         files::FileMetadata,
     },
-    types::Task,
 };
 
 pub const DEFAULT_ALIGNMENT_CONFIG: &str = "sequence_alignment";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AlignmentConfig {
-    pub input_summary: CandidateAlignmentSummary,
-    pub previous_step: PreviousStep,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub override_args: Option<String>,
     pub timestamp: String,
+    pub input_summary: CandidateAlignmentSummary,
+    pub dependencies: BTreeMap<String, DepMetadata>,
     pub sequences: Vec<FileMetadata>,
 }
 
 impl AlignmentConfig {
-    pub fn new(
-        task: Task,
-        dependencies: Vec<DepMetadata>,
-        override_args: Option<String>,
-        sequences: Vec<FileMetadata>,
-    ) -> Self {
+    pub fn new(sequences: Vec<FileMetadata>) -> Self {
         Self {
             input_summary: CandidateAlignmentSummary::default(),
-            previous_step: PreviousStep::with_dependencies(task, dependencies),
-            override_args,
+            dependencies: BTreeMap::new(),
             timestamp: get_timestamp(),
             sequences,
         }
     }
 
-    pub fn init(
-        &mut self,
-        input_dir: &Path,
-        input_fmt: &InputFmt,
-        previous_step: Option<PreviousStep>,
-    ) {
+    pub fn init(&mut self, input_dir: &Path, input_fmt: &InputFmt) {
+        self.timestamp = get_timestamp();
         let sequence_files = self.find_files(input_dir, input_fmt);
-        match previous_step {
-            Some(step) => self.previous_step = step,
-            None => self.previous_step = PreviousStep::new(Task::Unknown),
-        }
         self.input_summary = sequence_files.summary;
         self.sequences = self.get_metadata(&sequence_files.final_files);
     }
@@ -80,7 +64,8 @@ impl AlignmentConfig {
         Ok(config)
     }
 
-    pub fn to_toml(&self) -> Result<PathBuf, Box<dyn Error>> {
+    pub fn to_toml(&mut self, override_args: Option<&str>) -> Result<PathBuf, Box<dyn Error>> {
+        self.get_dependency(override_args);
         let output_path = generate_config_output_path(DEFAULT_ALIGNMENT_CONFIG);
         let config = toml::to_string_pretty(self)?;
         fs::write(&output_path, config)?;
@@ -89,7 +74,8 @@ impl AlignmentConfig {
 
     /// Get raw loci files
     #[deprecated(since = "0.5.0", note = "Use `to_toml` instead")]
-    pub fn to_yaml(&self) -> Result<PathBuf, Box<dyn Error>> {
+    pub fn to_yaml(&mut self, override_args: Option<&str>) -> Result<PathBuf, Box<dyn Error>> {
+        self.get_dependency(override_args);
         let output_path = generate_config_output_path(DEFAULT_ALIGNMENT_CONFIG);
         let writer = File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
@@ -120,5 +106,19 @@ impl AlignmentConfig {
                 file
             })
             .collect()
+    }
+
+    fn get_dependency(&mut self, override_args: Option<&str>) {
+        let mafft = MafftMetadata::new(override_args).get();
+
+        match mafft {
+            Some(metadata) => self
+                .dependencies
+                .insert(metadata.name.to_lowercase(), metadata),
+            None => panic!("MAFFT dependency not found. Please install MAFFT."),
+        };
+
+        let segul = get_segul_metadata();
+        self.dependencies.insert(segul.name.to_lowercase(), segul);
     }
 }
