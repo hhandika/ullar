@@ -6,7 +6,10 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{core::deps::iqtree::IqtreeMetadata, types::alignments::AlignmentFiles};
+use crate::{
+    core::deps::iqtree::IqtreeMetadata, helper::common::UllarConfig,
+    types::alignments::AlignmentFiles,
+};
 use crate::{
     core::deps::DepMetadata, helper::configs::generate_config_output_path,
     types::TreeInferenceMethod,
@@ -17,6 +20,7 @@ pub const DEFAULT_ML_INFERENCE_CONFIG: &str = "ml_inference";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct TreeInferenceConfig {
+    pub app: UllarConfig,
     pub input_dir: PathBuf,
     pub methods: Vec<TreeInferenceMethod>,
     pub dependencies: Vec<DepMetadata>,
@@ -30,6 +34,7 @@ impl TreeInferenceConfig {
         alignments: AlignmentFiles,
     ) -> Self {
         Self {
+            app: UllarConfig::default(),
             input_dir: input_dir.to_path_buf(),
             methods,
             dependencies: Vec::new(),

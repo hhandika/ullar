@@ -12,7 +12,7 @@ use crate::{
         clean::reports::CleanReadReport,
         deps::{spades::SpadesMetadata, DepMetadata},
     },
-    helper::{configs::generate_config_output_path, fastq::FastqInput},
+    helper::{common::UllarConfig, configs::generate_config_output_path, fastq::FastqInput},
     types::reads::FastqReads,
 };
 
@@ -21,6 +21,8 @@ pub const DEFAULT_ASSEMBLY_CONFIG: &str = "denovo_assembly";
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct AssemblyConfig {
+    #[serde(flatten)]
+    pub app: UllarConfig,
     pub input: FastqInput,
     pub dependencies: DepMetadata,
     pub samples: Vec<FastqReads>,
@@ -29,6 +31,7 @@ pub struct AssemblyConfig {
 impl Default for AssemblyConfig {
     fn default() -> Self {
         Self {
+            app: UllarConfig::default(),
             input: FastqInput::default(),
             dependencies: DepMetadata::default(),
             samples: Vec::new(),
@@ -39,6 +42,7 @@ impl Default for AssemblyConfig {
 impl AssemblyConfig {
     pub fn new(input: FastqInput, samples: Vec<FastqReads>) -> Self {
         Self {
+            app: UllarConfig::default(),
             input,
             dependencies: DepMetadata::default(),
             samples,

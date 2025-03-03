@@ -13,7 +13,7 @@ use crate::{
     core::deps::{mafft::MafftMetadata, segul::get_segul_metadata, DepMetadata},
     helper::{
         alignments::{FilteredSequenceInput, SequenceInput},
-        common::get_timestamp,
+        common::UllarConfig,
         configs::generate_config_output_path,
         files::FileMetadata,
     },
@@ -23,7 +23,7 @@ pub const DEFAULT_ALIGNMENT_CONFIG: &str = "sequence_alignment";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AlignmentConfig {
-    pub timestamp: String,
+    pub app: UllarConfig,
     pub input: SequenceInput,
     pub dependencies: BTreeMap<String, DepMetadata>,
     pub sequences: Vec<FileMetadata>,
@@ -32,15 +32,14 @@ pub struct AlignmentConfig {
 impl AlignmentConfig {
     pub fn new(sequences: Vec<FileMetadata>) -> Self {
         Self {
+            app: UllarConfig::default(),
             input: SequenceInput::default(),
             dependencies: BTreeMap::new(),
-            timestamp: get_timestamp(),
             sequences,
         }
     }
 
     pub fn init(&mut self, input_dir: &Path, input_fmt: &InputFmt) {
-        self.timestamp = get_timestamp();
         let sequence_files = self.find_files(input_dir, input_fmt);
         self.input = sequence_files.input;
         self.sequences = self.get_metadata(&sequence_files.final_files);
