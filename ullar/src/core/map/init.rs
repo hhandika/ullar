@@ -41,6 +41,7 @@ pub struct InitMappingConfig<'a> {
     pub refname_regex: &'a str,
     /// Sample name regex
     pub sample_name_regex: &'a str,
+    pub override_args: Option<&'a str>,
 }
 
 impl Default for InitMappingConfig<'_> {
@@ -54,6 +55,7 @@ impl Default for InitMappingConfig<'_> {
             config_name: DEFAULT_REF_MAPPING_CONFIG,
             refname_regex: UCE_REGEX,
             sample_name_regex: CONTIG_SAMPLE_REGEX,
+            override_args: None,
         }
     }
 }
@@ -69,6 +71,7 @@ impl<'a> InitMappingConfig<'a> {
             config_name: &args.config_name,
             refname_regex: &args.re_reference,
             sample_name_regex: &args.re_sample,
+            override_args: args.common.override_args.as_deref(),
         }
     }
 
@@ -109,7 +112,8 @@ impl<'a> InitMappingConfig<'a> {
                 "No sequence found in the input directory. Please, check input is FASTA".into(),
             );
         }
-        let output_path = config.to_toml(self.config_name, self.reference_path)?;
+        let output_path =
+            config.to_toml(self.config_name, self.reference_path, self.override_args)?;
         Ok((output_path, config))
     }
 

@@ -2,6 +2,42 @@ use std::{fmt::Display, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum Aligner {
+    Exonerate,
+    Lastz,
+    Minimap,
+}
+
+impl Default for Aligner {
+    fn default() -> Self {
+        Aligner::Lastz
+    }
+}
+
+impl Display for Aligner {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Aligner::Lastz => write!(f, "Lastz"),
+            Aligner::Exonerate => write!(f, "Exonerate"),
+            Aligner::Minimap => write!(f, "Minimap"),
+        }
+    }
+}
+
+impl FromStr for Aligner {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "lastz" => Ok(Aligner::Lastz),
+            "exonerate" => Ok(Aligner::Exonerate),
+            "minimap" => Ok(Aligner::Minimap),
+            _ => Err(format!("Invalid aligner: {}", s)),
+        }
+    }
+}
+
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MappingQueryFormat {
     #[default]
@@ -31,12 +67,12 @@ impl FromStr for MappingQueryFormat {
 }
 
 /// Lastz support many output formats.
-/// We only support the most commoly used formats.
+/// We only support the most commonly used formats.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum LastzOutputFormat {
     /// Lastz general output format. The output
     /// is a tab-delimited format. If the string
-    /// is empty, the dafault lastz fields will be used.
+    /// is empty, the default lastz fields will be used.
     General(String),
     /// Multiple alignment format. A line oriented format
     /// to store multiple sequence alignments.
