@@ -50,7 +50,7 @@ impl AlignmentConfig {
     pub fn init(
         &mut self,
         input_dir: &Path,
-        input_fmt: Option<&InputFmt>,
+        input_fmt: &InputFmt,
         previous_step: Option<PreviousStep>,
     ) {
         let sequence_files = self.find_files(input_dir, input_fmt);
@@ -96,9 +96,8 @@ impl AlignmentConfig {
         Ok(output_path)
     }
 
-    fn find_files(&self, input_dir: &Path, format: Option<&InputFmt>) -> FilteredSequenceFiles {
-        let input_format = format.unwrap_or(&InputFmt::Auto);
-        let sequence_files = SeqFileFinder::new(input_dir).find_recursive_only(&input_format);
+    fn find_files(&self, input_dir: &Path, format: &InputFmt) -> FilteredSequenceFiles {
+        let sequence_files = SeqFileFinder::new(input_dir).find_recursive_only(format);
         self.filter_problematic_contigs(input_dir, &sequence_files)
     }
 
