@@ -1,3 +1,7 @@
+timestamp = "2025-03-03 17:12:35"
+ullar_version = "0.5.0"
+
+# This is a comment
 [input]
 input_dir = "datasets/rawreads/"
 sample_counts = 1
