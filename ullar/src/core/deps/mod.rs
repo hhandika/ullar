@@ -12,6 +12,7 @@ pub mod fastp;
 pub mod iqtree;
 pub mod lastz;
 pub mod mafft;
+pub mod segul;
 pub mod spades;
 
 pub enum Dependency {
@@ -67,6 +68,17 @@ pub struct DepMetadata {
     /// Additional arguments/flags for the executable
     #[serde(skip_serializing_if = "Option::is_none")]
     pub override_args: Option<String>,
+}
+
+impl DepMetadata {
+    pub fn new(name: &str, version: &str, executable: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            version: version.to_string(),
+            executable: executable.to_string(),
+            override_args: None,
+        }
+    }
 }
 
 pub struct DependencyCheck {

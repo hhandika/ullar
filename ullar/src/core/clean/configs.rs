@@ -21,7 +21,6 @@ pub enum FileMatchingStrategy {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CleanReadConfig {
     pub input_dir: PathBuf,
-    #[serde(flatten)]
     pub input_summary: FastqConfigSummary,
     pub dependencies: DepMetadata,
     pub samples: Vec<FastqReads>,
@@ -95,7 +94,7 @@ impl CleanReadConfig {
         match dep {
             Some(metadata) => self.dependencies = metadata,
             None => {
-                panic!("Fastp dependency not found. Please, install fastp first");
+                panic!("Fastp dependency not found. Please, install fastp");
             }
         }
     }

@@ -15,6 +15,7 @@ pub struct AlignmentInit<'a> {
     pub input_dir: &'a Path,
     pub output_dir: &'a Path,
     pub input_fmt: InputFmt,
+    pub override_args: Option<&'a str>,
 }
 
 impl<'a> AlignmentInit<'a> {
@@ -26,6 +27,7 @@ impl<'a> AlignmentInit<'a> {
                 .input_fmt
                 .parse::<InputFmt>()
                 .expect("Invalid input format"),
+            override_args: args.common.override_args.as_deref(),
         }
     }
 
@@ -45,13 +47,13 @@ impl<'a> AlignmentInit<'a> {
 
     fn write_config(&self) -> Result<(PathBuf, AlignmentConfig), Box<dyn Error>> {
         let mut config = AlignmentConfig::default();
-        config.init(self.input_dir, &self.input_fmt, None);
+        config.init(self.input_dir, &self.input_fmt);
         if config.sequences.is_empty() {
             return Err(
                 "No sequence found in the input directory. Please, check input is FASTA".into(),
             );
         }
-        let output_path = config.to_toml()?;
+        let output_path = config.to_toml(self.override_args)?;
         Ok((output_path, config))
     }
 
