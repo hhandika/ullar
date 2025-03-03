@@ -52,14 +52,14 @@ pub fn init_progress_bar(len: u64) -> ProgressBar {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UllarConfig {
     pub timestamp: String,
-    pub version: String,
+    pub ullar_version: String,
 }
 
 impl Default for UllarConfig {
     fn default() -> Self {
         Self {
             timestamp: get_timestamp(),
-            version: get_api_version(),
+            ullar_version: get_api_version(),
         }
     }
 }
