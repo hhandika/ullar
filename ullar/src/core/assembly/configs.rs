@@ -21,7 +21,7 @@ pub const DEFAULT_ASSEMBLY_CONFIG: &str = "denovo_assembly";
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct AssemblyConfig {
-    pub input_summary: FastqInput,
+    pub input: FastqInput,
     pub dependencies: DepMetadata,
     pub samples: Vec<FastqReads>,
 }
@@ -29,7 +29,7 @@ pub struct AssemblyConfig {
 impl Default for AssemblyConfig {
     fn default() -> Self {
         Self {
-            input_summary: FastqInput::default(),
+            input: FastqInput::default(),
             dependencies: DepMetadata::default(),
             samples: Vec::new(),
         }
@@ -37,9 +37,9 @@ impl Default for AssemblyConfig {
 }
 
 impl AssemblyConfig {
-    pub fn new(input_summary: FastqInput, samples: Vec<FastqReads>) -> Self {
+    pub fn new(input: FastqInput, samples: Vec<FastqReads>) -> Self {
         Self {
-            input_summary,
+            input,
             dependencies: DepMetadata::default(),
             samples,
         }
@@ -135,12 +135,12 @@ impl AssemblyConfig {
     }
 
     fn get_sample_counts(&mut self) {
-        self.input_summary.sample_counts = self.samples.len();
+        self.input.sample_counts = self.samples.len();
     }
 
     fn get_file_counts(&mut self) {
         let read1 = self.samples.iter().filter(|s| s.read_1.is_some()).count();
         let read2 = self.samples.iter().filter(|s| s.read_2.is_some()).count();
-        self.input_summary.file_counts = read1 + read2;
+        self.input.file_counts = read1 + read2;
     }
 }

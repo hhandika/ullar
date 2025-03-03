@@ -1,6 +1,7 @@
 //! Miscellaneous utility functions
 use clap::{crate_description, crate_name, crate_version};
 use indicatif::{ProgressBar, ProgressStyle};
+use serde::{Deserialize, Serialize};
 use size::Size;
 use std::time::Duration;
 use sysinfo::System;
@@ -46,6 +47,21 @@ pub fn init_progress_bar(len: u64) -> ProgressBar {
             .expect("Failed to set progress bar style"),
     );
     progress_bar
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UllarConfig {
+    pub timestamp: String,
+    pub version: String,
+}
+
+impl Default for UllarConfig {
+    fn default() -> Self {
+        Self {
+            timestamp: get_timestamp(),
+            version: get_api_version(),
+        }
+    }
 }
 
 pub struct PrettyHeader {

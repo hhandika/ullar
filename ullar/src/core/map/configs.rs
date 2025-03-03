@@ -10,12 +10,12 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    core::deps::DepMetadata,
     helper::{
-        configs::{generate_config_output_path, PreviousStep},
+        common::UllarConfig,
+        configs::generate_config_output_path,
         files::{FileFinder, FileMetadata},
     },
-    types::{SupportedFormats, Task},
+    types::SupportedFormats,
 };
 
 pub const DEFAULT_REF_MAPPING_CONFIG: &str = "reference_mapping";
@@ -27,6 +27,12 @@ pub enum SampleNameSource {
     File,
     Directory,
     Regex(String),
+}
+
+impl Default for SampleNameSource {
+    fn default() -> Self {
+        SampleNameSource::File
+    }
 }
 
 impl Display for SampleNameSource {
@@ -53,59 +59,41 @@ impl FromStr for SampleNameSource {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct MappedContigConfig {
-    /// Total number of contig files
-    pub contig_file_counts: usize,
-    pub previous_step: PreviousStep,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub override_args: Option<String>,
-    /// Source of the sample name
-    /// for the mapped contigs
-    pub name_source: SampleNameSource,
-    pub reference_data: ReferenceFile,
+pub struct ContigMappingConfig {
+    #[serde(flatten)]
+    pub app: UllarConfig,
+    pub input: ContigInput,
+    pub reference: ReferenceFile,
     pub contigs: Vec<ContigFiles>,
 }
 
-impl Default for MappedContigConfig {
+impl Default for ContigMappingConfig {
     fn default() -> Self {
         Self {
-            contig_file_counts: 0,
-            previous_step: PreviousStep::default(),
-            override_args: None,
+            app: UllarConfig::default(),
+            input: ContigInput::default(),
             contigs: Vec::new(),
-            reference_data: ReferenceFile::default(),
-            name_source: SampleNameSource::File,
+            reference: ReferenceFile::default(),
         }
     }
 }
 
-impl MappedContigConfig {
-    pub fn new(
-        file_counts: usize,
-        task: Task,
-        dependencies: Vec<DepMetadata>,
-        override_args: Option<String>,
-        name_source: SampleNameSource,
-        reference_regex: &str,
-    ) -> Self {
+impl ContigMappingConfig {
+    pub fn new(reference_regex: &str) -> Self {
         Self {
-            contig_file_counts: file_counts,
-            previous_step: PreviousStep::with_dependencies(task, dependencies),
-            override_args,
+            app: UllarConfig::default(),
+            input: ContigInput::default(),
             contigs: Vec::new(),
-            name_source,
-            reference_data: ReferenceFile::new(reference_regex),
+            reference: ReferenceFile::new(reference_regex),
         }
     }
 
-    pub fn init(name_source: SampleNameSource, reference_regex: &str) -> Self {
+    pub fn init(input: ContigInput, reference_regex: &str) -> Self {
         Self {
-            contig_file_counts: 0,
-            previous_step: PreviousStep::default(),
-            override_args: None,
+            app: UllarConfig::default(),
+            input,
+            reference: ReferenceFile::new(reference_regex),
             contigs: Vec::new(),
-            name_source,
-            reference_data: ReferenceFile::new(reference_regex),
         }
     }
 
@@ -128,7 +116,7 @@ impl MappedContigConfig {
     }
 
     pub fn to_toml(&mut self, file_name: &str, ref_path: &Path) -> Result<PathBuf, Box<dyn Error>> {
-        self.reference_data.get(ref_path);
+        self.reference.get(ref_path);
         let output_path = generate_config_output_path(file_name);
         let toml = toml::to_string_pretty(&self)?;
         std::fs::write(&output_path, toml)?;
@@ -138,14 +126,15 @@ impl MappedContigConfig {
     /// Get raw loci files
     #[deprecated(since = "0.5.0", note = "Use `to_toml` instead")]
     pub fn to_yaml(&mut self, file_name: &str, ref_path: &Path) -> Result<PathBuf, Box<dyn Error>> {
-        self.reference_data.get(ref_path);
+        self.reference.get(ref_path);
         let output_path = generate_config_output_path(file_name);
         let writer = File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
         Ok(output_path)
     }
 
-    pub fn from_contig_dir(&mut self, contig_dir: &Path, previous_step: Option<PreviousStep>) {
+    pub fn from_contig_dir(&mut self, contig_dir: &Path) {
+        self.input.set_directory(contig_dir);
         let sequence_files = self.find_contig_files(contig_dir);
         if sequence_files.is_empty() {
             log::error!(
@@ -154,23 +143,21 @@ impl MappedContigConfig {
             );
             return;
         }
-        self.assign_values(&sequence_files, previous_step);
+        self.input.set_file_counts(sequence_files.len());
+        self.assign_values(&sequence_files);
     }
 
-    pub fn from_contig_paths(&mut self, contigs: &[PathBuf], previous_step: Option<PreviousStep>) {
+    pub fn from_contig_paths(&mut self, contigs: &[PathBuf]) {
         if contigs.is_empty() {
             log::warn!("No contig files found in input");
             return;
         }
-        self.assign_values(contigs, previous_step);
+        self.input.set_file_counts(contigs.len());
+        self.assign_values(contigs);
     }
 
-    fn assign_values(&mut self, contigs: &[PathBuf], previous_step: Option<PreviousStep>) {
-        self.contig_file_counts = contigs.len();
-        match previous_step {
-            Some(step) => self.previous_step = step,
-            None => self.previous_step = PreviousStep::new(Task::Unknown),
-        }
+    fn assign_values(&mut self, contigs: &[PathBuf]) {
+        self.input.file_counts = contigs.len();
         self.contigs = self.get_metadata(contigs);
     }
 
@@ -190,10 +177,37 @@ impl MappedContigConfig {
             .par_iter()
             .map(|f| {
                 let mut file = ContigFiles::new();
-                file.parse(f, &self.name_source);
+                file.parse(f, &self.input.name_source);
                 file
             })
             .collect()
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct ContigInput {
+    pub input_dir: Option<PathBuf>,
+    /// Source of the sample name
+    /// for the mapped contigs
+    pub name_source: SampleNameSource,
+    pub file_counts: usize,
+}
+
+impl ContigInput {
+    pub fn new(name_source: SampleNameSource) -> Self {
+        Self {
+            input_dir: None,
+            name_source,
+            file_counts: 0,
+        }
+    }
+
+    pub fn set_directory(&mut self, input_dir: &Path) {
+        self.input_dir = Some(input_dir.to_path_buf());
+    }
+
+    pub fn set_file_counts(&mut self, file_counts: usize) {
+        self.file_counts = file_counts;
     }
 }
 
@@ -263,6 +277,7 @@ impl ContigFiles {
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct ReferenceFile {
     pub name_regex: String,
+    #[serde(flatten)]
     pub metadata: FileMetadata,
 }
 

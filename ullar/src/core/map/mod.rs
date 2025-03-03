@@ -2,7 +2,7 @@
 use std::{error::Error, path::Path};
 
 use colored::Colorize;
-use configs::MappedContigConfig;
+use configs::ContigMappingConfig;
 use lastz::{LastzMapping, DEFAULT_LASTZ_PARAMS};
 use reports::MappingData;
 use summary::FinalMappingSummary;
@@ -74,14 +74,14 @@ impl<'a> ContigMapping<'a> {
         self.log_output(&results, &summary);
     }
 
-    fn parse_config(&self) -> Result<MappedContigConfig, Box<dyn Error>> {
-        let config = MappedContigConfig::from_toml(self.config_path)?;
+    fn parse_config(&self) -> Result<ContigMappingConfig, Box<dyn Error>> {
+        let config = ContigMappingConfig::from_toml(self.config_path)?;
         Ok(config)
     }
 
-    fn run_lastz(&self, config: &MappedContigConfig) -> Vec<MappingData> {
+    fn run_lastz(&self, config: &ContigMappingConfig) -> Vec<MappingData> {
         let lastz = LastzMapping::new(
-            &config.reference_data,
+            &config.reference,
             self.output_dir,
             self.runner.override_args,
         );
@@ -91,9 +91,9 @@ impl<'a> ContigMapping<'a> {
     fn generate_mapped_contig(
         &self,
         data: &[MappingData],
-        config: &MappedContigConfig,
+        config: &ContigMappingConfig,
     ) -> FinalMappingSummary {
-        MappedContigWriter::new(data, self.output_dir, &config.reference_data).generate()
+        MappedContigWriter::new(data, self.output_dir, &config.reference).generate()
     }
 
     fn log_input(&self, file_count: usize) {
