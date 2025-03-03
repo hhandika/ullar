@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use segul::helper::{
+    finder::IDs,
     sequence::SeqParser,
     types::{DataType, InputFmt},
 };
@@ -16,9 +17,9 @@ pub struct FilteredSequenceFiles {
 }
 
 impl FilteredSequenceFiles {
-    pub fn new() -> Self {
+    pub fn new(input_dir: &Path) -> Self {
         Self {
-            summary: CandidateAlignmentSummary::new(),
+            summary: CandidateAlignmentSummary::new(input_dir),
             final_files: Vec::new(),
         }
     }
@@ -30,7 +31,20 @@ impl FilteredSequenceFiles {
             .filter(|contig| !self.is_single_sequence(contig))
             .map(|contig| contig.to_path_buf())
             .collect();
-        self.summary.count(total_found, self.final_files.len());
+        let sample_count = self.count_samples(&self.final_files);
+        self.summary
+            .count(total_found, self.final_files.len(), sample_count);
+    }
+
+    // We use SEGUL to count the number of samples in the sequence files
+    // Input format is automatically detected
+    // because during the sequence file finding process, we already know the input format
+    // is sequence files.
+    fn count_samples(&self, sequence_files: &[PathBuf]) -> usize {
+        let format = InputFmt::Auto;
+        let datatype = DataType::Dna;
+        let unique_ids = IDs::new(sequence_files, &format, &datatype).id_unique();
+        unique_ids.len()
     }
 
     fn is_single_sequence(&self, contig: &Path) -> bool {
@@ -44,26 +58,33 @@ impl FilteredSequenceFiles {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct CandidateAlignmentSummary {
-    pub total_found: usize,
-    pub skipped: usize,
-    pub final_count: usize,
+    pub input_dir: PathBuf,
+    pub sample_counts: usize,
+    pub total_files: usize,
+    pub file_skipped: usize,
+    /// Final count of files
+    /// skipping single sequence files
+    pub file_counts: usize,
 }
 
 impl CandidateAlignmentSummary {
-    pub fn new() -> Self {
+    pub fn new(input_dir: &Path) -> Self {
         Self {
-            total_found: 0,
-            skipped: 0,
-            final_count: 0,
+            input_dir: input_dir.to_path_buf(),
+            sample_counts: 0,
+            total_files: 0,
+            file_skipped: 0,
+            file_counts: 0,
         }
     }
 
-    pub fn count(&mut self, found: usize, final_files: usize) {
-        self.total_found = found;
-        self.skipped = found - final_files;
-        self.final_count = final_files;
+    pub fn count(&mut self, found: usize, final_files: usize, samples: usize) {
+        self.sample_counts = samples;
+        self.total_files = found;
+        self.file_counts = final_files;
+        self.file_skipped = found - final_files;
     }
 }
 
@@ -77,21 +98,24 @@ mod tests {
 
     #[test]
     fn test_candidate_alignment_summary() {
-        let mut summary = CandidateAlignmentSummary::new();
-        summary.count(10, 2);
-        assert_eq!(summary.total_found, 10);
-        assert_eq!(summary.skipped, 8);
-        assert_eq!(summary.final_count, 2);
+        let mut summary = CandidateAlignmentSummary::new(Path::new("tests/data/alignments"));
+        summary.count(10, 2, 1);
+        assert_eq!(summary.total_files, 10);
+        assert_eq!(summary.file_skipped, 8);
+        assert_eq!(summary.file_counts, 2);
+        assert_eq!(summary.sample_counts, 1);
     }
 
     #[test]
     fn test_filtered_contigs() {
         let path = Path::new("tests/data/alignments");
         let files = SeqFileFinder::new(&path).find(&InputFmt::Auto);
-        let mut filter = FilteredSequenceFiles::new();
+        let mut filter = FilteredSequenceFiles::new(path);
         filter.filter_single_sequence(&files);
-        assert_eq!(filter.summary.total_found, 4);
-        assert_eq!(filter.summary.skipped, 1);
-        assert_eq!(filter.summary.final_count, 3);
+        assert_eq!(filter.summary.total_files, 4);
+        assert_eq!(filter.summary.file_skipped, 1);
+        assert_eq!(filter.summary.total_files, 3);
+        assert_eq!(filter.final_files.len(), 3);
+        assert_eq!(filter.summary.sample_counts, 3);
     }
 }

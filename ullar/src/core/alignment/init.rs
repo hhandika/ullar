@@ -4,6 +4,7 @@ use std::error::Error;
 
 use colored::Colorize;
 use comfy_table::Table;
+use segul::helper::types::InputFmt;
 
 use crate::cli::commands::alignment::AlignmentInitArgs;
 use crate::helper::common;
@@ -13,6 +14,7 @@ use super::configs::AlignmentConfig;
 pub struct AlignmentInit<'a> {
     pub input_dir: &'a Path,
     pub output_dir: &'a Path,
+    pub input_fmt: Option<InputFmt>,
 }
 
 impl<'a> AlignmentInit<'a> {
@@ -20,6 +22,10 @@ impl<'a> AlignmentInit<'a> {
         Self {
             input_dir: &args.dir,
             output_dir: &args.common.output,
+            input_fmt: args
+                .input_fmt
+                .as_deref()
+                .map(|s| s.parse().expect("Invalid input format")),
         }
     }
 
@@ -39,7 +45,7 @@ impl<'a> AlignmentInit<'a> {
 
     fn write_config(&self) -> Result<(PathBuf, AlignmentConfig), Box<dyn Error>> {
         let mut config = AlignmentConfig::default();
-        config.init(self.input_dir, None);
+        config.init(self.input_dir, self.input_fmt.as_ref(), None);
         if config.sequences.is_empty() {
             return Err(
                 "No sequence found in the input directory. Please, check input is FASTA".into(),
@@ -59,23 +65,31 @@ impl<'a> AlignmentInit<'a> {
         log::info!("{}", "Output".cyan());
         log::info!("{:18}: {}", "Config directory", self.output_dir.display());
         log::info!("{:18}: {}", "Config file", config_path.display());
-        log::info!("{:18}: {}", "Sample counts", config.sample_counts);
-        log::info!("{:18}: {}", "File found", config.file_summary.total_found);
-        log::info!("{:18}: {}", "File skipped", config.file_summary.skipped);
+        log::info!(
+            "{:18}: {}",
+            "Sample counts",
+            config.input_summary.sample_counts
+        );
+        log::info!("{:18}: {}", "File found", config.input_summary.total_files);
+        log::info!(
+            "{:18}: {}",
+            "File skipped",
+            config.input_summary.file_skipped
+        );
         log::info!(
             "{:18}: {}\n",
             "Final file count",
-            config.file_summary.final_count
+            config.input_summary.file_counts
         );
         self.log_info_skipped_msg(config);
     }
 
     fn log_info_skipped_msg(&self, config: &AlignmentConfig) {
-        if config.file_summary.skipped > 0 {
+        if config.input_summary.file_skipped > 0 {
             let mut table = Table::new();
             let msg = format!(
                 "Skipped {} file(s) because it contains less than 2 sequences",
-                config.file_summary.skipped.to_string().yellow()
+                config.input_summary.file_skipped.to_string().yellow()
             );
             table.add_row(vec![msg]);
             log::warn!("\n{}\n", table);

@@ -38,6 +38,8 @@ pub struct AlignmentInitArgs {
     /// Input directory containing the assemblies
     #[arg(short, long, help = "Input directory containing the assemblies")]
     pub dir: PathBuf,
+    #[arg(short, long, help = "Input format of the sequences")]
+    pub input_fmt: Option<String>,
     #[command(flatten)]
     pub common: CommonInitArgs,
 }
