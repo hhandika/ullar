@@ -14,7 +14,7 @@ use csv::ReaderBuilder;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::core::deps::lastz::LASTZ_EXE;
+use crate::deps::lastz::LASTZ_EXE;
 use crate::helper::common;
 use crate::types::map::{LastzNameParse, LastzOutputFormat};
 use crate::{get_file_stem, parse_override_args};

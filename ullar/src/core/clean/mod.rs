@@ -13,10 +13,10 @@ use comfy_table::Table;
 use configs::{CleanReadConfig, DEFAULT_READ_CLEANING_CONFIG};
 
 use self::reports::CleanReadReport;
-use super::deps::fastp::FastpMetadata;
-use super::deps::DepMetadata;
 use crate::cli::commands::clean::ReadCleaningArgs;
-use crate::core::deps::check_dependency_match;
+use crate::deps::check_dependency_match;
+use crate::deps::fastp::FastpMetadata;
+use crate::deps::DepMetadata;
 use crate::helper::common;
 use crate::helper::configs::{CONFIG_EXTENSION_TOML, DEFAULT_CONFIG_DIR};
 use crate::helper::fastq::FastqConfigCheck;

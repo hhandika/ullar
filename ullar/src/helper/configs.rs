@@ -5,7 +5,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{core::deps::DepMetadata, types::Task};
+use crate::{deps::DepMetadata, types::Task};
 
 pub const DEFAULT_CONFIG_DIR: &str = "configs";
 pub const CONFIG_EXTENSION_TOML: &str = "toml";
