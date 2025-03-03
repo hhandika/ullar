@@ -5,8 +5,8 @@ use std::{error::Error, path::Path};
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
-use crate::core::deps::fastp::FastpMetadata;
-use crate::core::deps::DepMetadata;
+use crate::deps::fastp::FastpMetadata;
+use crate::deps::DepMetadata;
 use crate::helper::common::UllarConfig;
 use crate::helper::configs::generate_config_output_path;
 use crate::helper::fastq::FastqInput;

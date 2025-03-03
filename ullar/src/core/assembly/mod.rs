@@ -23,7 +23,7 @@ use crate::{
 
 use self::reports::SpadeReports;
 
-use super::deps::{check_dependency_match, spades::SpadesMetadata, DepMetadata};
+use crate::deps::{check_dependency_match, spades::SpadesMetadata, DepMetadata};
 
 pub mod configs;
 pub mod init;

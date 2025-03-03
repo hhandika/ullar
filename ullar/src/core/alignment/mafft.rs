@@ -4,7 +4,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use crate::core::deps::mafft::MAFFT_EXE;
+use crate::deps::mafft::MAFFT_EXE;
 use crate::helper::files::FileMetadata;
 use crate::parse_override_args;
 

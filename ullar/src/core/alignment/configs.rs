@@ -10,7 +10,7 @@ use segul::helper::{finder::SeqFileFinder, types::InputFmt};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    core::deps::{mafft::MafftMetadata, segul::get_segul_metadata, DepMetadata},
+    deps::{mafft::MafftMetadata, segul::get_segul_metadata, DepMetadata},
     helper::{
         alignments::{FilteredSequenceInput, SequenceInput},
         common::UllarConfig,

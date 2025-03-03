@@ -10,7 +10,7 @@ use sysinfo::System;
 
 use crate::{
     check_read1_exists,
-    core::deps::spades::SPADES_EXE,
+    deps::spades::SPADES_EXE,
     create_output_dir,
     helper::common::{self, PrettyHeader},
     parse_override_args,
