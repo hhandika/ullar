@@ -1,8 +1,9 @@
+[input]
 input_dir = "datasets/rawreads/"
 sample_counts = 1
 file_counts = 2
 
-[read_assignment]
+[input.read_assignment]
 strategy = "regex"
 format = "descriptive"
 

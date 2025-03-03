@@ -12,7 +12,7 @@ use crate::{
         clean::reports::CleanReadReport,
         deps::{spades::SpadesMetadata, DepMetadata},
     },
-    helper::{configs::generate_config_output_path, fastq::FastqConfigSummary},
+    helper::{configs::generate_config_output_path, fastq::FastqInput},
     types::reads::FastqReads,
 };
 
@@ -21,9 +21,7 @@ pub const DEFAULT_ASSEMBLY_CONFIG: &str = "denovo_assembly";
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct AssemblyConfig {
-    /// Use clean output directory
-    pub input_dir: PathBuf,
-    pub input_summary: FastqConfigSummary,
+    pub input_summary: FastqInput,
     pub dependencies: DepMetadata,
     pub samples: Vec<FastqReads>,
 }
@@ -31,8 +29,7 @@ pub struct AssemblyConfig {
 impl Default for AssemblyConfig {
     fn default() -> Self {
         Self {
-            input_dir: PathBuf::new(),
-            input_summary: FastqConfigSummary::default(),
+            input_summary: FastqInput::default(),
             dependencies: DepMetadata::default(),
             samples: Vec::new(),
         }
@@ -40,13 +37,8 @@ impl Default for AssemblyConfig {
 }
 
 impl AssemblyConfig {
-    pub fn new(
-        input_init_dir: &Path,
-        input_summary: FastqConfigSummary,
-        samples: Vec<FastqReads>,
-    ) -> Self {
+    pub fn new(input_summary: FastqInput, samples: Vec<FastqReads>) -> Self {
         Self {
-            input_dir: input_init_dir.to_path_buf(),
             input_summary,
             dependencies: DepMetadata::default(),
             samples,

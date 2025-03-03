@@ -1,4 +1,7 @@
-use std::sync::mpsc;
+use std::{
+    path::{Path, PathBuf},
+    sync::mpsc,
+};
 
 use colored::Colorize;
 use rayon::prelude::*;
@@ -10,7 +13,9 @@ use crate::{
 };
 
 #[derive(Debug, Serialize, Default, Deserialize)]
-pub struct FastqConfigSummary {
+pub struct FastqInput {
+    /// Input directory
+    pub input_dir: PathBuf,
     /// Total samples input
     pub sample_counts: usize,
     /// Total files input
@@ -19,14 +24,16 @@ pub struct FastqConfigSummary {
     pub read_assignment: ReadAssignmentStrategy,
 }
 
-impl FastqConfigSummary {
+impl FastqInput {
     /// Initialize a new ConfigSummary instance
     pub fn new(
+        input_dir: &Path,
         sample_counts: usize,
         file_counts: usize,
         read_assignment: ReadAssignmentStrategy,
     ) -> Self {
         Self {
+            input_dir: input_dir.to_path_buf(),
             sample_counts,
             file_counts,
             read_assignment,

@@ -77,7 +77,7 @@ impl<'a> ReadCleaner<'a> {
         self.log_input(&config);
         PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
         let spinner = common::init_spinner();
-        let mut check = FastqConfigCheck::new(config.input_summary.sample_counts);
+        let mut check = FastqConfigCheck::new(config.input.sample_counts);
         if self.runner.skip_config_check {
             spinner.finish_with_message("Skipping config data check\n");
         } else {
@@ -141,7 +141,7 @@ impl<'a> ReadCleaner<'a> {
             .with_context(|| format!("Input config path: {}", self.config_path.display()))?;
         let config: CleanReadConfig = toml::from_str(&content)?;
 
-        if config.input_summary.sample_counts != config.samples.len() {
+        if config.input.sample_counts != config.samples.len() {
             return Err("Sample counts do not match the number of samples".into());
         }
 
@@ -165,12 +165,8 @@ impl<'a> ReadCleaner<'a> {
     fn log_input(&self, config: &CleanReadConfig) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config file", self.config_path.display());
-        log::info!(
-            "{:18}: {}",
-            "Sample counts",
-            config.input_summary.sample_counts
-        );
-        log::info!("{:18}: {}", "File counts", config.input_summary.file_counts);
+        log::info!("{:18}: {}", "Sample counts", config.input.sample_counts);
+        log::info!("{:18}: {}", "File counts", config.input.file_counts);
         log::info!("{:18}: {}", "Task", self.task);
         self.log_fastp_info(&config.dependencies);
     }
