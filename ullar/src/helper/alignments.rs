@@ -114,7 +114,6 @@ mod tests {
         filter.filter_single_sequence(&files);
         assert_eq!(filter.summary.total_files, 4);
         assert_eq!(filter.summary.file_skipped, 1);
-        assert_eq!(filter.summary.total_files, 3);
         assert_eq!(filter.final_files.len(), 3);
         assert_eq!(filter.summary.sample_counts, 3);
     }
