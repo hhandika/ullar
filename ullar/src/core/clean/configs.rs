@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::deps::fastp::FastpMetadata;
 use crate::core::deps::DepMetadata;
+use crate::helper::common::UllarConfig;
 use crate::helper::configs::generate_config_output_path;
 use crate::helper::fastq::FastqInput;
 use crate::types::reads::FastqReads;
@@ -20,6 +21,8 @@ pub enum FileMatchingStrategy {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CleanReadConfig {
+    #[serde(flatten)]
+    pub app: UllarConfig,
     pub input: FastqInput,
     pub dependencies: DepMetadata,
     pub samples: Vec<FastqReads>,
@@ -28,6 +31,7 @@ pub struct CleanReadConfig {
 impl Default for CleanReadConfig {
     fn default() -> Self {
         Self {
+            app: UllarConfig::default(),
             input: FastqInput::default(),
             dependencies: DepMetadata::default(),
             samples: Vec::new(),
@@ -38,6 +42,7 @@ impl Default for CleanReadConfig {
 impl CleanReadConfig {
     pub fn new(input: FastqInput, samples: Vec<FastqReads>) -> Self {
         Self {
+            app: UllarConfig::default(),
             input,
             dependencies: DepMetadata::default(),
             samples,
