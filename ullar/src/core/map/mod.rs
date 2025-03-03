@@ -11,7 +11,7 @@ use writer::MappedContigWriter;
 use crate::{
     cli::commands::map::MapContigArgs,
     helper::{common, files::PathCheck},
-    types::{runner::RunnerOptions, Task},
+    types::{map::Aligner, runner::RunnerOptions, Task},
 };
 
 pub mod configs;
@@ -23,19 +23,12 @@ pub mod reports;
 pub mod summary;
 pub mod writer;
 
-pub const DEFAULT_MAPPED_CONTIG_OUTPUT_DIR: &str = "mapped_contigs";
-pub const DEFAULT_MAP_READ_OUTPUT_DIR: &str = "mapped_reads";
-
-pub enum Aligner {
-    Exonerate,
-    Lastz,
-    Minimap,
-}
+pub const DEFAULT_CONTIG_MAPPING_OUTPUT_DIR: &str = "mapped_contigs";
+pub const DEFAULT_READ_MAPPING_OUTPUT_DIR: &str = "mapped_reads";
 
 pub struct ContigMapping<'a> {
     pub config_path: &'a Path,
     pub output_dir: &'a Path,
-    pub aligner: Aligner,
     pub runner: RunnerOptions<'a>,
     #[allow(dead_code)]
     task: Task,
@@ -46,7 +39,6 @@ impl<'a> ContigMapping<'a> {
         Self {
             config_path,
             output_dir,
-            aligner: Aligner::Lastz,
             runner: RunnerOptions::default(),
             task: Task::ContigMapping,
         }
@@ -56,7 +48,6 @@ impl<'a> ContigMapping<'a> {
         Self {
             config_path: &args.config,
             output_dir: &args.output,
-            aligner: Aligner::Lastz,
             runner: RunnerOptions::from_arg(&args.common),
             task: Task::ContigMapping,
         }
@@ -67,7 +58,7 @@ impl<'a> ContigMapping<'a> {
         spinner.set_message("Mapping contigs to reference sequence");
         let config = self.parse_config().expect("Failed to parse config");
         spinner.finish_with_message(format!("{} Finished parsing config\n", "✔".green()));
-        self.log_input(config.contigs.len());
+        self.log_input(config.contigs.len(), &config.input.aligner);
         PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
         let results = self.run_lastz(&config);
         let summary = self.generate_mapped_contig(&results, &config);
@@ -96,16 +87,16 @@ impl<'a> ContigMapping<'a> {
         MappedContigWriter::new(data, self.output_dir, &config.reference).generate()
     }
 
-    fn log_input(&self, file_count: usize) {
+    fn log_input(&self, file_count: usize, aligner: &Aligner) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config", self.config_path.display());
         log::info!("{:18}: {}", "File count", file_count);
         log::info!("{:18}: {}", "Task", self.task);
-        self.log_aligner_info();
+        self.log_aligner_info(aligner);
     }
 
-    fn log_aligner_info(&self) {
-        match self.aligner {
+    fn log_aligner_info(&self, aligner: &Aligner) {
+        match aligner {
             Aligner::Lastz => log::info!("{:18}: {}", "Aligner:", "Lastz"),
             Aligner::Exonerate => log::info!("{:18}: {}", "Aligner:", "Exonerate"),
             Aligner::Minimap => log::info!("{:18}: {}", "Aligner:", "Minimap"),

@@ -10,15 +10,16 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    core::deps::{lastz::LastzMetadata, DepMetadata},
     helper::{
         common::UllarConfig,
         configs::generate_config_output_path,
         files::{FileFinder, FileMetadata},
     },
-    types::SupportedFormats,
+    types::{map::Aligner, SupportedFormats},
 };
 
-pub const DEFAULT_REF_MAPPING_CONFIG: &str = "reference_mapping";
+pub const DEFAULT_REF_MAPPING_CONFIG: &str = "contig_mapping";
 
 pub const CONTIG_REGEX: &str = r"(?i)(contig*)";
 
@@ -63,6 +64,7 @@ pub struct ContigMappingConfig {
     #[serde(flatten)]
     pub app: UllarConfig,
     pub input: ContigInput,
+    pub dependencies: DepMetadata,
     pub reference: ReferenceFile,
     pub contigs: Vec<ContigFiles>,
 }
@@ -72,6 +74,7 @@ impl Default for ContigMappingConfig {
         Self {
             app: UllarConfig::default(),
             input: ContigInput::default(),
+            dependencies: DepMetadata::default(),
             contigs: Vec::new(),
             reference: ReferenceFile::default(),
         }
@@ -83,6 +86,7 @@ impl ContigMappingConfig {
         Self {
             app: UllarConfig::default(),
             input: ContigInput::default(),
+            dependencies: DepMetadata::default(),
             contigs: Vec::new(),
             reference: ReferenceFile::new(reference_regex),
         }
@@ -91,6 +95,7 @@ impl ContigMappingConfig {
     pub fn init(input: ContigInput, reference_regex: &str) -> Self {
         Self {
             app: UllarConfig::default(),
+            dependencies: DepMetadata::default(),
             input,
             reference: ReferenceFile::new(reference_regex),
             contigs: Vec::new(),
@@ -115,7 +120,13 @@ impl ContigMappingConfig {
         Ok(config)
     }
 
-    pub fn to_toml(&mut self, file_name: &str, ref_path: &Path) -> Result<PathBuf, Box<dyn Error>> {
+    pub fn to_toml(
+        &mut self,
+        file_name: &str,
+        ref_path: &Path,
+        override_args: Option<&str>,
+    ) -> Result<PathBuf, Box<dyn Error>> {
+        self.get_dependency(override_args);
         self.reference.get(ref_path);
         let output_path = generate_config_output_path(file_name);
         let toml = toml::to_string_pretty(&self)?;
@@ -182,6 +193,16 @@ impl ContigMappingConfig {
             })
             .collect()
     }
+
+    fn get_dependency(&mut self, override_args: Option<&str>) {
+        let dep = LastzMetadata::new(override_args).get();
+        match dep {
+            Some(metadata) => self.dependencies = metadata,
+            None => {
+                panic!("Lastz dependency not found. Please, install lastz");
+            }
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -191,6 +212,7 @@ pub struct ContigInput {
     /// for the mapped contigs
     pub name_source: SampleNameSource,
     pub file_counts: usize,
+    pub aligner: Aligner,
 }
 
 impl ContigInput {
@@ -199,6 +221,7 @@ impl ContigInput {
             input_dir: None,
             name_source,
             file_counts: 0,
+            aligner: Aligner::default(),
         }
     }
 

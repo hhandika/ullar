@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::{builder, Args, Subcommand};
 
-use crate::{core::map::{configs::DEFAULT_REF_MAPPING_CONFIG, DEFAULT_MAPPED_CONTIG_OUTPUT_DIR}, helper::regex::CONTIG_SAMPLE_REGEX};
+use crate::{core::map::{configs::DEFAULT_REF_MAPPING_CONFIG, DEFAULT_CONTIG_MAPPING_OUTPUT_DIR, }, helper::regex::CONTIG_SAMPLE_REGEX};
 
 use super::common::CommonRunnerArgs;
 
@@ -28,7 +28,7 @@ pub struct MapContigArgs {
     #[arg( 
         short,
         long,
-        default_value = DEFAULT_MAPPED_CONTIG_OUTPUT_DIR,
+        default_value = DEFAULT_CONTIG_MAPPING_OUTPUT_DIR,
         help = "Output directory to store the alignments"
     )]
     pub output: PathBuf,
@@ -103,7 +103,7 @@ pub struct MapReadArgs {
     #[arg( 
         short,
         long,
-        default_value = DEFAULT_MAPPED_CONTIG_OUTPUT_DIR,
+        default_value = DEFAULT_CONTIG_MAPPING_OUTPUT_DIR,
         help = "Output directory to store the alignments"
     )]
     pub output: PathBuf,
