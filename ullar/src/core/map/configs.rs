@@ -65,7 +65,7 @@ pub struct ContigMappingConfig {
     pub app: UllarConfig,
     pub input: ContigInput,
     pub dependencies: DepMetadata,
-    pub reference: ReferenceFile,
+    pub sequence_reference: ReferenceFile,
     pub contigs: Vec<ContigFiles>,
 }
 
@@ -76,7 +76,7 @@ impl Default for ContigMappingConfig {
             input: ContigInput::default(),
             dependencies: DepMetadata::default(),
             contigs: Vec::new(),
-            reference: ReferenceFile::default(),
+            sequence_reference: ReferenceFile::default(),
         }
     }
 }
@@ -88,7 +88,7 @@ impl ContigMappingConfig {
             input: ContigInput::default(),
             dependencies: DepMetadata::default(),
             contigs: Vec::new(),
-            reference: ReferenceFile::new(reference_regex),
+            sequence_reference: ReferenceFile::new(reference_regex),
         }
     }
 
@@ -97,7 +97,7 @@ impl ContigMappingConfig {
             app: UllarConfig::default(),
             dependencies: DepMetadata::default(),
             input,
-            reference: ReferenceFile::new(reference_regex),
+            sequence_reference: ReferenceFile::new(reference_regex),
             contigs: Vec::new(),
         }
     }
@@ -127,7 +127,7 @@ impl ContigMappingConfig {
         override_args: Option<&str>,
     ) -> Result<PathBuf, Box<dyn Error>> {
         self.get_dependency(override_args);
-        self.reference.get(ref_path);
+        self.sequence_reference.get(ref_path);
         let output_path = generate_config_output_path(file_name);
         let toml = toml::to_string_pretty(&self)?;
         std::fs::write(&output_path, toml)?;
@@ -137,7 +137,7 @@ impl ContigMappingConfig {
     /// Get raw loci files
     #[deprecated(since = "0.5.0", note = "Use `to_toml` instead")]
     pub fn to_yaml(&mut self, file_name: &str, ref_path: &Path) -> Result<PathBuf, Box<dyn Error>> {
-        self.reference.get(ref_path);
+        self.sequence_reference.get(ref_path);
         let output_path = generate_config_output_path(file_name);
         let writer = File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
