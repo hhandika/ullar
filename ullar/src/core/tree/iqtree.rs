@@ -19,6 +19,7 @@ use crate::{
         iqtree::{IQTREE2_EXE, IQTREE_EXE},
         DepMetadata,
     },
+    helper::{common, files::PathCheck},
     parse_override_args,
     types::alignments::AlignmentFiles,
 };
@@ -58,10 +59,18 @@ impl<'a> MlIqTree<'a> {
 
     pub fn infer(&self, prefix: &str) {
         let output_dir = self.output_dir.join("species_tree");
+        PathCheck::new(&output_dir).is_dir().prompt_exists(false);
+        let spinner = common::init_spinner();
+        spinner.set_message("Concatenating alignments");
         let (alignment_path, partition_path) = self.concat_alignments(&output_dir);
+        let spinner_msg = format!(
+            "Running IQ-TREE. Check the IQ-TREE log for details: {}",
+            self.output_dir.join(prefix).with_extension("log").display()
+        );
+        spinner.set_message(spinner_msg);
         let output_path = output_dir.join(prefix);
         let iqtree = self.run_iqtree(&alignment_path, &partition_path, &output_path);
-        // Check if the command was successful
+        spinner.finish_with_message("IQ-TREE finished");
         if !iqtree.status.success() {
             log::error!("IQ-TREE failed to run: {:?}", iqtree);
             return;
@@ -202,7 +211,7 @@ impl IqTree {
         match thread.name("value") {
             Some(v) => {
                 let value = v.as_str().to_string();
-                let arg = format!("{} {}", thread.name("bs").unwrap().as_str(), value);
+                let arg = format!("{} {}", thread.name("threads").unwrap().as_str(), value);
                 self.args = self.args.replace(&arg, "");
                 value
             }
