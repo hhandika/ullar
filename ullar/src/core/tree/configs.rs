@@ -7,10 +7,12 @@ use std::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    deps::iqtree::IqtreeMetadata, helper::common::UllarConfig, types::alignments::AlignmentFiles,
+    core::deps::iqtree::IqtreeMetadata, helper::common::UllarConfig,
+    types::alignments::AlignmentFiles,
 };
 use crate::{
-    deps::DepMetadata, helper::configs::generate_config_output_path, types::TreeInferenceMethod,
+    core::deps::DepMetadata, helper::configs::generate_config_output_path,
+    types::TreeInferenceMethod,
 };
 
 pub const DEFAULT_TREE_PREFIX: &str = "tree";

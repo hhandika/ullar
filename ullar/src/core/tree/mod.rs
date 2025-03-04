@@ -17,7 +17,7 @@ use crate::{
     types::{runner::RunnerOptions, Task, TreeInferenceMethod},
 };
 
-use crate::deps::DepMetadata;
+use crate::core::deps::DepMetadata;
 
 pub mod configs;
 pub mod init;

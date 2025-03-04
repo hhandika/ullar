@@ -15,7 +15,7 @@ use segul::{
 };
 
 use crate::{
-    deps::{iqtree::IQTREE2_EXE, DepMetadata},
+    core::deps::{iqtree::IQTREE2_EXE, DepMetadata},
     types::alignments::AlignmentFiles,
 };
 

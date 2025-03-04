@@ -10,8 +10,9 @@ use colored::Colorize;
 use indicatif::ProgressBar;
 
 use crate::{
-    check_read1_exists, create_output_dir,
-    deps::fastp::FASTP_EXE,
+    check_read1_exists,
+    core::deps::fastp::FASTP_EXE,
+    create_output_dir,
     helper::common::{self, PrettyHeader},
     parse_override_args,
     types::reads::FastqReads,

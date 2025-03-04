@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::clean::reports::CleanReadReport,
-    deps::{spades::SpadesMetadata, DepMetadata},
+    core::deps::{spades::SpadesMetadata, DepMetadata},
     helper::{common::UllarConfig, configs::generate_config_output_path, fastq::FastqInput},
     types::reads::FastqReads,
 };

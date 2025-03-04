@@ -10,7 +10,7 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    deps::{lastz::LastzMetadata, DepMetadata},
+    core::deps::{lastz::LastzMetadata, DepMetadata},
     helper::{
         common::UllarConfig,
         configs::generate_config_output_path,

@@ -14,6 +14,7 @@ use segul::helper::utils;
 use std::{path::PathBuf, time::Instant};
 
 use crate::{
+    core::deps::DependencyCheck,
     core::{
         alignment::{init::AlignmentInit, SequenceAlignment},
         assembly::{init::AssemblyInit, Assembly},
@@ -22,7 +23,6 @@ use crate::{
         tree::{init::TreeInferenceInit, TreeEstimation},
         utils::{checksum::Sha256Executor, scan::ReadScanner},
     },
-    deps::DependencyCheck,
     helper::{self, common::PrettyHeader},
 };
 
