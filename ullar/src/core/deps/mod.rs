@@ -5,6 +5,7 @@ use fastp::FastpMetadata;
 use iqtree::IqtreeMetadata;
 use lastz::LastzMetadata;
 use mafft::MafftMetadata;
+use segul::get_segul_metadata;
 use serde::{Deserialize, Serialize};
 use spades::SpadesMetadata;
 
@@ -88,6 +89,7 @@ pub struct DependencyCheck {
     lastz: Option<DepMetadata>,
     mafft: Option<DepMetadata>,
     iqtree: Option<DepMetadata>,
+    segul: Option<DepMetadata>,
 }
 
 impl DependencyCheck {
@@ -98,6 +100,7 @@ impl DependencyCheck {
             lastz: LastzMetadata::new(None).get(),
             mafft: MafftMetadata::new(None).get(),
             iqtree: IqtreeMetadata::new(None).get(),
+            segul: Some(get_segul_metadata()),
         }
     }
 
@@ -108,6 +111,7 @@ impl DependencyCheck {
             lastz: LastzMetadata::new(override_args).get(),
             mafft: MafftMetadata::new(override_args).get(),
             iqtree: IqtreeMetadata::new(override_args).get(),
+            segul: Some(get_segul_metadata()),
         }
     }
 
@@ -118,6 +122,7 @@ impl DependencyCheck {
         self.log_contig_mapping(&mut table);
         self.log_sequence_alignment(&mut table);
         self.log_phylogenetic_inference(&mut table);
+        self.log_data_wrangling_summarization(&mut table);
         log::info!("{}", table);
     }
 
@@ -132,11 +137,11 @@ impl DependencyCheck {
         let feature = "Read cleaning";
         match &self.fastp {
             Some(metadata) => {
-                let cells = self.get_cell(feature, "fastp", &metadata.version, true);
+                let cells = self.get_cell(feature, "fastp", &metadata.version, Some(true));
                 table.add_row(cells);
             }
             None => {
-                let cells = self.get_cell(feature, "fastp", "Unknown", false);
+                let cells = self.get_cell(feature, "fastp", "Unknown", Some(false));
                 table.add_row(cells);
             }
         }
@@ -146,11 +151,11 @@ impl DependencyCheck {
         let feature = "De novo assembly";
         match &self.spades {
             Some(metadata) => {
-                let cells = self.get_cell(feature, "SPAdes", &metadata.version, true);
+                let cells = self.get_cell(feature, "SPAdes", &metadata.version, Some(true));
                 table.add_row(cells);
             }
             None => {
-                let cells = self.get_cell(feature, "SPAdes", "Unknown", false);
+                let cells = self.get_cell(feature, "SPAdes", "Unknown", Some(false));
                 table.add_row(cells);
             }
         }
@@ -160,11 +165,11 @@ impl DependencyCheck {
         let feature = "Contig mapping";
         match &self.lastz {
             Some(metadata) => {
-                let cells = self.get_cell(feature, "LASTZ", &metadata.version, true);
+                let cells = self.get_cell(feature, "LASTZ", &metadata.version, Some(true));
                 table.add_row(cells);
             }
             None => {
-                let cells = self.get_cell(feature, "LASTZ", "Unknown", false);
+                let cells = self.get_cell(feature, "LASTZ", "Unknown", Some(false));
                 table.add_row(cells);
             }
         }
@@ -174,11 +179,11 @@ impl DependencyCheck {
         let feature = "Sequence alignment";
         match &self.mafft {
             Some(metadata) => {
-                let cells = self.get_cell(feature, "MAFFT", &metadata.version, true);
+                let cells = self.get_cell(feature, "MAFFT", &metadata.version, Some(true));
                 table.add_row(cells);
             }
             None => {
-                let cells = self.get_cell(feature, "MAFFT", "Unknown", false);
+                let cells = self.get_cell(feature, "MAFFT", "Unknown", Some(false));
                 table.add_row(cells);
             }
         }
@@ -188,17 +193,29 @@ impl DependencyCheck {
         let feature = "Phylogenetic inference";
         match &self.iqtree {
             Some(metadata) => {
-                let cells = self.get_cell(feature, "IQ-TREE", &metadata.version, true);
+                let cells = self.get_cell(feature, "IQ-TREE", &metadata.version, Some(true));
                 table.add_row(cells);
             }
             None => {
-                let cells = self.get_cell(feature, "IQ-TREE", "Unknown", false);
+                let cells = self.get_cell(feature, "IQ-TREE", "Unknown", Some(false));
                 table.add_row(cells);
             }
         }
     }
 
-    fn get_cell(&self, feature: &str, app: &str, version: &str, ok: bool) -> Vec<Cell> {
+    fn log_data_wrangling_summarization(&mut self, table: &mut Table) {
+        let feature = "Data shaping, cleaning, and summarization";
+        let status = None;
+        match &self.segul {
+            Some(metadata) => {
+                let cells = self.get_cell(feature, "SEGUL", &metadata.version, status);
+                table.add_row(cells);
+            }
+            None => unreachable!("SEGUL should always be available"),
+        }
+    }
+
+    fn get_cell(&self, feature: &str, app: &str, version: &str, ok: Option<bool>) -> Vec<Cell> {
         let status = self.status_ok(ok);
         vec![
             Cell::new(feature),
@@ -208,11 +225,11 @@ impl DependencyCheck {
         ]
     }
 
-    fn status_ok(&self, ok: bool) -> Cell {
-        if ok {
-            Cell::new("[OK]").fg(Color::Green)
-        } else {
-            Cell::new("[ERROR]").fg(Color::Red)
+    fn status_ok(&self, ok: Option<bool>) -> Cell {
+        match ok {
+            None => Cell::new("🔧 BUILT-IN").fg(Color::Blue),
+            Some(true) => Cell::new("✅ OK").fg(Color::Green),
+            Some(false) => Cell::new("❌ NOT FOUND").fg(Color::Red),
         }
     }
 }
