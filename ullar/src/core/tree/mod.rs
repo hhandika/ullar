@@ -78,13 +78,13 @@ impl<'a> TreeEstimation<'a> {
     pub fn infer(&self) {
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
-        if config.methods.is_empty() {
+        if config.input.methods.is_empty() {
             log::warn!(
                 "{} No tree inference method specified in the config files. Using all methods",
                 "Warning:".yellow()
             );
         }
-        self.run_tree_inference(&config.methods, &config);
+        self.run_tree_inference(&config.input.methods, &config);
     }
 
     fn parse_config(&self) -> Result<TreeInferenceConfig, Box<dyn Error>> {

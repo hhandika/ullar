@@ -22,22 +22,24 @@ pub const DEFAULT_ML_INFERENCE_CONFIG: &str = "ml_inference";
 pub struct TreeInferenceConfig {
     #[serde(flatten)]
     pub app: UllarConfig,
-    pub input_dir: PathBuf,
-    pub methods: Vec<TreeInferenceMethod>,
+    pub input: TreeInferenceInput,
     pub dependencies: Vec<DepMetadata>,
     pub alignments: AlignmentFiles,
 }
 
 impl TreeInferenceConfig {
-    pub fn new(
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn init(
         input_dir: &Path,
         methods: Vec<TreeInferenceMethod>,
         alignments: AlignmentFiles,
     ) -> Self {
         Self {
             app: UllarConfig::default(),
-            input_dir: input_dir.to_path_buf(),
-            methods,
+            input: TreeInferenceInput::new(input_dir, methods),
             dependencies: Vec::new(),
             alignments,
         }
@@ -75,9 +77,24 @@ impl TreeInferenceConfig {
                 panic!(
                     "IQ-TREE not found. Please, install it first. \
                 ULLAR can use either iqtree v1 or v2. \
-                And will prioritize iqtree2 if both are installed."
+                It will prioritize iqtree2 if both are installed."
                 );
             }
+        }
+    }
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct TreeInferenceInput {
+    pub input_dir: PathBuf,
+    pub methods: Vec<TreeInferenceMethod>,
+}
+
+impl TreeInferenceInput {
+    pub fn new(input_dir: &Path, methods: Vec<TreeInferenceMethod>) -> Self {
+        Self {
+            input_dir: input_dir.to_path_buf(),
+            methods,
         }
     }
 }
