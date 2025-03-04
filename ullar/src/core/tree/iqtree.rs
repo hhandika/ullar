@@ -65,7 +65,7 @@ impl<'a> MlIqTree<'a> {
         let (alignment_path, partition_path) = self.concat_alignments(&output_dir);
         let spinner_msg = format!(
             "Running IQ-TREE. Check the IQ-TREE log for details: {}",
-            self.output_dir.join(prefix).with_extension("log").display()
+            output_dir.join(prefix).with_extension("log").display()
         );
         spinner.set_message(spinner_msg);
         let output_path = output_dir.join(prefix);
