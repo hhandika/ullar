@@ -1,6 +1,5 @@
 use std::{
     error::Error,
-    fs,
     path::{Path, PathBuf},
 };
 
@@ -88,8 +87,7 @@ impl<'a> TreeEstimation<'a> {
     }
 
     fn parse_config(&self) -> Result<TreeInferenceConfig, Box<dyn Error>> {
-        let content = fs::read_to_string(&self.config_path)?;
-        let config: TreeInferenceConfig = serde_yaml::from_str(&content)?;
+        let config: TreeInferenceConfig = TreeInferenceConfig::from_toml(&self.config_path)?;
         Ok(config)
     }
 
@@ -126,14 +124,20 @@ impl<'a> TreeEstimation<'a> {
 
     fn infer_ml_tree(&self, config: &TreeInferenceConfig) {
         let prefix = "concat";
-        let iqtree: Option<&DepMetadata> = config
+        let deps: Option<&DepMetadata> = config
             .dependencies
             .iter()
             .filter(|dep| dep.name == "iqtree")
             .next();
+        if deps.is_none() {
+            log::error!("IQ-TREE dependency not found in the config");
+            return;
+        }
+        let iqtree = deps.expect("IQ-TREE dependency not found in the config");
         let spinner = common::init_spinner();
         spinner.set_message("Estimating ML species tree");
-        let ml_analyses = MlIqTree::new(&config.alignments, iqtree, &self.output_dir, prefix);
+        let ml_analyses =
+            MlIqTree::new(&config.alignments, iqtree, &self.output_dir, prefix, false);
         ml_analyses.infer(prefix);
         spinner.finish_with_message("Finished estimating ML species tree\n");
     }

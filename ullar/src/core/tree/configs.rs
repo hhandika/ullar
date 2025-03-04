@@ -72,7 +72,7 @@ impl TreeInferenceConfig {
         let dep = IqtreeMetadata::new(override_args).get();
 
         match dep {
-            Some(metadata) => self.dependencies = vec![metadata],
+            Some(metadata) => self.dependencies.push(metadata),
             None => {
                 panic!(
                     "IQ-TREE not found. Please, install it first. \

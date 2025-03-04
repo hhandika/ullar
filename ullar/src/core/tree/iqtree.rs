@@ -15,33 +15,44 @@ use segul::{
 };
 
 use crate::{
-    core::deps::{iqtree::IQTREE2_EXE, DepMetadata},
+    core::deps::{
+        iqtree::{IQTREE2_EXE, IQTREE_EXE},
+        DepMetadata,
+    },
+    parse_override_args,
     types::alignments::AlignmentFiles,
 };
 
 /// Default parameters for IQ-TREE 2
-pub const DEFAULT_MODELS: &str = "-m GTR+G+I";
+const DEFAULT_MODELS: &str = "GTR+G+I";
+const DEFAULT_THREADS: &str = "4";
+const DEFAULT_BOOTSTRAP: &str = "1000";
+
+const DEFAULT_IQTREE2_ARGS: &str = "-m GTR+G+I -T 4 -B 1000 -bnni";
 
 pub struct MlIqTree<'a> {
     pub alignments: &'a AlignmentFiles,
-    pub iqtree_meta: Option<&'a DepMetadata>,
+    pub iqtree_meta: &'a DepMetadata,
     pub output_dir: &'a Path,
     pub prefix: &'a str,
+    pub enforce_v1: bool,
 }
 
 impl<'a> MlIqTree<'a> {
     /// Create a new instance of `MlIqTree`
     pub fn new(
         alignments: &'a AlignmentFiles,
-        iqtree_meta: Option<&'a DepMetadata>,
+        iqtree_meta: &'a DepMetadata,
         output_dir: &'a Path,
         prefix: &'a str,
+        enforce_v1: bool,
     ) -> Self {
         Self {
             alignments,
             iqtree_meta,
             output_dir,
             prefix,
+            enforce_v1,
         }
     }
 
@@ -89,57 +100,114 @@ impl<'a> MlIqTree<'a> {
     }
 
     fn run_iqtree(&self, alignment: &Path, partition: &Path, output_path: &Path) -> Output {
-        let iqtree = IqTree::new(self.iqtree_meta);
+        let mut iqtree = IqTree::new(self.iqtree_meta.override_args.as_deref(), self.enforce_v1);
+        iqtree.get_args(self.iqtree_meta.executable.as_deref());
         let mut out = Command::new(IQTREE2_EXE);
         out.arg("-s")
             .arg(alignment)
             .arg("-q")
             .arg(partition)
             .arg("-m")
-            .arg(iqtree.get_models())
+            .arg(iqtree.models)
             .arg("--prefix")
             .arg(output_path)
             .arg("-B")
-            .arg("1000")
+            .arg(iqtree.bootstrap)
             .arg("-T")
-            .arg("10")
-            .arg("-bnni");
+            .arg(iqtree.threads);
+
+        let other_args = iqtree.args.trim();
+        if !other_args.is_empty() {
+            parse_override_args!(out, other_args);
+        }
 
         out.output().expect("Failed to run IQ-TREE")
     }
 }
 
-struct IqTree<'a> {
-    override_args: Option<&'a str>,
+struct IqTree {
+    args: String,
+    executable: String,
+    models: String,
+    threads: String,
+    bootstrap: String,
+    enforce_v1: bool,
 }
 
-impl<'a> IqTree<'a> {
-    fn new(meta: Option<&'a DepMetadata>) -> Self {
-        let override_args = meta.and_then(|m| m.override_args.as_deref());
-        Self { override_args }
+impl IqTree {
+    fn new(override_args: Option<&str>, enforce_v1: bool) -> Self {
+        Self {
+            args: override_args.unwrap_or(DEFAULT_IQTREE2_ARGS).to_string(),
+            executable: String::new(),
+            models: String::new(),
+            threads: String::new(),
+            bootstrap: String::new(),
+            enforce_v1,
+        }
     }
 
-    fn get_models(&self) -> String {
-        match self.override_args {
-            Some(args) => args.to_string(),
+    fn get_args(&mut self, executable: Option<&str>) {
+        match executable {
+            Some(e) => self.get_executable(e),
+            None => self.get_executable(IQTREE2_EXE),
+        };
+        self.models = self.capture_models();
+        self.threads = self.capture_threads();
+        self.bootstrap = self.capture_bs_value();
+    }
+
+    fn get_executable(&mut self, executable: &str) {
+        if self.enforce_v1 {
+            self.executable = IQTREE_EXE.to_string();
+        } else {
+            self.executable = executable.to_string();
+        }
+    }
+
+    fn capture_models(&mut self) -> String {
+        let re = Regex::new(r"(?<models>-m)\s+(?<value>\S+)").expect("Failed to compile regex");
+        let capture = re.captures(&self.args).expect("Failed to capture models");
+        match capture.name("value") {
+            Some(v) => {
+                let value = v.as_str().to_string();
+                let model = format!("{} {}", capture.name("models").unwrap().as_str(), value);
+                self.args = self.args.replace(&model, "");
+                value
+            }
             None => DEFAULT_MODELS.to_string(),
         }
     }
 
-    #[allow(dead_code)]
-    fn capture_bs_value(&self, args: &str) -> String {
+    fn capture_bs_value(&mut self) -> String {
         let re = Regex::new(r"(?<bs>-B|b)\s+(?<value>\d+)").expect("Failed to compile regex");
         let bs = re
-            .captures(args)
+            .captures(&self.args)
             .expect("Failed to capture bootstrap value");
-        bs.name("value").unwrap().as_str().to_string()
+        match bs.name("value") {
+            Some(v) => {
+                let value = v.as_str().to_string();
+                let arg = format!("{} {}", bs.name("bs").unwrap().as_str(), value);
+                self.args = self.args.replace(&arg, "");
+                value
+            }
+            None => DEFAULT_BOOTSTRAP.to_string(),
+        }
     }
 
-    #[allow(dead_code)]
-    fn capture_threads(&self, args: &str) -> String {
+    fn capture_threads(&mut self) -> String {
         let re = Regex::new(r"(?<threads>-T|t)\s+(?<value>\d+)").expect("Failed to compile regex");
-        let bs = re.captures(args).expect("Failed to capture thread value");
-        bs.name("value").unwrap().as_str().to_string()
+        let thread = re
+            .captures(&self.args)
+            .expect("Failed to capture thread value");
+        match thread.name("value") {
+            Some(v) => {
+                let value = v.as_str().to_string();
+                let arg = format!("{} {}", thread.name("bs").unwrap().as_str(), value);
+                self.args = self.args.replace(&arg, "");
+                value
+            }
+            None => DEFAULT_THREADS.to_string(),
+        }
     }
 }
 
@@ -149,25 +217,21 @@ mod tests {
 
     macro_rules! init {
         ($iqtree: ident) => {
-            let $iqtree = IqTree {
-                override_args: None,
-            };
+            let mut $iqtree = IqTree::new(None, false);
         };
     }
 
     #[test]
     fn test_bootstrap_value() {
-        let val = "-B 1000";
         init!(iqtree);
-        let bs = iqtree.capture_bs_value(val);
+        let bs = iqtree.capture_bs_value();
         assert_eq!(bs, "1000");
     }
 
     #[test]
     fn test_threads_value() {
-        let val = "-T 4";
         init!(iqtree);
-        let threads = iqtree.capture_threads(val);
+        let threads = iqtree.capture_threads();
         assert_eq!(threads, "4");
     }
 }
