@@ -75,7 +75,7 @@ impl<'a> TreeInferenceInit<'a> {
         alignments: AlignmentFiles,
     ) -> Result<(PathBuf, TreeInferenceConfig), Box<dyn Error>> {
         let methods = self.parse_method();
-        let mut config = TreeInferenceConfig::new(self.input_dir, methods, alignments);
+        let mut config = TreeInferenceConfig::init(self.input_dir, methods, alignments);
         let output_path = config.to_toml(self.common.override_args.as_deref())?;
         Ok((output_path, config))
     }
