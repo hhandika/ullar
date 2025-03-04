@@ -80,7 +80,7 @@ impl<'a> InitMappingConfig<'a> {
         let config_path = Path::new(DEFAULT_CONFIG_DIR)
             .join(self.config_name)
             .with_extension(CONFIG_EXTENSION_TOML);
-        PathCheck::new(&config_path, false, false).prompt_exists(false);
+        PathCheck::new(&config_path).prompt_exists(false);
         let spinner = common::init_spinner();
         spinner.set_message("Initializing mapping configuration");
         self.write_config(&spinner);

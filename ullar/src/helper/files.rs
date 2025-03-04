@@ -50,12 +50,22 @@ pub struct PathCheck<'a> {
 
 impl<'a> PathCheck<'a> {
     /// Initialize a new PathCheck instance
-    pub fn new(path: &'a Path, is_dir: bool, force: bool) -> Self {
+    pub fn new(path: &'a Path) -> Self {
         Self {
             path,
-            is_dir,
-            force,
+            is_dir: false,
+            force: false,
         }
+    }
+
+    pub fn with_force_overwrite(mut self, force: bool) -> Self {
+        self.force = force;
+        self
+    }
+
+    pub fn is_dir(mut self) -> Self {
+        self.is_dir = true;
+        self
     }
 
     /// Check if the path exists and prompt the user to delete it

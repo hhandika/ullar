@@ -75,7 +75,10 @@ impl<'a> ReadCleaner<'a> {
             .parse_config()
             .expect("Failed to parse config. Try to create a new config.");
         self.log_input(&config);
-        PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
+        PathCheck::new(self.output_dir)
+            .is_dir()
+            .with_force_overwrite(self.runner.force)
+            .prompt_exists(self.runner.dry_run);
         let spinner = common::init_spinner();
         let mut check = FastqConfigCheck::new(config.input.sample_counts);
         if self.runner.skip_config_check {
