@@ -1,3 +1,5 @@
+//! Main command data structure for the CLI
+//! Handle all the subcommands, arguments, and flags
 pub mod alignment;
 pub mod assembly;
 pub mod clean;

@@ -1,5 +1,4 @@
-//! Command-line interface for ULLAR project.
-
+//! Command-line interface for the binary ULLAR.
 use clap::Parser;
 use commands::{
     alignment::{AlignmentArgs, AlignmentInitArgs, AlignmentSubcommand},
