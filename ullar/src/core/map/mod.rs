@@ -59,7 +59,10 @@ impl<'a> ContigMapping<'a> {
         let config = self.parse_config().expect("Failed to parse config");
         spinner.finish_with_message(format!("{} Finished parsing config\n", "✔".green()));
         self.log_input(config.contigs.len(), &config.input.aligner);
-        PathCheck::new(self.output_dir, true, self.runner.force).prompt_exists(self.runner.dry_run);
+        PathCheck::new(self.output_dir)
+            .is_dir()
+            .with_force_overwrite(self.runner.force)
+            .prompt_exists(self.runner.dry_run);
         let results = self.run_lastz(&config);
         let summary = self.generate_mapped_contig(&results, &config);
         self.log_output(&results, &summary);

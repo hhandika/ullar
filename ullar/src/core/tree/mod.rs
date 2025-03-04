@@ -18,6 +18,8 @@ use crate::{
 
 use crate::core::deps::DepMetadata;
 
+use super::deps::iqtree::IqtreeMetadata;
+
 pub mod configs;
 pub mod init;
 pub mod iqtree;
@@ -127,19 +129,26 @@ impl<'a> TreeEstimation<'a> {
         let deps: Option<&DepMetadata> = config
             .dependencies
             .iter()
-            .filter(|dep| dep.name == "iqtree")
+            .filter(|dep| dep.name == "IQ-TREE")
             .next();
         if deps.is_none() {
-            log::error!("IQ-TREE dependency not found in the config");
-            return;
+            self.try_iqtree();
         }
         let iqtree = deps.expect("IQ-TREE dependency not found in the config");
-        let spinner = common::init_spinner();
-        spinner.set_message("Estimating ML species tree");
         let ml_analyses =
             MlIqTree::new(&config.alignments, iqtree, &self.output_dir, prefix, false);
         ml_analyses.infer(prefix);
-        spinner.finish_with_message("Finished estimating ML species tree\n");
+    }
+
+    fn try_iqtree(&self) -> DepMetadata {
+        let dep = IqtreeMetadata::new(None).get();
+        match dep {
+            Some(d) => d,
+            None => {
+                log::error!("IQ-TREE dependency not found in the config");
+                panic!("Exiting due to missing dependency");
+            }
+        }
     }
 
     fn infer_ml_gene_tree(&self) {
