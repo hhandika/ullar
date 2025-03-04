@@ -24,7 +24,7 @@ use crate::{
     types::{runner::RunnerOptions, Task},
 };
 
-use crate::deps::mafft::MafftMetadata;
+use crate::core::deps::mafft::MafftMetadata;
 
 pub const DEFAULT_ALIGNMENT_OUTPUT_DIR: &str = "alignments";
 
