@@ -40,14 +40,7 @@ impl<'a> IqtreeMetadata<'a> {
     }
 
     pub fn get(&self) -> Option<DepMetadata> {
-        if self.version.is_none() {
-            return None;
-        }
-
-        match &self.version {
-            Some(v) => self.metadata(&v),
-            None => None,
-        }
+        self.version.as_ref().and_then(|v| self.metadata(v))
     }
 
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {

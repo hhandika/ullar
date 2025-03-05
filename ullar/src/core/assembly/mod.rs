@@ -80,7 +80,7 @@ impl<'a> Assembly<'a> {
                 .with_extension(CONFIG_EXTENSION_TOML),
         };
         Self {
-            config_path: config_path,
+            config_path,
             ignore_checksum: args.common.ignore_checksum,
             output_dir: &args.output,
             keep_intermediates: args.keep_intermediates,

@@ -112,7 +112,7 @@ impl<'a> AssemblyInit<'a> {
         records: Vec<FastqReads>,
         file_counts: usize,
     ) -> Result<PathBuf, Box<dyn Error>> {
-        let strategy = ReadAssignmentStrategy::from_arg(&self.common);
+        let strategy = ReadAssignmentStrategy::from_arg(self.common);
         let input_summary = FastqInput::new(self.input_dir, records.len(), file_counts, strategy);
         let mut config = AssemblyConfig::new(input_summary, records.to_vec());
         let output_path = config.to_toml(self.common.override_args.as_deref())?;

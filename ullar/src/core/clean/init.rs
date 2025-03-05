@@ -40,7 +40,7 @@ impl<'a> ReadCleaningInit<'a> {
         spin.set_message("Finding files...");
         let format = SupportedFormats::Fastq;
         self.match_sample_name_format();
-        let files = FileFinder::new(&self.input_dir, &format).find(self.common.recursive)?;
+        let files = FileFinder::new(self.input_dir, &format).find(self.common.recursive)?;
         let file_count = files.len();
         if files.is_empty() {
             spin.finish_with_message(format!(

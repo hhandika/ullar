@@ -16,7 +16,7 @@ use crate::{
 
 pub const DEFAULT_ASSEMBLY_CONFIG: &str = "denovo_assembly";
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct AssemblyConfig {
     #[serde(flatten)]
@@ -24,17 +24,6 @@ pub struct AssemblyConfig {
     pub input: FastqInput,
     pub dependencies: DepMetadata,
     pub samples: Vec<FastqReads>,
-}
-
-impl Default for AssemblyConfig {
-    fn default() -> Self {
-        Self {
-            app: UllarConfig::default(),
-            input: FastqInput::default(),
-            dependencies: DepMetadata::default(),
-            samples: Vec::new(),
-        }
-    }
 }
 
 impl AssemblyConfig {
@@ -109,12 +98,7 @@ impl AssemblyConfig {
     fn get_dependency(&mut self, override_args: Option<&str>) {
         let dep = SpadesMetadata::new(override_args).get();
 
-        match dep {
-            Some(metadata) => self.dependencies = metadata,
-            None => {
-                panic!("SPAdes not found. Please, install spades first");
-            }
-        }
+        self.dependencies = dep.unwrap_or_else(|| panic!("Failed to get Spades dependency"));
     }
 
     fn parse_fastp_report(&self, reports: &[CleanReadReport]) -> Vec<FastqReads> {

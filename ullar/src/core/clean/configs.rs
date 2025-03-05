@@ -19,24 +19,13 @@ pub enum FileMatchingStrategy {
     CharacterSplit,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct CleanReadConfig {
     #[serde(flatten)]
     pub app: UllarConfig,
     pub input: FastqInput,
     pub dependencies: DepMetadata,
     pub samples: Vec<FastqReads>,
-}
-
-impl Default for CleanReadConfig {
-    fn default() -> Self {
-        Self {
-            app: UllarConfig::default(),
-            input: FastqInput::default(),
-            dependencies: DepMetadata::default(),
-            samples: Vec::new(),
-        }
-    }
 }
 
 impl CleanReadConfig {
@@ -89,12 +78,9 @@ impl CleanReadConfig {
     fn get_dependency(&mut self, override_args: Option<&str>) {
         let dep = FastpMetadata::new(override_args).get();
 
-        match dep {
-            Some(metadata) => self.dependencies = metadata,
-            None => {
-                panic!("Fastp dependency not found. Please, install fastp");
-            }
-        }
+        self.dependencies = dep.unwrap_or_else(|| {
+            panic!("Fastp dependency not found. Please, install fastp");
+        });
     }
 }
 

@@ -22,14 +22,7 @@ impl<'a> MafftMetadata<'a> {
 
     pub fn get(&self) -> Option<DepMetadata> {
         let version_data: Option<String> = self.get_mafft();
-        if version_data.is_none() {
-            return None;
-        }
-
-        match version_data {
-            Some(v) => self.metadata(&v),
-            None => None,
-        }
+        version_data.as_ref().and_then(|v| self.metadata(v))
     }
 
     /// Get the version of fastp
