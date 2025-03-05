@@ -10,7 +10,7 @@ use sysinfo::System;
 
 use crate::{
     check_read1_exists,
-    core::deps::spades::SPADES_EXE,
+    core::deps::{spades::SPADES_EXE, DepMetadata},
     create_output_dir,
     helper::common::{self, PrettyHeader},
     parse_override_args,
@@ -24,7 +24,7 @@ pub const SPADES_DEFAULT_PARAMS: &str = "--isolate";
 pub struct SpadeRunner<'a> {
     sample: &'a FastqReads,
     pub sample_output_dir: PathBuf,
-    pub override_args: Option<&'a str>,
+    pub dependency: &'a DepMetadata,
     pub keep_intermediates: bool,
     pub rename_contigs: bool,
 }
@@ -33,17 +33,25 @@ impl<'a> SpadeRunner<'a> {
     pub fn new(
         sample: &'a FastqReads,
         output_dir: &Path,
-        override_args: Option<&'a str>,
-        keep_intermediates: bool,
-        rename_contigs: bool,
+        dependency: &'a DepMetadata,
     ) -> SpadeRunner<'a> {
         SpadeRunner {
             sample,
             sample_output_dir: output_dir.join(&sample.sample_name),
-            override_args,
-            keep_intermediates,
-            rename_contigs,
+            dependency,
+            keep_intermediates: false,
+            rename_contigs: false,
         }
+    }
+
+    pub fn keep_intermediates(mut self, keep_intermediates: bool) -> Self {
+        self.keep_intermediates = keep_intermediates;
+        self
+    }
+
+    pub fn rename_contigs(mut self, rename_contigs: bool) -> Self {
+        self.rename_contigs = rename_contigs;
+        self
     }
 
     pub fn run(&mut self) -> Result<SpadeReports, Box<dyn Error>> {
@@ -62,7 +70,7 @@ impl<'a> SpadeRunner<'a> {
             singleton.as_deref(),
             &self.sample_output_dir,
         );
-        let output = spades.execute(self.override_args);
+        let output = spades.execute(self.dependency);
         match output {
             Ok(output) => self.create_report(&output, &spinner, &decorator),
             Err(e) => {
@@ -201,8 +209,9 @@ impl<'a> Spades<'a> {
         }
     }
 
-    pub fn execute(&self, override_args: Option<&'a str>) -> Result<Output, Box<dyn Error>> {
-        let mut cmd = Command::new(SPADES_EXE);
+    pub fn execute(&self, dep: &DepMetadata) -> Result<Output, Box<dyn Error>> {
+        let executable = dep.get_executable(SPADES_EXE);
+        let mut cmd = Command::new(executable);
         cmd.arg("-1").arg(self.read1);
         if let Some(read2) = self.read2 {
             cmd.arg("-2").arg(read2);
@@ -214,7 +223,7 @@ impl<'a> Spades<'a> {
         cmd.arg("-o").arg(&self.output_dir);
         cmd.arg("-t").arg(Spades::get_thread_count());
 
-        match override_args {
+        match &dep.override_args {
             Some(params) => {
                 parse_override_args!(cmd, params);
             }

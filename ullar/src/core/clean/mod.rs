@@ -10,11 +10,10 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 use colored::Colorize;
 use comfy_table::Table;
-use configs::{CleanReadConfig, DEFAULT_READ_CLEANING_CONFIG};
+use configs::{CleanReadConfig, DEFAULT_READ_CLEANING_CONFIG, QC_DEPENDENCY};
 
 use self::reports::CleanReadReport;
 use crate::cli::commands::clean::ReadCleaningArgs;
-use crate::core::deps::check_dependency_match;
 use crate::core::deps::fastp::FastpMetadata;
 use crate::core::deps::DepMetadata;
 use crate::helper::common;
@@ -35,7 +34,7 @@ pub struct ReadCleaner<'a> {
     /// Output directory to store the cleaned reads
     pub output_dir: &'a Path,
     /// Runner options
-    pub runner: RunnerOptions<'a>,
+    pub runner: RunnerOptions,
     task: Task,
 }
 
@@ -71,15 +70,18 @@ impl<'a> ReadCleaner<'a> {
 
     /// Clean raw read files using Fastp
     pub fn clean(&self) {
+        let spinner = common::init_spinner();
+        spinner.set_message("Parsing config file");
         let config = self
             .parse_config()
             .expect("Failed to parse config. Try to create a new config.");
-        self.log_input(&config);
+        let qc = config.dependencies.get(QC_DEPENDENCY);
+        let updated_dep = FastpMetadata::new().update(qc);
+        self.log_input(&config, &updated_dep);
         PathCheck::new(self.output_dir)
             .is_dir()
-            .with_force_overwrite(self.runner.force)
+            .with_force_overwrite(self.runner.overwrite)
             .prompt_exists(self.runner.dry_run);
-        let spinner = common::init_spinner();
         let mut check = FastqConfigCheck::new(config.input.sample_counts);
         if self.runner.skip_config_check {
             spinner.finish_with_message("Skipping config data check\n");
@@ -101,20 +103,16 @@ impl<'a> ReadCleaner<'a> {
             return;
         }
 
-        let reports = self.clean_reads(&config.samples);
-        // let config_path = self
-        //     .write_output_config(&reports)
-        //     .expect("Failed to write clean read config");
+        let reports = self.clean_reads(&config.samples, &updated_dep);
         self.log_final_output(&reports);
     }
 
-    fn clean_reads(&self, samples: &[FastqReads]) -> Vec<CleanReadReport> {
+    fn clean_reads(&self, samples: &[FastqReads], fastp: &DepMetadata) -> Vec<CleanReadReport> {
         let mut tracker = ProcessingTracker::new(samples.len());
         let time = std::time::Instant::now();
         let mut reports = Vec::new();
         samples.iter().enumerate().for_each(|(i, sample)| {
-            let mut runner =
-                fastp::FastpRunner::new(sample, self.output_dir, self.runner.override_args);
+            let mut runner = fastp::FastpRunner::new(sample, self.output_dir, fastp);
             let results = runner.run();
 
             match results {
@@ -165,29 +163,18 @@ impl<'a> ReadCleaner<'a> {
         log::info!("\n{}", table);
     }
 
-    fn log_input(&self, config: &CleanReadConfig) {
+    fn log_input(&self, config: &CleanReadConfig, dep: &DepMetadata) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config file", self.config_path.display());
         log::info!("{:18}: {}", "Sample counts", config.input.sample_counts);
         log::info!("{:18}: {}", "File counts", config.input.file_counts);
         log::info!("{:18}: {}", "Task", self.task);
-        self.log_fastp_info(&config.dependencies);
+        log::info!("{:18}: {} v{}\n", "QC", dep.name, dep.version);
     }
 
     fn log_final_output(&self, reports: &[CleanReadReport]) {
         log::info!("{}", "\nOutput".cyan());
         log::info!("{:18}: {}", "Directory", self.output_dir.display());
         log::info!("{:18}: {}", "Total processed", reports.len());
-    }
-
-    fn log_fastp_info(&self, dependency: &DepMetadata) {
-        let deps = FastpMetadata::new(None).get();
-        match deps {
-            Some(dep) => {
-                log::info!("{:18}: {} v{}\n", "Cleaner", dep.name, dep.version);
-                check_dependency_match(dependency, &dep.version);
-            }
-            None => panic!("Failed to find Fastp"),
-        }
     }
 }

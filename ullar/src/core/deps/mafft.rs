@@ -1,11 +1,14 @@
+use colored::Colorize;
+
 #[cfg(target_family = "unix")]
 use crate::version;
 use std::process::Command;
 
-use super::DepMetadata;
+use super::{check_dependency_match, dependency_not_found, DepMetadata};
 
 /// Default MAFFT executable for Unix systems
 pub const MAFFT_EXE: &str = "mafft";
+const MAFFT_NAME: &str = "MAFFT";
 
 pub struct MafftMetadata<'a> {
     name: String,
@@ -13,16 +16,48 @@ pub struct MafftMetadata<'a> {
 }
 
 impl<'a> MafftMetadata<'a> {
-    pub fn new(override_args: Option<&'a str>) -> Self {
+    pub fn new() -> Self {
         Self {
-            name: "MAFFT".to_string(),
-            override_args,
+            name: MAFFT_NAME.to_string(),
+            override_args: None,
         }
+    }
+
+    pub fn override_args(mut self, override_args: Option<&'a str>) -> Self {
+        self.override_args = override_args;
+        self
     }
 
     pub fn get(&self) -> Option<DepMetadata> {
         let version_data: Option<String> = self.get_mafft();
         version_data.as_ref().and_then(|v| self.metadata(v))
+    }
+
+    pub fn update(&self, config_meta: Option<&DepMetadata>) -> DepMetadata {
+        let mut update = self.get().unwrap_or_else(|| {
+            panic!(
+                "{} MAFFT is not found. 
+                Please ensure MAFFT is installed and accessible in your PATH",
+                "Error:".red()
+            )
+        });
+
+        match config_meta {
+            Some(dep) => {
+                check_dependency_match(&update, &dep.version);
+                if dep.override_args.is_some() {
+                    let default_args = "".to_string();
+                    let args = dep.override_args.as_ref().unwrap_or(&default_args);
+                    update.override_args = Some(args.to_string());
+                }
+
+                update
+            }
+            None => {
+                dependency_not_found(MAFFT_NAME);
+                update
+            }
+        }
     }
 
     /// Get the version of fastp

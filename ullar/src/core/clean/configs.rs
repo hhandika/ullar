@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
 use std::{error::Error, path::Path};
@@ -13,6 +14,7 @@ use crate::helper::fastq::FastqInput;
 use crate::types::reads::FastqReads;
 
 pub const DEFAULT_READ_CLEANING_CONFIG: &str = "read_cleaning";
+pub const QC_DEPENDENCY: &str = "qc";
 
 pub enum FileMatchingStrategy {
     Regex,
@@ -24,7 +26,7 @@ pub struct CleanReadConfig {
     #[serde(flatten)]
     pub app: UllarConfig,
     pub input: FastqInput,
-    pub dependencies: DepMetadata,
+    pub dependencies: BTreeMap<String, DepMetadata>,
     pub samples: Vec<FastqReads>,
 }
 
@@ -33,7 +35,7 @@ impl CleanReadConfig {
         Self {
             app: UllarConfig::default(),
             input,
-            dependencies: DepMetadata::default(),
+            dependencies: BTreeMap::new(),
             samples,
         }
     }
@@ -76,11 +78,12 @@ impl CleanReadConfig {
     }
 
     fn get_dependency(&mut self, override_args: Option<&str>) {
-        let dep = FastpMetadata::new(override_args).get();
+        let dep = FastpMetadata::new().override_args(override_args).get();
 
-        self.dependencies = dep.unwrap_or_else(|| {
+        let fastp = dep.unwrap_or_else(|| {
             panic!("Fastp dependency not found. Please, install fastp");
         });
+        self.dependencies.insert(QC_DEPENDENCY.to_string(), fastp);
     }
 }
 
@@ -94,12 +97,12 @@ mod tests {
         let config = CleanReadConfig::from_toml(input_dir).unwrap();
         let input = PathBuf::from("datasets/rawreads/");
         let sample_name = "Bunomys_chrysocomus_ABCD1234";
-
+        let dep = config.dependencies.get(QC_DEPENDENCY).unwrap();
         assert_eq!(config.input.input_dir, input);
         assert_eq!(config.input.sample_counts, 1);
         assert_eq!(config.samples.len(), 1);
-        assert_eq!(config.dependencies.name, "fastp");
-        assert_eq!(config.dependencies.version, "0.23.4");
+        assert_eq!(dep.name, "fastp");
+        assert_eq!(dep.version, "0.23.4");
         assert_eq!(config.samples[0].sample_name, sample_name);
         assert_eq!(
             config.samples[0].read_1.as_ref().unwrap().file_name,

@@ -8,7 +8,7 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    cli::commands::common::CommonInitArgs,
+    cli::commands::common::GenomicReadsInitArgs,
     types::reads::{FastqReads, ReadChecker},
 };
 
@@ -131,13 +131,13 @@ impl Default for ReadAssignmentStrategy {
 }
 
 impl ReadAssignmentStrategy {
-    pub fn from_arg(common: &CommonInitArgs) -> Self {
-        if let Some(regex) = &common.re_sample {
+    pub fn from_arg(reads: &GenomicReadsInitArgs) -> Self {
+        if let Some(regex) = &reads.re_sample {
             Self::CustomRegex {
                 pattern: regex.to_string(),
             }
         } else {
-            Self::match_strategy(common.separator, common.length, &common.sample_name)
+            Self::match_strategy(reads.separator, reads.length, &reads.sample_name)
         }
     }
 

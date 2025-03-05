@@ -4,7 +4,7 @@ use clap::{Args, Subcommand};
 
 use crate::core::{assembly::DEFAULT_ASSEMBLY_OUTPUT_DIR, clean::DEFAULT_CLEAN_READ_OUTPUT_DIR};
 
-use super::common::{CommonInitArgs, CommonRunnerArgs};
+use super::common::{CommonInitArgs, CommonRunnerArgs, GenomicReadsInitArgs};
 
 #[derive(Subcommand)]
 pub(crate) enum AssemblySubcommand {
@@ -21,6 +21,8 @@ pub struct AssemblyInitArgs {
     /// Input directory containing the cleaned reads
     #[arg(short, long, default_value = DEFAULT_CLEAN_READ_OUTPUT_DIR, help = "Input directory containing the cleaned reads")]
     pub dir: PathBuf,
+    #[command(flatten)]
+    pub reads: GenomicReadsInitArgs,
     #[command(flatten)]
     pub common: CommonInitArgs,
 }

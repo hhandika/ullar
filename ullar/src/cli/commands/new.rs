@@ -2,9 +2,9 @@ use std::path::PathBuf;
 
 use clap::Args;
 
-// use crate::helper::configs::DEFAULT_CONFIG_DIR;
+use super::common::GenomicReadsInitArgs;
 
-use super::common::CommonInitArgs;
+// use crate::helper::configs::DEFAULT_CONFIG_DIR;
 
 #[derive(Args)]
 pub struct NewArgs {
@@ -17,7 +17,7 @@ pub struct NewArgs {
     )]
     pub dir: PathBuf,
     #[command(flatten)]
-    pub common: CommonInitArgs,
+    pub common: GenomicReadsInitArgs,
 }
 
 // #[derive(Args)]

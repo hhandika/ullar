@@ -16,13 +16,6 @@ pub struct CommonRunnerArgs {
         help = "Check the config file without processing samples"
     )]
     pub dry_run: bool,
-    /// Optional parameters for runner
-    #[arg(
-        long,
-        require_equals = true,
-        help = "Optional parameters for the assembly process"
-    )]
-    pub override_args: Option<String>,
     /// Check config for errors
     #[arg(
         long,
@@ -31,19 +24,11 @@ pub struct CommonRunnerArgs {
     pub skip_config_check: bool,
     /// Force overwrite of existing files
     #[arg(long, help = "Force overwrite of existing files")]
-    pub force: bool,
+    pub overwrite: bool,
 }
 
 #[derive(Args)]
-pub struct CommonInitArgs {
-    /// Output directory for the config file
-    #[arg(
-        short,
-        long,
-        default_value = DEFAULT_CONFIG_DIR,
-        help = "Select a directory for the config file."
-    )]
-    pub output: PathBuf,
+pub struct GenomicReadsInitArgs {
     /// Split separator for sample names
     /// Default used '_'
     /// Example: sample1_R1.fastq.gz -> sample1
@@ -72,13 +57,6 @@ pub struct CommonInitArgs {
         help = "Specify input file extension to match. Support regex."
     )]
     pub extension: Option<String>,
-    /// Optional parameters for runner
-    #[arg(
-        long,
-        require_equals = true,
-        help = "Optional parameters for the runner"
-    )]
-    pub override_args: Option<String>,
     /// Specify regex to match sample names
     /// Default used internal regex based on name format.
     #[arg(
@@ -90,4 +68,23 @@ pub struct CommonInitArgs {
     /// Search recursively for files
     #[arg(long, help = "Search recursively for files")]
     pub recursive: bool,
+}
+
+#[derive(Args)]
+pub struct CommonInitArgs {
+    /// Output directory to store the config file
+    #[arg(
+        short,
+        long,
+        default_value = DEFAULT_CONFIG_DIR,
+        help = "Output directory to write the config file"
+    )]
+    pub output: PathBuf,
+    /// Optional parameters for runner
+    #[arg(
+        long,
+        require_equals = true,
+        help = "Optional parameters for the runner"
+    )]
+    pub override_args: Option<String>,
 }

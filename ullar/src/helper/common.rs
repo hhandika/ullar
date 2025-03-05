@@ -3,7 +3,7 @@ use clap::{crate_description, crate_name, crate_version};
 use indicatif::{ProgressBar, ProgressStyle};
 use serde::{Deserialize, Serialize};
 use size::Size;
-use std::time::Duration;
+use std::{fmt::Debug, time::Duration};
 use sysinfo::System;
 
 use chrono::Local;
@@ -152,7 +152,7 @@ pub struct SystemInfo {
     pub cpu: String,
     pub cores: usize,
     pub threads: usize,
-    pub total_memory: String,
+    pub total_memory: u64,
     pub timestamp: String,
 }
 
@@ -172,7 +172,7 @@ impl SystemInfo {
             cpu: String::new(),
             cores: 0,
             threads: 0,
-            total_memory: String::new(),
+            total_memory: 0,
             timestamp: get_timestamp(),
         }
     }
@@ -199,7 +199,11 @@ impl SystemInfo {
         log::info!("{:18}: {}", "CPU", self.cpu);
         log::info!("{:18}: {}", "Physical cores", self.cores);
         log::info!("{:18}: {}", "Threads", self.threads);
-        log::info!("{:18}: {}", "Total Memory", self.total_memory);
+        log::info!(
+            "{:18}: {:0}",
+            "Total Memory",
+            Size::from_bytes(self.total_memory).to_string()
+        );
         log::info!("{:18}: {}\n", "Timestamp", self.timestamp);
     }
 
@@ -222,7 +226,6 @@ impl SystemInfo {
     }
 
     fn get_memory(&mut self) {
-        let total_memory = self.info.total_memory();
-        self.total_memory = Size::from_bytes(total_memory).to_string();
+        self.total_memory = self.info.total_memory();
     }
 }

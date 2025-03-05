@@ -2,7 +2,7 @@
 use std::{error::Error, path::Path};
 
 use colored::Colorize;
-use configs::ContigMappingConfig;
+use configs::{ContigMappingConfig, LASTZ_ALIGNER};
 use lastz::{LastzMapping, DEFAULT_LASTZ_PARAMS};
 use reports::MappingData;
 use summary::FinalMappingSummary;
@@ -13,6 +13,8 @@ use crate::{
     helper::{common, files::PathCheck},
     types::{map::Aligner, runner::RunnerOptions, Task},
 };
+
+use super::deps::{lastz::LastzMetadata, DepMetadata};
 
 pub mod configs;
 pub mod exonerate;
@@ -29,7 +31,7 @@ pub const DEFAULT_READ_MAPPING_OUTPUT_DIR: &str = "mapped_reads";
 pub struct ContigMapping<'a> {
     pub config_path: &'a Path,
     pub output_dir: &'a Path,
-    pub runner: RunnerOptions<'a>,
+    pub runner: RunnerOptions,
     #[allow(dead_code)]
     task: Task,
 }
@@ -58,12 +60,14 @@ impl<'a> ContigMapping<'a> {
         spinner.set_message("Mapping contigs to reference sequence");
         let config = self.parse_config().expect("Failed to parse config");
         spinner.finish_with_message(format!("{} Finished parsing config\n", "✔".green()));
-        self.log_input(config.contigs.len(), &config.input.aligner);
+        let dep = config.dependencies.get(LASTZ_ALIGNER);
+        let updated_dep = LastzMetadata::new().update(dep);
+        self.log_input(config.contigs.len(), &config.input.aligner, &updated_dep);
         PathCheck::new(self.output_dir)
             .is_dir()
-            .with_force_overwrite(self.runner.force)
+            .with_force_overwrite(self.runner.overwrite)
             .prompt_exists(self.runner.dry_run);
-        let results = self.run_lastz(&config);
+        let results = self.run_lastz(&config, &updated_dep);
         let summary = self.generate_mapped_contig(&results, &config);
         self.log_output(&results, &summary);
     }
@@ -73,12 +77,8 @@ impl<'a> ContigMapping<'a> {
         Ok(config)
     }
 
-    fn run_lastz(&self, config: &ContigMappingConfig) -> Vec<MappingData> {
-        let lastz = LastzMapping::new(
-            &config.sequence_reference,
-            self.output_dir,
-            self.runner.override_args,
-        );
+    fn run_lastz(&self, config: &ContigMappingConfig, dep: &DepMetadata) -> Vec<MappingData> {
+        let lastz = LastzMapping::new(&config.sequence_reference, self.output_dir, dep);
         lastz.run(&config.contigs).expect("Failed to run Lastz")
     }
 
@@ -90,21 +90,21 @@ impl<'a> ContigMapping<'a> {
         MappedContigWriter::new(data, self.output_dir, &config.sequence_reference).generate()
     }
 
-    fn log_input(&self, file_count: usize, aligner: &Aligner) {
+    fn log_input(&self, file_count: usize, aligner: &Aligner, dep: &DepMetadata) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config", self.config_path.display());
         log::info!("{:18}: {}", "File count", file_count);
         log::info!("{:18}: {}", "Task", self.task);
-        self.log_aligner_info(aligner);
+        self.log_aligner_info(aligner, dep);
     }
 
-    fn log_aligner_info(&self, aligner: &Aligner) {
+    fn log_aligner_info(&self, aligner: &Aligner, dep: &DepMetadata) {
         match aligner {
             Aligner::Lastz => log::info!("{:18}: {}", "Aligner:", "Lastz"),
             Aligner::Exonerate => log::info!("{:18}: {}", "Aligner:", "Exonerate"),
             Aligner::Minimap => log::info!("{:18}: {}", "Aligner:", "Minimap"),
         }
-        match self.runner.override_args {
+        match &dep.override_args {
             Some(args) => log::info!("{:18}: {}\n", "Override args:", args),
             None => log::info!("{:18}: {}\n", "Override args:", DEFAULT_LASTZ_PARAMS),
         }

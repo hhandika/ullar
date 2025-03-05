@@ -1,4 +1,6 @@
 //! Utilities for managing dependencies.
+use core::panic;
+
 use colored::Colorize;
 use comfy_table::{Cell, Color, Table};
 use fastp::FastpMetadata;
@@ -47,16 +49,28 @@ macro_rules! version {
     }};
 }
 
-pub fn check_dependency_match(dep: &DepMetadata, version: &str) {
-    if dep.version != version {
+pub fn check_dependency_match(dep: &DepMetadata, config_version: &str) {
+    if dep.version != config_version {
         log::warn!(
-            "\n{} Version mismatch for {}. Expected: {}, Found: {}",
+            "\n{} Installed {} version {} is different from the config version {}.\
+            ULLAR will use the installed version",
             "Warning:".yellow(),
             dep.name,
             dep.version,
-            version
+            config_version
         );
     }
+}
+
+pub fn dependency_not_found(dep: &str) {
+    log::error!(
+        "{} {} is not found. 
+        Please ensure {} is installed and accessible in your PATH",
+        "Error:".red(),
+        dep,
+        dep
+    );
+    panic!("{} Dependency not found", "Error:".red());
 }
 
 /// Data structure to store dependency metadata
@@ -81,6 +95,13 @@ impl DepMetadata {
             override_args: None,
         }
     }
+
+    pub fn get_executable(&self, default: &str) -> String {
+        self.executable
+            .as_ref()
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| default.to_string())
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -96,10 +117,10 @@ pub struct DependencyCheck {
 impl DependencyCheck {
     pub fn new() -> Self {
         Self {
-            fastp: FastpMetadata::new(None).get(),
-            spades: SpadesMetadata::new(None).get(),
-            lastz: LastzMetadata::new(None).get(),
-            mafft: MafftMetadata::new(None).get(),
+            fastp: FastpMetadata::new().get(),
+            spades: SpadesMetadata::new().get(),
+            lastz: LastzMetadata::new().get(),
+            mafft: MafftMetadata::new().get(),
             iqtree: IqtreeMetadata::new(None).get(),
             segul: Some(get_segul_metadata()),
         }
@@ -107,10 +128,10 @@ impl DependencyCheck {
 
     pub fn with_override_args(override_args: Option<&str>) -> Self {
         Self {
-            fastp: FastpMetadata::new(override_args).get(),
-            spades: SpadesMetadata::new(override_args).get(),
-            lastz: LastzMetadata::new(override_args).get(),
-            mafft: MafftMetadata::new(override_args).get(),
+            fastp: FastpMetadata::new().override_args(override_args).get(),
+            spades: SpadesMetadata::new().override_args(override_args).get(),
+            lastz: LastzMetadata::new().override_args(override_args).get(),
+            mafft: MafftMetadata::new().override_args(override_args).get(),
             iqtree: IqtreeMetadata::new(override_args).get(),
             segul: Some(get_segul_metadata()),
         }

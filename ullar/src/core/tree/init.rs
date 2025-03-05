@@ -6,7 +6,6 @@ use enum_iterator::all;
 use segul::helper::finder::SeqFileFinder;
 use segul::helper::types::{DataType, InputFmt};
 
-use crate::cli::commands::common::CommonInitArgs;
 use crate::cli::commands::tree::TreeInferenceInitArgs;
 use crate::helper::common;
 use crate::types::alignments::AlignmentFiles;
@@ -20,7 +19,6 @@ pub struct TreeInferenceInit<'a> {
     pub datatype: DataType,
     pub partition: Option<&'a Path>,
     pub method: Option<&'a str>,
-    pub common: &'a CommonInitArgs,
 }
 
 impl<'a> TreeInferenceInit<'a> {
@@ -34,7 +32,6 @@ impl<'a> TreeInferenceInit<'a> {
             datatype: DataType::Dna,
             partition: args.partition.as_deref(),
             method: args.method.as_deref(),
-            common: &args.common,
         }
     }
 
@@ -76,7 +73,7 @@ impl<'a> TreeInferenceInit<'a> {
     ) -> Result<(PathBuf, TreeInferenceConfig), Box<dyn Error>> {
         let methods = self.parse_method();
         let mut config = TreeInferenceConfig::init(self.input_dir, methods, alignments);
-        let output_path = config.to_toml(self.common.override_args.as_deref())?;
+        // let output_path = config.to_toml(self.override_args.as_deref())?;
         Ok((output_path, config))
     }
 

@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
 use crate::core::deps::mafft::MAFFT_EXE;
+use crate::core::deps::DepMetadata;
 use crate::helper::files::FileMetadata;
 use crate::parse_override_args;
 
@@ -36,19 +37,19 @@ pub struct MafftRunner<'a> {
     ///    If None, use DEFAULT_MAFFT_PARAMS
     ///   If Some, the string will be split  by whitespace
     ///     into individual arguments
-    pub override_args: Option<&'a str>,
+    pub dep_metadata: &'a DepMetadata,
 }
 
 impl<'a> MafftRunner<'a> {
     pub fn new(
         input_file: &'a FileMetadata,
         output_dir: &'a Path,
-        override_args: Option<&'a str>,
+        dep_metadata: &'a DepMetadata,
     ) -> Self {
         Self {
             input_file,
             output_dir,
-            override_args,
+            dep_metadata,
         }
     }
 
@@ -59,38 +60,20 @@ impl<'a> MafftRunner<'a> {
         self.execute_mafft()
     }
 
-    #[cfg(target_family = "unix")]
     fn execute_mafft(&self) -> Result<PathBuf, Box<dyn Error>> {
-        let mut cmd = Command::new(MAFFT_EXE);
-        match self.override_args {
+        let executable = self
+            .dep_metadata
+            .executable
+            .as_ref()
+            .unwrap_or(&MAFFT_EXE.to_string())
+            .to_string();
+        let mut cmd = Command::new(&executable);
+        match &self.dep_metadata.override_args {
             Some(params) => parse_override_args!(cmd, params),
             None => parse_override_args!(cmd, DEFAULT_MAFFT_PARAMS),
         };
 
         cmd.arg(self.get_input_path());
-        let output = cmd.output()?;
-
-        match self.check_success(&output) {
-            Ok(_) => {
-                let output_path = self.create_output_path()?;
-                self.write_output(&output_path, &output.stdout)?;
-                Ok(output_path)
-            }
-            Err(e) => Err(e),
-        }
-    }
-
-    #[cfg(target_family = "windows")]
-    fn execute_mafft(&self) -> Result<PathBuf, Box<dyn Error>> {
-        let mut cmd = Command::new("wsl.exe");
-        cmd.arg(MAFFT_EXE);
-        match self.override_args {
-            Some(params) => parse_override_args!(cmd, params),
-            None => parse_override_args!(cmd, DEFAULT_MAFFT_PARAMS),
-        };
-
-        cmd.arg(self.get_input_path());
-        // let output_path = self.create_output_path()?;
         let output = cmd.output()?;
 
         match self.check_success(&output) {
