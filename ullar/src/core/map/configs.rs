@@ -1,4 +1,5 @@
 use std::{
+    collections::BTreeMap,
     error::Error,
     fmt::Display,
     fs::File,
@@ -22,6 +23,7 @@ use crate::{
 pub const DEFAULT_REF_MAPPING_CONFIG: &str = "contig_mapping";
 
 pub const CONTIG_REGEX: &str = r"(?i)(contig*)";
+pub const LASTZ_ALIGNER: &str = "aligner";
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub enum SampleNameSource {
@@ -59,7 +61,7 @@ pub struct ContigMappingConfig {
     #[serde(flatten)]
     pub app: UllarConfig,
     pub input: ContigInput,
-    pub dependencies: DepMetadata,
+    pub dependencies: BTreeMap<String, DepMetadata>,
     pub sequence_reference: ReferenceFile,
     pub contigs: Vec<ContigFiles>,
 }
@@ -69,7 +71,7 @@ impl ContigMappingConfig {
         Self {
             app: UllarConfig::default(),
             input: ContigInput::default(),
-            dependencies: DepMetadata::default(),
+            dependencies: BTreeMap::new(),
             contigs: Vec::new(),
             sequence_reference: ReferenceFile::new(reference_regex),
         }
@@ -78,7 +80,7 @@ impl ContigMappingConfig {
     pub fn init(input: ContigInput, reference_regex: &str) -> Self {
         Self {
             app: UllarConfig::default(),
-            dependencies: DepMetadata::default(),
+            dependencies: BTreeMap::new(),
             input,
             sequence_reference: ReferenceFile::new(reference_regex),
             contigs: Vec::new(),
@@ -178,13 +180,11 @@ impl ContigMappingConfig {
     }
 
     fn get_dependency(&mut self, override_args: Option<&str>) {
-        let dep = LastzMetadata::new(override_args).get();
-        match dep {
-            Some(metadata) => self.dependencies = metadata,
-            None => {
-                panic!("Lastz dependency not found. Please, install lastz");
-            }
-        }
+        let dep = LastzMetadata::new().override_args(override_args).get();
+        let lastz = dep.unwrap_or_else(|| {
+            panic!("Lastz dependency not found. Please, install lastz");
+        });
+        self.dependencies.insert(LASTZ_ALIGNER.to_string(), lastz);
     }
 }
 

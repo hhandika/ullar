@@ -6,7 +6,7 @@ use std::{
 
 use colored::Colorize;
 use comfy_table::Table;
-use configs::{AssemblyConfig, DEFAULT_ASSEMBLY_CONFIG};
+use configs::{AssemblyConfig, ASSEMBLER_DEPENDENCY, DEFAULT_ASSEMBLY_CONFIG};
 use spades::SpadeRunner;
 
 use crate::{
@@ -23,7 +23,7 @@ use crate::{
 
 use self::reports::SpadeReports;
 
-use crate::core::deps::{check_dependency_match, spades::SpadesMetadata, DepMetadata};
+use crate::core::deps::{spades::SpadesMetadata, DepMetadata};
 
 pub mod configs;
 pub mod init;
@@ -46,7 +46,7 @@ pub struct Assembly<'a> {
     /// Rename contigs file to sample name
     pub rename_contigs: bool,
     /// Runner options
-    pub runner: RunnerOptions<'a>,
+    pub runner: RunnerOptions,
     task: Task,
 }
 
@@ -92,13 +92,16 @@ impl<'a> Assembly<'a> {
 
     /// Assemble cleaned read files using SPAdes
     pub fn assemble(&self) {
+        let spinner = common::init_spinner();
+        spinner.set_message("Parsing config file");
         let config = self.parse_config().expect("Failed to parse config");
-        self.log_input(&config);
+        let assembler = config.dependencies.get(ASSEMBLER_DEPENDENCY);
+        let updated_dep = SpadesMetadata::new().update(assembler);
+        self.log_input(&config, &updated_dep);
         PathCheck::new(self.output_dir)
             .is_dir()
-            .with_force_overwrite(self.runner.force)
+            .with_force_overwrite(self.runner.overwrite)
             .prompt_exists(self.runner.dry_run);
-        let spinner = common::init_spinner();
         let mut check = FastqConfigCheck::new(config.input.sample_counts);
         if self.runner.skip_config_check {
             spinner.finish_with_message("Skipping config data check\n");
@@ -120,7 +123,7 @@ impl<'a> Assembly<'a> {
             return;
         }
 
-        let _ = self.assemble_reads(&config.samples);
+        let _ = self.assemble_reads(&config.samples, &updated_dep);
         self.log_output();
     }
 
@@ -129,20 +132,16 @@ impl<'a> Assembly<'a> {
         Ok(config)
     }
 
-    fn assemble_reads(&self, samples: &[FastqReads]) -> Vec<SpadeReports> {
+    fn assemble_reads(&self, samples: &[FastqReads], dep: &DepMetadata) -> Vec<SpadeReports> {
         let time = Instant::now();
         let mut tracker = ProcessingTracker::new(samples.len());
         let mut reports = Vec::new();
 
         samples.iter().enumerate().for_each(|(idx, sample)| {
-            let results = SpadeRunner::new(
-                sample,
-                self.output_dir,
-                self.runner.override_args,
-                self.keep_intermediates,
-                self.rename_contigs,
-            )
-            .run();
+            let results = SpadeRunner::new(sample, self.output_dir, dep)
+                .keep_intermediates(self.keep_intermediates)
+                .rename_contigs(self.rename_contigs)
+                .run();
 
             match results {
                 Ok(report) => {
@@ -180,28 +179,17 @@ impl<'a> Assembly<'a> {
         log::info!("\n{}", table);
     }
 
-    fn log_input(&self, config: &AssemblyConfig) {
+    fn log_input(&self, config: &AssemblyConfig, dep: &DepMetadata) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config path", self.config_path.display());
         config.input.log_summary();
         log::info!("{:18}: {}", "Task", self.task);
-        self.log_spade_info(&config.dependencies);
+        log::info!("{:18}: {} v{}\n", "Assembler", dep.name, dep.version);
     }
 
     fn log_output(&self) {
         log::info!("{}", "Output summary".cyan());
         let output_dir = self.output_dir.join("assemblies");
         log::info!("{:18}: {}", "Output directory", output_dir.display());
-    }
-
-    fn log_spade_info(&self, dependency: &DepMetadata) {
-        let deps = SpadesMetadata::new(None).get();
-        match deps {
-            Some(dep) => {
-                log::info!("{:18}: {} v{}\n", "Assembler", dep.name, dep.version);
-                check_dependency_match(dependency, &dep.version);
-            }
-            None => panic!("Failed to find SPAdes"),
-        }
     }
 }

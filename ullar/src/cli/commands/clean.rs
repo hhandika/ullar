@@ -4,7 +4,7 @@ use clap::{Args, Subcommand};
 
 use crate::core::clean::{DEFAULT_CLEAN_READ_OUTPUT_DIR, DEFAULT_RAW_READS_DIR};
 
-use super::common::{CommonInitArgs, CommonRunnerArgs};
+use super::common::{CommonInitArgs, CommonRunnerArgs, GenomicReadsInitArgs};
 
 #[derive(Subcommand)]
 pub(crate) enum ReadCleaningSubcommand {
@@ -21,6 +21,8 @@ pub struct ReadCleaningInitArgs {
     /// Input directory containing raw reads
     #[arg(short, long, default_value = DEFAULT_RAW_READS_DIR, help = "Input directory containing raw reads")]
     pub dir: PathBuf,
+    #[command(flatten)]
+    pub reads: GenomicReadsInitArgs,
     #[command(flatten)]
     pub common: CommonInitArgs,
 }

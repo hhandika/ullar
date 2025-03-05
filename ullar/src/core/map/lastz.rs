@@ -15,6 +15,7 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::core::deps::lastz::LASTZ_EXE;
+use crate::core::deps::DepMetadata;
 use crate::helper::common;
 use crate::types::map::{LastzNameParse, LastzOutputFormat};
 use crate::{get_file_stem, parse_override_args};
@@ -48,19 +49,19 @@ pub struct LastzMapping<'a> {
     /// Is reference contains multiple sequences
     pub multiple_targets: bool,
     /// Override arguments for Lastz
-    pub override_args: Option<&'a str>,
+    pub dependency: &'a DepMetadata,
 }
 
 impl<'a> LastzMapping<'a> {
     pub fn new(
         reference_data: &'a ReferenceFile,
         output_dir: &'a Path,
-        override_args: Option<&'a str>,
+        dependency: &'a DepMetadata,
     ) -> Self {
         Self {
             reference_data,
             output_dir,
-            override_args,
+            dependency,
             multiple_targets: true,
         }
     }
@@ -111,7 +112,7 @@ impl<'a> LastzMapping<'a> {
             &query,
             self.output_dir,
             &format,
-            self.override_args,
+            self.dependency,
             &self.reference_data.name_regex,
         );
         runner.run(sample_name)
@@ -158,9 +159,8 @@ pub struct Lastz<'a> {
     pub output_dir: &'a Path,
     /// Output format. The format of the output file.
     pub output_format: &'a LastzOutputFormat,
-    /// Override arguments for Lastz
-    ///   If None, use DEFAULT_LASTZ_PARAMS
-    pub override_args: Option<&'a str>,
+    /// LASTZ metadata to override the default parameters
+    pub dependency: &'a DepMetadata,
     /// Reference sequence name regex pattern
     pub refname_regex: &'a str,
 }
@@ -171,7 +171,7 @@ impl<'a> Lastz<'a> {
         query: &'a LastzQuery,
         output_dir: &'a Path,
         output_format: &'a LastzOutputFormat,
-        override_args: Option<&'a str>,
+        dependency: &'a DepMetadata,
         refname_regex: &'a str,
     ) -> Self {
         Self {
@@ -179,7 +179,7 @@ impl<'a> Lastz<'a> {
             query,
             output_dir,
             output_format,
-            override_args,
+            dependency,
             refname_regex,
         }
     }
@@ -207,10 +207,11 @@ impl<'a> Lastz<'a> {
     }
 
     fn execute_lastz(&self) -> Result<Vec<LastzOutput>, Box<dyn Error>> {
-        let mut cmd = Command::new(LASTZ_EXE);
+        let executable = self.dependency.get_executable(LASTZ_EXE);
+        let mut cmd = Command::new(executable);
         cmd.arg(self.target.get_path());
         cmd.arg(self.query.get_path());
-        match self.override_args {
+        match &self.dependency.override_args {
             Some(params) => parse_override_args!(cmd, params),
             None => parse_override_args!(cmd, DEFAULT_LASTZ_PARAMS),
         };

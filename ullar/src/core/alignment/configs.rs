@@ -20,6 +20,7 @@ use crate::{
 };
 
 pub const DEFAULT_ALIGNMENT_CONFIG: &str = "sequence_alignment";
+pub const ALIGNER_DEPENDENCY: &str = "aligner";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AlignmentConfig {
@@ -109,12 +110,12 @@ impl AlignmentConfig {
     }
 
     fn get_dependency(&mut self, override_args: Option<&str>) {
-        let mafft = MafftMetadata::new(override_args).get();
+        let mafft = MafftMetadata::new().override_args(override_args).get();
 
         match mafft {
             Some(metadata) => self
                 .dependencies
-                .insert(metadata.name.to_lowercase(), metadata),
+                .insert(ALIGNER_DEPENDENCY.to_string(), metadata),
             None => panic!("MAFFT dependency not found. Please install MAFFT."),
         };
 

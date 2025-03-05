@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{builder, Args, Subcommand};
+use clap::{Args, Subcommand};
 
 use crate::core::alignment::DEFAULT_ALIGNMENT_OUTPUT_DIR;
 
@@ -13,7 +13,7 @@ pub(crate) enum AlignmentSubcommand {
     Init(AlignmentInitArgs),
     /// Perform locus alignment
     #[command(name = "align", about = "Align multiple sequences")]
-    Align(AlignmentArgs),
+    Run(AlignmentArgs),
 }
 
 #[derive(Args)]
@@ -38,13 +38,6 @@ pub struct AlignmentInitArgs {
     /// Input directory containing the assemblies
     #[arg(short, long, help = "Input directory containing the assemblies")]
     pub dir: PathBuf,
-    #[arg(
-        short = 'f', 
-        long, 
-        help = "Input format of the sequences",
-        default_value = "fasta",
-        value_parser = builder::PossibleValuesParser::new(["auto","fasta","nexus","phylip"]))]
-    pub input_fmt: String,
     #[command(flatten)]
     pub common: CommonInitArgs,
 }

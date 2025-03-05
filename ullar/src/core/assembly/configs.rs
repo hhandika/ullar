@@ -1,4 +1,5 @@
 use std::{
+    collections::BTreeMap,
     fs,
     path::{Path, PathBuf},
     sync::mpsc::channel,
@@ -15,6 +16,7 @@ use crate::{
 };
 
 pub const DEFAULT_ASSEMBLY_CONFIG: &str = "denovo_assembly";
+pub const ASSEMBLER_DEPENDENCY: &str = "assembler";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -22,7 +24,7 @@ pub struct AssemblyConfig {
     #[serde(flatten)]
     pub app: UllarConfig,
     pub input: FastqInput,
-    pub dependencies: DepMetadata,
+    pub dependencies: BTreeMap<String, DepMetadata>,
     pub samples: Vec<FastqReads>,
 }
 
@@ -31,7 +33,7 @@ impl AssemblyConfig {
         Self {
             app: UllarConfig::default(),
             input,
-            dependencies: DepMetadata::default(),
+            dependencies: BTreeMap::new(),
             samples,
         }
     }
@@ -96,9 +98,10 @@ impl AssemblyConfig {
     }
 
     fn get_dependency(&mut self, override_args: Option<&str>) {
-        let dep = SpadesMetadata::new(override_args).get();
-
-        self.dependencies = dep.unwrap_or_else(|| panic!("Failed to get Spades dependency"));
+        let dep = SpadesMetadata::new().override_args(override_args).get();
+        let spades = dep.unwrap_or_else(|| panic!("Failed to get Spades dependency"));
+        self.dependencies
+            .insert(ASSEMBLER_DEPENDENCY.to_string(), spades);
     }
 
     fn parse_fastp_report(&self, reports: &[CleanReadReport]) -> Vec<FastqReads> {

@@ -10,7 +10,7 @@ use std::{
 };
 
 use colored::Colorize;
-use configs::AlignmentConfig;
+use configs::{AlignmentConfig, ALIGNER_DEPENDENCY};
 use mafft::{MafftRunner, DEFAULT_MAFFT_PARAMS};
 use rayon::prelude::*;
 use reports::MafftReport;
@@ -26,6 +26,8 @@ use crate::{
 
 use crate::core::deps::mafft::MafftMetadata;
 
+use super::deps::DepMetadata;
+
 pub const DEFAULT_ALIGNMENT_OUTPUT_DIR: &str = "alignments";
 
 pub struct SequenceAlignment<'a> {
@@ -34,7 +36,7 @@ pub struct SequenceAlignment<'a> {
     /// Output directory to store the alignments
     pub output_dir: &'a Path,
     /// Runner options for the alignment
-    pub runner: RunnerOptions<'a>,
+    pub runner: RunnerOptions,
     task: Task,
 }
 
@@ -69,33 +71,34 @@ impl<'a> SequenceAlignment<'a> {
     /// 4. Check configuration
     /// 6. If dry-run, print the summary and exit
     /// 7. Align the sequences
-    pub fn align(&self) {
+    pub fn align(&mut self) {
         let spinner = common::init_spinner();
         spinner.set_message("Parsing config file");
         let config = self.parse_config().expect("Failed to parse config");
         spinner.finish_with_message(format!("{} Finished parsing config file\n", "✔".green()));
-        self.log_input(&config);
+        let aligner = config.dependencies.get(ALIGNER_DEPENDENCY);
+        let updated_dep = MafftMetadata::new().update(aligner);
+        self.log_input(&config, &updated_dep);
         PathCheck::new(self.output_dir)
             .is_dir()
-            .with_force_overwrite(self.runner.force)
+            .with_force_overwrite(self.runner.overwrite)
             .prompt_exists(self.runner.dry_run);
-        let reports = self.par_align(&config.sequences);
+        let reports = self.par_align(&config.sequences, &updated_dep);
         self.log_final_output(&reports);
     }
 
     fn parse_config(&self) -> Result<AlignmentConfig, Box<dyn Error>> {
-        let config: AlignmentConfig = AlignmentConfig::from_toml(self.config_path)?;
-
+        let config = AlignmentConfig::from_toml(self.config_path)?;
         Ok(config)
     }
 
-    fn par_align(&self, input_files: &[FileMetadata]) -> MafftReport {
-        let progress_bar = common::init_progress_bar(input_files.len() as u64);
+    fn par_align(&mut self, sequences: &[FileMetadata], mafft: &DepMetadata) -> MafftReport {
+        let progress_bar = common::init_progress_bar(sequences.len() as u64);
         log::info!("{}", "Aligning sequences".cyan());
         progress_bar.set_message("Alignments");
         let (tx, rx) = mpsc::channel();
-        input_files.par_iter().for_each_with(tx, |tx, file| {
-            let output = self.align_mafft(file);
+        sequences.par_iter().for_each_with(tx, |tx, file| {
+            let output = self.align_mafft(file, &mafft);
             match output {
                 Ok(path) => tx.send(path).expect("Failed to send output path"),
                 Err(e) => log::error!("Failed to align {}: {}", file.file_name.red(), e),
@@ -111,12 +114,16 @@ impl<'a> SequenceAlignment<'a> {
         report
     }
 
-    fn align_mafft(&self, input: &FileMetadata) -> Result<PathBuf, Box<dyn Error>> {
-        let mafft = MafftRunner::new(input, self.output_dir, self.runner.override_args);
+    fn align_mafft(
+        &self,
+        input: &FileMetadata,
+        mafft: &DepMetadata,
+    ) -> Result<PathBuf, Box<dyn Error>> {
+        let mafft = MafftRunner::new(input, self.output_dir, mafft);
         mafft.run()
     }
 
-    fn log_input(&self, config: &AlignmentConfig) {
+    fn log_input(&self, config: &AlignmentConfig, dep: &DepMetadata) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Config path", self.config_path.display());
         log::info!("{:18}: {}", "Sample counts", config.input.sample_counts);
@@ -124,7 +131,13 @@ impl<'a> SequenceAlignment<'a> {
         log::info!("{:18}: {}", "File skipped", config.input.file_skipped);
         log::info!("{:18}: {}", "Final file count", config.input.file_counts);
         log::info!("{:18}: {}", "Task", self.task);
-        self.log_mafft_info();
+        log::info!("{:18}: {} v{}", "Aligner", "MAFFT", dep.version);
+        let params = dep
+            .override_args
+            .as_ref()
+            .unwrap_or(&DEFAULT_MAFFT_PARAMS.to_string())
+            .to_string();
+        log::info!("{:18}: {}\n", "Parameters", params);
     }
 
     fn log_final_output(&self, reports: &MafftReport) {
@@ -136,19 +149,5 @@ impl<'a> SequenceAlignment<'a> {
             "Sample counts",
             reports.alignments.sample_counts
         );
-    }
-
-    fn log_mafft_info(&self) {
-        let dep = MafftMetadata::new(None).get();
-        match dep {
-            Some(mafft) => log::info!("{:18}: {} v{}", "Aligner", "MAFFT", mafft.version),
-            None => log::info!("{:18}: {}", "Aligner", "MAFFT"),
-        }
-
-        let params = match self.runner.override_args {
-            Some(args) => args,
-            None => DEFAULT_MAFFT_PARAMS,
-        };
-        log::info!("{:18}: {}\n", "Parameters", params);
     }
 }

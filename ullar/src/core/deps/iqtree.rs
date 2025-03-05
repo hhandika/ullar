@@ -1,4 +1,6 @@
-use std::process::Command;
+use std::{process::Command, str::FromStr};
+
+use serde::{de, Deserialize, Serialize};
 
 use super::{re_capture_version, DepMetadata};
 use crate::version;
@@ -14,6 +16,43 @@ pub const IQTREE_EXE: &str = "iqtree.exe";
 
 #[cfg(not(target_os = "windows"))]
 pub const IQTREE_EXE: &str = "iqtree";
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub enum IQTreePartitions {
+    /// Edge equal partitions,
+    /// using '-q' option in IQ-TREE
+    #[default]
+    EdgeEqual,
+    /// Edge proportional partitions,
+    /// using '-spp' option in IQ-TREE
+    EdgeProportional,
+    /// Edge linked partitions,
+    /// using '-sp' option in IQ-TREE
+    EdgeUnlinked,
+}
+
+impl IQTreePartitions {
+    pub fn to_string(&self) -> String {
+        match self {
+            Self::EdgeEqual => "-q".to_string(),
+            Self::EdgeProportional => "-spp".to_string(),
+            Self::EdgeUnlinked => "-sp".to_string(),
+        }
+    }
+}
+
+impl FromStr for IQTreePartitions {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "equal" => Ok(Self::EdgeEqual),
+            "proporsional" => Ok(Self::EdgeProportional),
+            "unlinked" => Ok(Self::EdgeUnlinked),
+            _ => Err(format!("Unknown IQ-TREE partition: {}", s)),
+        }
+    }
+}
 
 pub struct IqtreeMetadata<'a> {
     version: Option<String>,
@@ -70,4 +109,17 @@ impl<'a> IqtreeMetadata<'a> {
             "IQ-TREE".to_string()
         }
     }
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct IQTreeSettings {
+    pub models: String,
+    pub threads: String,
+    pub bootstrap: u16,
+    pub partition: IQTreePartitions,
+    pub codon_model: bool,
+}
+
+impl IQTreeSettings {
+    pub fn from_args() {}
 }

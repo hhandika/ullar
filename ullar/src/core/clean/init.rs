@@ -6,7 +6,7 @@ use std::{error::Error, path::Path};
 use colored::Colorize;
 
 use crate::cli::commands::clean::ReadCleaningInitArgs;
-use crate::cli::commands::common::CommonInitArgs;
+use crate::cli::commands::common::{CommonInitArgs, GenomicReadsInitArgs};
 use crate::helper::common;
 use crate::helper::fastq::{FastqInput, ReadAssignmentStrategy};
 use crate::helper::files::FileFinder;
@@ -18,6 +18,7 @@ use super::configs::CleanReadConfig;
 pub struct ReadCleaningInit<'a> {
     input_dir: &'a Path,
     common: &'a CommonInitArgs,
+    reads: &'a GenomicReadsInitArgs,
     sample_name_format: SampleNameFormat,
 }
 
@@ -26,8 +27,9 @@ impl<'a> ReadCleaningInit<'a> {
         Self {
             input_dir: args.dir.as_path(),
             common: &args.common,
+            reads: &args.reads,
             sample_name_format: args
-                .common
+                .reads
                 .sample_name
                 .parse::<SampleNameFormat>()
                 .expect("Invalid sample name format"),
@@ -40,7 +42,7 @@ impl<'a> ReadCleaningInit<'a> {
         spin.set_message("Finding files...");
         let format = SupportedFormats::Fastq;
         self.match_sample_name_format();
-        let files = FileFinder::new(self.input_dir, &format).find(self.common.recursive)?;
+        let files = FileFinder::new(self.input_dir, &format).find(self.reads.recursive)?;
         let file_count = files.len();
         if files.is_empty() {
             spin.finish_with_message(format!(
@@ -68,7 +70,7 @@ impl<'a> ReadCleaningInit<'a> {
     }
 
     fn match_sample_name_format(&mut self) {
-        if let Some(regex) = &self.common.re_sample {
+        if let Some(regex) = &self.reads.re_sample {
             self.sample_name_format = SampleNameFormat::Custom(regex.to_string());
         }
     }
@@ -82,7 +84,7 @@ impl<'a> ReadCleaningInit<'a> {
         records: Vec<FastqReads>,
         file_counts: usize,
     ) -> Result<PathBuf, Box<dyn Error>> {
-        let strategy = ReadAssignmentStrategy::from_arg(self.common);
+        let strategy = ReadAssignmentStrategy::from_arg(self.reads);
         let input_summary = FastqInput::new(self.input_dir, records.len(), file_counts, strategy);
         let mut config = CleanReadConfig::new(input_summary, records.to_vec());
         let output_path = config.to_toml(self.common.override_args.as_deref())?;

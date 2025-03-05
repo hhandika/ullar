@@ -4,7 +4,7 @@ use clap::{builder, Args, Subcommand};
 
 use crate::{core::map::{configs::DEFAULT_REF_MAPPING_CONFIG, DEFAULT_CONTIG_MAPPING_OUTPUT_DIR, }, helper::regex::CONTIG_SAMPLE_REGEX};
 
-use super::common::CommonRunnerArgs;
+use super::common::{CommonInitArgs, CommonRunnerArgs};
 
 #[derive(Subcommand)]
 pub(crate) enum MapSubcommand {
@@ -91,7 +91,7 @@ pub struct MapInitArgs {
     )]
     pub config_name: String,
     #[command(flatten)]
-    pub common: CommonRunnerArgs,
+    pub common: CommonInitArgs,
 }
 
 #[derive(Args)]

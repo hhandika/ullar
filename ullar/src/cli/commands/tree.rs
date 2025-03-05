@@ -1,10 +1,9 @@
 use std::path::PathBuf;
 
-use clap::{Args, Subcommand};
+use clap::{builder, Args, Subcommand};
 
 use crate::core::tree::DEFAULT_PHYLO_OUTPUT_DIR;
 
-use super::common::{CommonInitArgs, CommonRunnerArgs};
 
 #[derive(Subcommand)]
 pub(crate) enum TreeInferenceSubcommand {
@@ -41,7 +40,8 @@ pub struct TreeInferenceInitArgs {
     #[arg(short, long, help = "Phylogenetic tree inference method")]
     pub method: Option<String>,
     #[command(flatten)]
-    pub common: CommonInitArgs,
+    pub iqtree: IqTreeSettingArgs,
+    
 }
 
 #[derive(Args)]
@@ -53,14 +53,60 @@ pub struct TreeInferenceArgs {
     #[arg(short, long, default_value = DEFAULT_PHYLO_OUTPUT_DIR,
         help = "Output directory to store the phylogenetic trees")]
     pub output: PathBuf,
-    #[command(flatten)]
-    pub common: CommonRunnerArgs,
     /// Phylogenetic tree inference method
     #[arg(
         short,
         long,
         default_value = "all",
-        help = "Phylogenetic tree inference method"
+        help = "Phylogenetic tree inference method",
+        value_parser = builder::PossibleValuesParser::new(["all", "ml-species", "ml-gene", "gsc", "msc"])
     )]
     pub method: String,
+}
+
+#[derive(Args)]
+pub struct IqTreeSettingArgs {
+    /// Model of nucleotide substitution
+    #[arg(
+        short,
+        long,
+        default_value = "GTR+G+I",
+        help = "Model of nucleotide substitution"
+    )]
+    pub models: String,
+    /// Number of threads to use
+    #[arg(short, long, default_value = "1", help = "Number of threads to use for IQ-TREE")]
+    pub threads: String,
+    /// Number of bootstrap replicates
+    #[arg(
+        short,
+        long,
+        default_value = "1000",
+        help = "Number of bootstrap replicates for IQ-TREE"
+    )]
+    pub bootstrap: String,
+    /// Partitioning scheme
+    #[arg(
+        short, 
+        long, 
+        help = "Partition model for IQ-TREE",
+        default_value = "equal", 
+        value_parser = builder::PossibleValuesParser::new(["equal", "proporsional", "unlinked"])
+    )]
+    pub partition: String,
+    /// Override arguments for IQ-TREE 
+    /// species tree inference.
+    /// Example: -m GTR+G+I -T 2 -B 1000
+    #[arg(
+        long,
+        help = "Override arguments for IQ-TREE species tree inference"
+    )]
+    pub override_args_species: Option<String>,
+    /// Override arguments for IQ-TREE
+    /// gene tree inference.
+    #[arg(
+        long,
+        help = "Override arguments for IQ-TREE gene tree inference"
+    )]
+    pub override_args_gene: Option<String>,
 }

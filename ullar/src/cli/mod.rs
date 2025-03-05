@@ -195,7 +195,7 @@ impl<'a> AlignmentArgParser<'a> {
     fn parse(&self) {
         match self.subcommand {
             AlignmentSubcommand::Init(init_args) => self.init(init_args),
-            AlignmentSubcommand::Align(run_args) => self.run(run_args),
+            AlignmentSubcommand::Run(run_args) => self.run(run_args),
         }
     }
 

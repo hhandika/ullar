@@ -23,10 +23,8 @@ impl<'a> AlignmentInit<'a> {
         Self {
             input_dir: &args.dir,
             output_dir: &args.common.output,
-            input_fmt: args
-                .input_fmt
-                .parse::<InputFmt>()
-                .expect("Invalid input format"),
+            // Mafft only supports FASTA format
+            input_fmt: InputFmt::Fasta,
             override_args: args.common.override_args.as_deref(),
         }
     }

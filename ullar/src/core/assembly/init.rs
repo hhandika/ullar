@@ -11,7 +11,10 @@ use std::{
 use colored::Colorize;
 
 use crate::{
-    cli::commands::{assembly::AssemblyInitArgs, common::CommonInitArgs},
+    cli::commands::{
+        assembly::AssemblyInitArgs,
+        common::{CommonInitArgs, GenomicReadsInitArgs},
+    },
     helper::{
         common,
         fastq::{FastqInput, ReadAssignmentStrategy},
@@ -28,6 +31,7 @@ use super::configs::AssemblyConfig;
 pub struct AssemblyInit<'a> {
     input_dir: &'a Path,
     common: &'a CommonInitArgs,
+    reads: &'a GenomicReadsInitArgs,
     sample_name_format: SampleNameFormat,
 }
 
@@ -36,8 +40,9 @@ impl<'a> AssemblyInit<'a> {
         Self {
             input_dir: &args.dir,
             common: &args.common,
+            reads: &args.reads,
             sample_name_format: args
-                .common
+                .reads
                 .sample_name
                 .parse::<SampleNameFormat>()
                 .expect("Invalid sample name format"),
@@ -50,7 +55,7 @@ impl<'a> AssemblyInit<'a> {
         spin.set_message("Finding files...");
         let format = SupportedFormats::Fastq;
         self.match_sample_name_format();
-        let files = FileFinder::new(self.input_dir, &format).find(self.common.recursive)?;
+        let files = FileFinder::new(self.input_dir, &format).find(self.reads.recursive)?;
 
         if files.is_empty() {
             spin.finish_with_message(format!(
@@ -98,7 +103,7 @@ impl<'a> AssemblyInit<'a> {
     }
 
     fn match_sample_name_format(&mut self) {
-        if let Some(regex) = &self.common.re_sample {
+        if let Some(regex) = &self.reads.re_sample {
             self.sample_name_format = SampleNameFormat::Custom(regex.to_string());
         }
     }
@@ -112,7 +117,7 @@ impl<'a> AssemblyInit<'a> {
         records: Vec<FastqReads>,
         file_counts: usize,
     ) -> Result<PathBuf, Box<dyn Error>> {
-        let strategy = ReadAssignmentStrategy::from_arg(self.common);
+        let strategy = ReadAssignmentStrategy::from_arg(self.reads);
         let input_summary = FastqInput::new(self.input_dir, records.len(), file_counts, strategy);
         let mut config = AssemblyConfig::new(input_summary, records.to_vec());
         let output_path = config.to_toml(self.common.override_args.as_deref())?;
@@ -122,7 +127,7 @@ impl<'a> AssemblyInit<'a> {
     fn log_input(&self) {
         log::info!("{}", "Input".cyan());
         log::info!("{:18}: {}", "Directory", self.input_dir.display());
-        log::info!("{:18}: {}\n", "Sample name format", self.common.sample_name);
+        log::info!("{:18}: {}\n", "Sample name format", self.reads.sample_name);
     }
 
     fn log_output(&self, output_path: &Path, record_counts: usize, file_counts: usize) {
