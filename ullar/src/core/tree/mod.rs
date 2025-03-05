@@ -126,17 +126,14 @@ impl<'a> TreeEstimation<'a> {
 
     fn infer_ml_tree(&self, config: &TreeInferenceConfig) {
         let prefix = "concat";
-        let deps: Option<&DepMetadata> = config
-            .dependencies
-            .iter()
-            .filter(|dep| dep.name == "IQ-TREE")
-            .next();
+        let deps: Option<&DepMetadata> =
+            config.dependencies.iter().find(|dep| dep.name == "IQ-TREE");
+
         if deps.is_none() {
             self.try_iqtree();
         }
         let iqtree = deps.expect("IQ-TREE dependency not found in the config");
-        let ml_analyses =
-            MlIqTree::new(&config.alignments, iqtree, &self.output_dir, prefix, false);
+        let ml_analyses = MlIqTree::new(&config.alignments, iqtree, self.output_dir, prefix, false);
         ml_analyses.infer(prefix);
     }
 

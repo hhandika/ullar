@@ -23,17 +23,12 @@ pub const DEFAULT_REF_MAPPING_CONFIG: &str = "contig_mapping";
 
 pub const CONTIG_REGEX: &str = r"(?i)(contig*)";
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub enum SampleNameSource {
+    #[default]
     File,
     Directory,
     Regex(String),
-}
-
-impl Default for SampleNameSource {
-    fn default() -> Self {
-        SampleNameSource::File
-    }
 }
 
 impl Display for SampleNameSource {
@@ -59,7 +54,7 @@ impl FromStr for SampleNameSource {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct ContigMappingConfig {
     #[serde(flatten)]
     pub app: UllarConfig,
@@ -67,18 +62,6 @@ pub struct ContigMappingConfig {
     pub dependencies: DepMetadata,
     pub sequence_reference: ReferenceFile,
     pub contigs: Vec<ContigFiles>,
-}
-
-impl Default for ContigMappingConfig {
-    fn default() -> Self {
-        Self {
-            app: UllarConfig::default(),
-            input: ContigInput::default(),
-            dependencies: DepMetadata::default(),
-            contigs: Vec::new(),
-            sequence_reference: ReferenceFile::default(),
-        }
-    }
 }
 
 impl ContigMappingConfig {

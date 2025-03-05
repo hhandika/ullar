@@ -83,6 +83,7 @@ impl DepMetadata {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct DependencyCheck {
     fastp: Option<DepMetadata>,
     spades: Option<DepMetadata>,
