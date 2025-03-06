@@ -1,6 +1,6 @@
 use std::{process::Command, str::FromStr};
 
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use super::{re_capture_version, DepMetadata};
 use crate::version;
@@ -32,7 +32,7 @@ pub enum IQTreePartitions {
 }
 
 impl IQTreePartitions {
-    pub fn to_string(&self) -> String {
+    pub fn get_arg(&self) -> String {
         match self {
             Self::EdgeEqual => "-q".to_string(),
             Self::EdgeProportional => "-spp".to_string(),
@@ -47,21 +47,21 @@ impl FromStr for IQTreePartitions {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "equal" => Ok(Self::EdgeEqual),
-            "proporsional" => Ok(Self::EdgeProportional),
+            "proportional" => Ok(Self::EdgeProportional),
             "unlinked" => Ok(Self::EdgeUnlinked),
             _ => Err(format!("Unknown IQ-TREE partition: {}", s)),
         }
     }
 }
 
-pub struct IqtreeMetadata<'a> {
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct IqtreeMetadata {
     version: Option<String>,
-    override_args: Option<&'a str>,
     both_versions: bool,
 }
 
-impl<'a> IqtreeMetadata<'a> {
-    pub fn new(override_args: Option<&'a str>) -> Self {
+impl IqtreeMetadata {
+    pub fn new() -> Self {
         let version_1 = version!(IQTREE_EXE);
         let version_2 = version!(IQTREE2_EXE);
         let both_versions = version_1.is_some() && version_2.is_some();
@@ -73,7 +73,6 @@ impl<'a> IqtreeMetadata<'a> {
 
         Self {
             version,
-            override_args,
             both_versions,
         }
     }
@@ -86,12 +85,7 @@ impl<'a> IqtreeMetadata<'a> {
         let version = re_capture_version(version_data);
         let executable = self.get_executable();
         let name = self.name();
-        Some(DepMetadata {
-            name,
-            version,
-            executable: Some(executable),
-            override_args: self.override_args.map(|s| s.to_string()),
-        })
+        Some(DepMetadata::new(&name, &version, Some(&executable)))
     }
 
     fn get_executable(&self) -> String {

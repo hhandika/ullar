@@ -6,7 +6,7 @@ use enum_iterator::all;
 use segul::helper::finder::SeqFileFinder;
 use segul::helper::types::{DataType, InputFmt};
 
-use crate::cli::commands::tree::TreeInferenceInitArgs;
+use crate::cli::commands::tree::{IqTreeSettingArgs, TreeInferenceInitArgs};
 use crate::helper::common;
 use crate::types::alignments::AlignmentFiles;
 use crate::types::TreeInferenceMethod;
@@ -17,8 +17,8 @@ pub struct TreeInferenceInit<'a> {
     pub input_dir: &'a Path,
     pub input_format: InputFmt,
     pub datatype: DataType,
-    pub partition: Option<&'a Path>,
-    pub method: Option<&'a str>,
+    pub methods: Vec<TreeInferenceMethod>,
+    pub iqtree: &'a IqTreeSettingArgs,
 }
 
 impl<'a> TreeInferenceInit<'a> {
@@ -29,9 +29,18 @@ impl<'a> TreeInferenceInit<'a> {
                 .input_format
                 .parse::<InputFmt>()
                 .expect("Invalid input format"),
-            datatype: DataType::Dna,
-            partition: args.partition.as_deref(),
-            method: args.method.as_deref(),
+            methods: match &args.specify_methods {
+                Some(methods) => methods
+                    .iter()
+                    .map(|m| m.parse().expect("Failed parsing tree inference methods"))
+                    .collect(),
+                None => all::<TreeInferenceMethod>().collect(),
+            },
+            datatype: args
+                .datatype
+                .parse::<DataType>()
+                .expect("Invalid data type"),
+            iqtree: &args.iqtree,
         }
     }
 
@@ -63,7 +72,7 @@ impl<'a> TreeInferenceInit<'a> {
             &files,
             &self.input_format,
             &self.datatype,
-            self.partition,
+            self.iqtree.partition.as_deref(),
         )
     }
 
@@ -71,20 +80,9 @@ impl<'a> TreeInferenceInit<'a> {
         &self,
         alignments: AlignmentFiles,
     ) -> Result<(PathBuf, TreeInferenceConfig), Box<dyn Error>> {
-        let methods = self.parse_method();
-        let mut config = TreeInferenceConfig::init(self.input_dir, methods, alignments);
-        // let output_path = config.to_toml(self.override_args.as_deref())?;
+        let mut config = TreeInferenceConfig::init(self.input_dir, &self.methods, alignments);
+        let output_path = config.to_toml()?;
         Ok((output_path, config))
-    }
-
-    fn parse_method(&self) -> Vec<TreeInferenceMethod> {
-        if let Some(method) = self.method {
-            vec![method
-                .parse::<TreeInferenceMethod>()
-                .expect("Invalid method")]
-        } else {
-            all::<TreeInferenceMethod>().collect()
-        }
     }
 
     fn log_input(&self) {

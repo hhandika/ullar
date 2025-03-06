@@ -43,19 +43,11 @@ impl AlignmentFiles {
     ) -> Self {
         let files = sequences
             .par_iter()
-            .map(|f| {
-                let mut meta = FileMetadata::new();
-                meta.get(f);
-                meta
-            })
+            .map(FileMetadata::from_path)
             .collect::<Vec<FileMetadata>>();
         let file_counts = files.len();
         let sample_counts = IDs::new(sequences, format, datatype).id_unique().len();
-        let partition = partition.map(|p| {
-            let mut meta = FileMetadata::new();
-            meta.get(p);
-            meta
-        });
+        let partition = partition.map(FileMetadata::from_path);
         Self {
             sample_counts,
             file_counts,

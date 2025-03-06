@@ -4,7 +4,7 @@ use std::{
 };
 
 use colored::Colorize;
-use configs::{TreeInferenceConfig, DEFAULT_ML_INFERENCE_CONFIG};
+use configs::{TreeInferenceConfig, DEFAULT_ML_INFERENCE_CONFIG, TREE_INFERENCE_DEP_NAME};
 use iqtree::MlIqTree;
 
 use crate::{
@@ -36,7 +36,7 @@ pub struct TreeEstimation<'a> {
     /// Parent output directory
     pub output_dir: &'a Path,
     /// Runner options
-    pub runner: RunnerOptions<'a>,
+    pub runner: RunnerOptions,
     #[allow(dead_code)]
     task: Task,
 }
@@ -126,8 +126,7 @@ impl<'a> TreeEstimation<'a> {
 
     fn infer_ml_tree(&self, config: &TreeInferenceConfig) {
         let prefix = "concat";
-        let deps: Option<&DepMetadata> =
-            config.dependencies.iter().find(|dep| dep.name == "IQ-TREE");
+        let deps: Option<&DepMetadata> = config.dependencies.get(TREE_INFERENCE_DEP_NAME);
 
         if deps.is_none() {
             self.try_iqtree();
@@ -138,7 +137,7 @@ impl<'a> TreeEstimation<'a> {
     }
 
     fn try_iqtree(&self) -> DepMetadata {
-        let dep = IqtreeMetadata::new(None).get();
+        let dep = IqtreeMetadata::new().get();
         match dep {
             Some(d) => d,
             None => {

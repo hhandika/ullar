@@ -44,9 +44,7 @@ impl MafftReport {
     fn get_metadata(&self, files: &[PathBuf]) -> Vec<FileMetadata> {
         let mut metadata: Vec<FileMetadata> = Vec::new();
         files.iter().for_each(|f| {
-            let mut file = FileMetadata::new();
-            file.get(f);
-            metadata.push(file);
+            metadata.push(FileMetadata::from_path(f));
         });
 
         metadata

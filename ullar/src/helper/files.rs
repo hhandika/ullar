@@ -222,25 +222,36 @@ impl FileMetadata {
         }
     }
 
-    pub fn get(&mut self, path: &Path) {
-        let file = fs::metadata(path).unwrap_or_else(|_| {
+    pub fn from_path<P: AsRef<Path>>(path: P) -> Self {
+        let file = fs::metadata(path.as_ref()).unwrap_or_else(|_| {
             panic!(
                 "Failed to get metadata for {}",
-                path.display().to_string().red()
+                path.as_ref().display().to_string().red()
             )
         });
-        self.file_name = path
+        let file_name = path
+            .as_ref()
             .file_name()
             .expect("Failed to get file name")
             .to_str()
             .expect("Failed to convert file name to string")
             .to_string();
-        self.parent_dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
-        self.file_size = Size::from_bytes(file.len()).to_string();
+        let parent_dir = path
+            .as_ref()
+            .parent()
+            .unwrap_or(Path::new("."))
+            .to_path_buf();
+        let file_size = Size::from_bytes(file.len()).to_string();
         let checksum = ChecksumType::Sha256;
-        self.sha256 = checksum
-            .generate(path)
+        let sha256 = checksum
+            .generate(path.as_ref())
             .expect("Failed to generate SHA256 hash");
+        Self {
+            file_name,
+            parent_dir,
+            file_size,
+            sha256,
+        }
     }
 
     pub fn canonicalize(&self) -> PathBuf {

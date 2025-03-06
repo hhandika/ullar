@@ -101,11 +101,7 @@ impl AlignmentConfig {
     fn get_metadata(&self, sequence_files: &[PathBuf]) -> Vec<FileMetadata> {
         sequence_files
             .par_iter()
-            .map(|f| {
-                let mut file = FileMetadata::new();
-                file.get(f);
-                file
-            })
+            .map(FileMetadata::from_path)
             .collect()
     }
 
