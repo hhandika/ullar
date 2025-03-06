@@ -37,7 +37,7 @@ pub struct TreeInferenceInitArgs {
     pub input_format: String,
     /// Phylogenetic tree inference method
     #[arg(
-        num_args = ..=4,
+        num_args(..=4),
         long,
         help = "Phylogenetic tree inference method",
         value_parser = builder::PossibleValuesParser::new(["ml-species", "ml-gene", "gsc", "msc"])
@@ -46,7 +46,7 @@ pub struct TreeInferenceInitArgs {
     /// Sequence data type. 
     /// Uses by SEGUL (https://segul.app) to parse the alignment files.
     /// We use DNA as the default because the pipeline
-    /// is designed for DNA sequences.
+    /// is optimized for DNA sequences.
     /// You can use other options that SEGUL supports.
     #[arg(
         short,
