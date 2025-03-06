@@ -237,7 +237,7 @@ impl ContigFiles {
     }
 
     fn parse_metadata(&mut self, contig: &Path) {
-        self.metadata.get(contig);
+        self.metadata = FileMetadata::from_path(contig);
     }
 
     fn parse_sample_name(&mut self, contig: &Path, source: &SampleNameSource) {
@@ -296,6 +296,6 @@ impl ReferenceFile {
     }
 
     pub fn get(&mut self, reference: &Path) {
-        self.metadata.get(reference);
+        self.metadata = FileMetadata::from_path(reference);
     }
 }

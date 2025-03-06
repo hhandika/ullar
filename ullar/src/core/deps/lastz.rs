@@ -8,7 +8,10 @@ use super::{check_dependency_match, dependency_not_found, re_capture_version, De
 
 /// Lastz executable.
 pub const LASTZ_EXE: &str = "lastz";
+pub const LASTZ_NAME: &str = "LASTZ";
 
+/// Metadata for LASTZ.
+#[derive(Debug, Default)]
 pub struct LastzMetadata<'a> {
     version: Option<String>,
     override_args: Option<&'a str>,
@@ -63,11 +66,6 @@ impl<'a> LastzMetadata<'a> {
 
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {
         let version = re_capture_version(version_data);
-        Some(DepMetadata {
-            name: "LASTZ".to_string(),
-            version: version.to_string(),
-            executable: Some(LASTZ_EXE.to_string()),
-            override_args: self.override_args.map(|s| s.to_string()),
-        })
+        Some(DepMetadata::new(LASTZ_NAME, &version, Some(LASTZ_EXE)))
     }
 }

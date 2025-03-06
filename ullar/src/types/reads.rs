@@ -266,10 +266,9 @@ impl FastqReads {
         }
     }
 
+    #[inline]
     fn metadata(&self, file_path: &Path) -> FileMetadata {
-        let mut metadata = FileMetadata::new();
-        metadata.get(file_path);
-        metadata
+        FileMetadata::from_path(file_path)
     }
 
     fn check_reads(&self, reads: &[PathBuf], len: usize) {

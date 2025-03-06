@@ -10,6 +10,7 @@ use super::{check_dependency_match, dependency_not_found, DepMetadata};
 pub const MAFFT_EXE: &str = "mafft";
 const MAFFT_NAME: &str = "MAFFT";
 
+#[derive(Debug, Default)]
 pub struct MafftMetadata<'a> {
     name: String,
     override_args: Option<&'a str>,
@@ -81,12 +82,7 @@ impl<'a> MafftMetadata<'a> {
 
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {
         let version = self.capture_version(version_data);
-        Some(DepMetadata {
-            name: self.name.clone(),
-            version,
-            executable: Some(MAFFT_EXE.to_string()),
-            override_args: self.override_args.map(|s| s.to_string()),
-        })
+        Some(DepMetadata::new(&self.name, &version, Some(MAFFT_EXE)))
     }
 
     fn capture_version(&self, version_data: &str) -> String {

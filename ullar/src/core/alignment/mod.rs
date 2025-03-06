@@ -98,7 +98,7 @@ impl<'a> SequenceAlignment<'a> {
         progress_bar.set_message("Alignments");
         let (tx, rx) = mpsc::channel();
         sequences.par_iter().for_each_with(tx, |tx, file| {
-            let output = self.align_mafft(file, &mafft);
+            let output = self.align_mafft(file, mafft);
             match output {
                 Ok(path) => tx.send(path).expect("Failed to send output path"),
                 Err(e) => log::error!("Failed to align {}: {}", file.file_name.red(), e),

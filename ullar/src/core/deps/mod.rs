@@ -84,6 +84,9 @@ pub struct DepMetadata {
     /// Additional arguments/flags for the executable
     #[serde(skip_serializing_if = "Option::is_none")]
     pub override_args: Option<String>,
+    /// Method used if applicable
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub methods: Option<Vec<String>>,
 }
 
 impl DepMetadata {
@@ -93,7 +96,13 @@ impl DepMetadata {
             version: version.to_string(),
             executable: executable.map(|s| s.to_string()),
             override_args: None,
+            methods: None,
         }
+    }
+
+    pub fn with_methods(mut self, methods: Vec<String>) -> Self {
+        self.methods = Some(methods);
+        self
     }
 
     pub fn get_executable(&self, default: &str) -> String {
@@ -121,7 +130,7 @@ impl DependencyCheck {
             spades: SpadesMetadata::new().get(),
             lastz: LastzMetadata::new().get(),
             mafft: MafftMetadata::new().get(),
-            iqtree: IqtreeMetadata::new(None).get(),
+            iqtree: IqtreeMetadata::new().get(),
             segul: Some(get_segul_metadata()),
         }
     }
@@ -132,7 +141,7 @@ impl DependencyCheck {
             spades: SpadesMetadata::new().override_args(override_args).get(),
             lastz: LastzMetadata::new().override_args(override_args).get(),
             mafft: MafftMetadata::new().override_args(override_args).get(),
-            iqtree: IqtreeMetadata::new(override_args).get(),
+            iqtree: IqtreeMetadata::new().get(),
             segul: Some(get_segul_metadata()),
         }
     }
