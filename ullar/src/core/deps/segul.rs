@@ -4,7 +4,6 @@ use segul::helper::utils;
 
 use super::DepMetadata;
 
-const SEGUL_EXE: &str = "segul";
 const SEGUL_NAME: &str = "SEGUL";
 
 pub enum SegulMethods {
@@ -35,5 +34,5 @@ impl Display for SegulMethods {
 
 pub fn get_segul_metadata() -> DepMetadata {
     let version = utils::get_crate_version();
-    DepMetadata::new(SEGUL_NAME, &version, Some(SEGUL_EXE))
+    DepMetadata::new(SEGUL_NAME, &version, None)
 }
