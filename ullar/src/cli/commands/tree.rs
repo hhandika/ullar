@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{builder, Args, Subcommand};
+use clap::{builder::{self, PossibleValuesParser}, Args, Subcommand};
 
 use crate::core::tree::DEFAULT_PHYLO_OUTPUT_DIR;
 
@@ -29,10 +29,11 @@ pub struct TreeInferenceInitArgs {
     pub dir: PathBuf,
     /// Input format of the alignment files
     #[arg(
-        short,
+        short = 'f',
         long,
         default_value = "auto",
-        help = "Input format of the alignment files"
+        help = "Input format of the alignment files",
+        value_parser = PossibleValuesParser::new(["auto", "fasta", "phylip", "nexus"])
     )]
     pub input_format: String,
     /// Phylogenetic tree inference method
@@ -40,7 +41,7 @@ pub struct TreeInferenceInitArgs {
         num_args(..=4),
         long,
         help = "Phylogenetic tree inference method",
-        value_parser = builder::PossibleValuesParser::new(["ml-species", "ml-gene", "gsc", "msc"])
+        value_parser = PossibleValuesParser::new(["ml-species", "ml-gene", "gsc", "msc"])
     )]
     pub specify_methods: Option<Vec<String>>,
     /// Sequence data type. 
