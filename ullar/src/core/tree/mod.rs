@@ -5,7 +5,7 @@ use std::{
 
 use colored::Colorize;
 use configs::{TreeInferenceConfig, DEFAULT_ML_INFERENCE_CONFIG, TREE_INFERENCE_DEP_NAME};
-use iqtree::MlIqTree;
+use iqtree::MlSpeciesTree;
 
 use crate::{
     cli::commands::tree::TreeInferenceArgs,
@@ -132,7 +132,8 @@ impl<'a> TreeEstimation<'a> {
             self.try_iqtree();
         }
         let iqtree = deps.expect("IQ-TREE dependency not found in the config");
-        let ml_analyses = MlIqTree::new(&config.alignments, iqtree, self.output_dir, prefix, false);
+        let ml_analyses =
+            MlSpeciesTree::new(&config.alignments, iqtree, self.output_dir, prefix, false);
         ml_analyses.infer(prefix);
     }
 

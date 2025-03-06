@@ -31,7 +31,9 @@ const DEFAULT_BOOTSTRAP: &str = "1000";
 
 const DEFAULT_IQTREE2_ARGS: &str = "-m GTR+G+I -T 4 -B 1000 -bnni";
 
-pub struct MlIqTree<'a> {
+const SPECIES_TREE_DIR: &str = "species_tree";
+
+pub struct MlSpeciesTree<'a> {
     pub alignments: &'a AlignmentFiles,
     pub iqtree_meta: &'a DepMetadata,
     pub output_dir: &'a Path,
@@ -39,7 +41,7 @@ pub struct MlIqTree<'a> {
     pub enforce_v1: bool,
 }
 
-impl<'a> MlIqTree<'a> {
+impl<'a> MlSpeciesTree<'a> {
     /// Create a new instance of `MlIqTree`
     pub fn new(
         alignments: &'a AlignmentFiles,
@@ -58,7 +60,7 @@ impl<'a> MlIqTree<'a> {
     }
 
     pub fn infer(&self, prefix: &str) {
-        let output_dir = self.output_dir.join("species_tree");
+        let output_dir = self.output_dir.join(SPECIES_TREE_DIR);
         PathCheck::new(&output_dir).is_dir().prompt_exists(false);
         let spinner = common::init_spinner();
         spinner.set_message("Concatenating alignments");
@@ -131,6 +133,32 @@ impl<'a> MlIqTree<'a> {
         }
 
         out.output().expect("Failed to run IQ-TREE")
+    }
+}
+
+pub struct MLGeneTree<'a> {
+    pub alignment: &'a Path,
+    pub iqtree_meta: &'a DepMetadata,
+    pub output_dir: &'a Path,
+    pub prefix: &'a str,
+    pub enforce_v1: bool,
+}
+
+impl<'a> MLGeneTree<'a> {
+    pub fn new(
+        alignment: &'a Path,
+        iqtree_meta: &'a DepMetadata,
+        output_dir: &'a Path,
+        prefix: &'a str,
+        enforce_v1: bool,
+    ) -> Self {
+        Self {
+            alignment,
+            iqtree_meta,
+            output_dir,
+            prefix,
+            enforce_v1,
+        }
     }
 }
 
