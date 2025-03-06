@@ -37,7 +37,7 @@ pub struct TreeInferenceInitArgs {
     pub input_format: String,
     /// Phylogenetic tree inference method
     #[arg(
-        num_args = 4,
+        num_args = ..=4,
         long,
         help = "Phylogenetic tree inference method",
         value_parser = builder::PossibleValuesParser::new(["ml-species", "ml-gene", "gsc", "msc"])
