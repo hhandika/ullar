@@ -1,8 +1,9 @@
 use std::{process::Command, str::FromStr};
 
+use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
-use super::{re_capture_version, DepMetadata};
+use super::{check_dependency_match, dependency_not_found, re_capture_version, DepMetadata};
 use crate::version;
 
 #[cfg(target_os = "windows")]
@@ -16,6 +17,9 @@ pub const IQTREE_EXE: &str = "iqtree.exe";
 
 #[cfg(not(target_os = "windows"))]
 pub const IQTREE_EXE: &str = "iqtree";
+
+pub const IQTREE_NAME: &str = "IQ-TREE";
+pub const IQTREE2_NAME: &str = "IQ-TREE2";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub enum IQTreePartitions {
@@ -77,6 +81,27 @@ impl IqtreeMetadata {
         }
     }
 
+    pub fn update(&self, config_meta: Option<&DepMetadata>) -> DepMetadata {
+        let update = self.get().unwrap_or_else(|| {
+            panic!(
+                "{} IQ-TREE is not found. 
+                Please ensure IQ-TREE is installed and accessible in your PATH",
+                "Error:".red()
+            )
+        });
+
+        match config_meta {
+            Some(dep) => {
+                check_dependency_match(&update, &dep.version);
+                update
+            }
+            None => {
+                dependency_not_found(IQTREE_NAME);
+                update
+            }
+        }
+    }
+
     pub fn get(&self) -> Option<DepMetadata> {
         self.version.as_ref().and_then(|v| self.metadata(v))
     }
@@ -98,22 +123,9 @@ impl IqtreeMetadata {
 
     fn name(&self) -> String {
         if self.both_versions {
-            "IQ-TREE 2".to_string()
+            IQTREE2_NAME.to_string()
         } else {
-            "IQ-TREE".to_string()
+            IQTREE_NAME.to_string()
         }
     }
-}
-
-#[derive(Debug, Default, Serialize, Deserialize)]
-pub struct IQTreeSettings {
-    pub models: String,
-    pub threads: String,
-    pub bootstrap: u16,
-    pub partition: IQTreePartitions,
-    pub codon_model: bool,
-}
-
-impl IQTreeSettings {
-    pub fn from_args() {}
 }
