@@ -92,7 +92,7 @@ pub struct IqTreeSettingArgs {
         short,
         long,
         default_value = "GTR+G+I",
-        help = "Model of nucleotide substitution"
+        help = "Model of nucleotide substitution for IQ-TREE."
     )]
     pub models: String,
     /// Set different models for gene tree inference
@@ -120,6 +120,10 @@ pub struct IqTreeSettingArgs {
         help = "Number of bootstrap replicates for IQ-TREE"
     )]
     pub bootstrap: String,
+    #[arg(
+        long,
+        help = "Override arguments for IQ-TREE species tree inference"
+    )]
     pub override_args_species: Option<String>,
     /// Override arguments for IQ-TREE
     /// gene tree inference.
