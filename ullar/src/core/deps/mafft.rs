@@ -47,9 +47,7 @@ impl<'a> MafftMetadata<'a> {
             Some(dep) => {
                 check_dependency_match(&update, &dep.version);
                 if dep.override_args.is_some() {
-                    let default_args = "".to_string();
-                    let args = dep.override_args.as_ref().unwrap_or(&default_args);
-                    update.override_args = Some(args.to_string());
+                    update.override_args = dep.override_args.clone();
                 }
 
                 update
