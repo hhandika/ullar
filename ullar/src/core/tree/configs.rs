@@ -33,8 +33,8 @@ pub struct TreeInferenceConfig {
     #[serde(flatten)]
     pub app: UllarConfig,
     pub input: TreeInferenceInput,
-    pub iqtree_config: Option<IQTreeConfig>,
     pub dependencies: BTreeMap<String, DepMetadata>,
+    pub iqtree_config: IQTreeConfig,
     pub alignments: AlignmentFiles,
 }
 
@@ -47,13 +47,14 @@ impl TreeInferenceConfig {
         input_dir: &Path,
         methods: &[TreeInferenceMethod],
         alignments: AlignmentFiles,
+        iqtree_args: &IqTreeSettingArgs,
     ) -> Self {
         Self {
             app: UllarConfig::default(),
             input: TreeInferenceInput::new(input_dir, methods.to_vec()),
             dependencies: BTreeMap::new(),
             alignments,
-            iqtree_config: None,
+            iqtree_config: IQTreeConfig::from_args(iqtree_args),
         }
     }
 
@@ -73,7 +74,6 @@ impl TreeInferenceConfig {
 
     #[deprecated(since = "0.5.0", note = "Use `to_toml` instead")]
     pub fn to_yaml(&mut self) -> Result<PathBuf, Box<dyn Error>> {
-        self.get_iqtree_metadata();
         let output_path = generate_config_output_path(DEFAULT_ML_INFERENCE_CONFIG);
         let writer = File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
@@ -82,40 +82,29 @@ impl TreeInferenceConfig {
 
     fn get_metadata(&mut self) {
         self.get_segul_metadata();
-        let used_iqtree = self.input.methods.iter().find(|m| {
-            matches!(
-                m,
-                TreeInferenceMethod::MlSpeciesTree
-                    | TreeInferenceMethod::MlGeneTree
-                    | TreeInferenceMethod::GeneSiteConcordance
-            )
-        });
-        let used_aster = self
-            .input
-            .methods
-            .iter()
-            .find(|m| matches!(m, TreeInferenceMethod::MscSpeciesTree));
-        if used_iqtree.is_some() {
-            let meta = self.get_iqtree_metadata();
+        let iqtree_methods = self.parse_iqtree_methods();
+        let aster_methods = self.parse_msc_methods();
+        if !iqtree_methods.is_empty() {
+            let meta = self.get_iqtree_metadata(iqtree_methods);
             self.dependencies
                 .insert(TREE_INFERENCE_DEP_NAME.to_string(), meta);
         }
-        if used_aster.is_some() {
-            let meta = self.get_msc_inference_metadata();
+        if !aster_methods.is_empty() {
+            let meta = self.get_msc_inference_metadata(aster_methods);
             self.dependencies
                 .insert(MSC_INFERENCE_DEP_NAME.to_string(), meta);
         }
     }
 
-    fn get_msc_inference_metadata(&mut self) -> DepMetadata {
-        DepMetadata::new("msc", "TEST", None)
+    fn get_msc_inference_metadata(&mut self, methods: Vec<String>) -> DepMetadata {
+        DepMetadata::new("msc", "TEST", None).with_methods(methods)
     }
 
-    fn get_iqtree_metadata(&self) -> DepMetadata {
+    fn get_iqtree_metadata(&self, methods: Vec<String>) -> DepMetadata {
         let dep = IqtreeMetadata::new().get();
 
         match dep {
-            Some(metadata) => metadata,
+            Some(metadata) => metadata.with_methods(methods),
             None => {
                 panic!(
                     "IQ-TREE not found. Please, install it first. \
@@ -136,6 +125,31 @@ impl TreeInferenceConfig {
         let dep = get_segul_metadata().with_methods(methods_str);
         self.dependencies
             .insert(DATA_PREPARATION_DEP_NAME.to_string(), dep);
+    }
+
+    fn parse_iqtree_methods(&self) -> Vec<String> {
+        self.input
+            .methods
+            .iter()
+            .filter(|m| {
+                matches!(
+                    m,
+                    TreeInferenceMethod::MlSpeciesTree
+                        | TreeInferenceMethod::MlGeneTree
+                        | TreeInferenceMethod::GeneSiteConcordance
+                )
+            })
+            .map(|m| m.as_str().to_string())
+            .collect()
+    }
+
+    fn parse_msc_methods(&self) -> Vec<String> {
+        self.input
+            .methods
+            .iter()
+            .filter(|m| matches!(m, TreeInferenceMethod::MscSpeciesTree))
+            .map(|m| m.as_str().to_string())
+            .collect()
     }
 }
 
@@ -160,6 +174,8 @@ pub struct IQTreeConfig {
     pub models: String,
     pub threads: String,
     pub bootstrap: String,
+    pub optinal_args_species: Option<String>,
+    pub optional_args_genes: Option<String>,
     pub override_args_species: Option<String>,
     pub override_args_genes: Option<String>,
 }
@@ -177,6 +193,8 @@ impl IQTreeConfig {
             bootstrap: args.bootstrap.to_string(),
             override_args_species: args.override_args_species.clone(),
             override_args_genes: args.override_args_genes.clone(),
+            optinal_args_species: args.optinal_args_species.clone(),
+            optional_args_genes: args.optional_args_genes.clone(),
         }
     }
 }
