@@ -36,7 +36,11 @@ pub struct TreeInferenceInitArgs {
         value_parser = PossibleValuesParser::new(["auto", "fasta", "phylip", "nexus"])
     )]
     pub input_format: String,
-    /// Phylogenetic tree inference method
+    /// Phylogenetic tree inference method options:
+    /// 1. Maximum likelihood species tree inference (ml-species)
+    /// 2. Maximum likelihood gene tree inference (ml-gene)
+    /// 3. Gene species concordance (gsc)
+    /// 4. Multispecies coalescent (msc)
     #[arg(
         num_args(..=4),
         long,
@@ -59,6 +63,9 @@ pub struct TreeInferenceInitArgs {
     pub datatype: String,
     #[command(flatten)]
     pub iqtree: IqTreeSettingArgs,
+    /// Search recursively for files
+    #[arg(long, help = "Search recursively for files")]
+    pub recursive: bool,
 }
 
 #[derive(Args)]
@@ -80,6 +87,9 @@ pub struct IqTreeSettingArgs {
     #[arg(short, long, help = "Path to the partition file")]
     pub partition: Option<PathBuf>,
     /// Partitioning scheme
+    /// equal: Equal rates for all partitions (-q option in IQ-TREE)
+    /// proportional: Proportional rates for all partitions (-spp option in IQ-TREE)
+    /// unlinked: Unlinked models for all partitions (-sp option in IQ-TREE)
     #[arg(
         short='P', 
         long="partition-model", 
@@ -93,10 +103,12 @@ pub struct IqTreeSettingArgs {
         short,
         long,
         default_value = "GTR+G+I",
-        help = "Model of nucleotide substitution for IQ-TREE."
+        help = "Model of nucleotide substitution for IQ-TREE. Must matches IQ-TREE model format"
     )]
     pub models: String,
     /// Set different models for gene tree inference
+    /// Otherwise, the same model will be used for both
+    /// species and gene tree inference.
     #[arg(
         short='M',
         long,
@@ -121,6 +133,28 @@ pub struct IqTreeSettingArgs {
         help = "Number of bootstrap replicates for IQ-TREE"
     )]
     pub bootstrap: String,
+    /// Optional arguments for IQ-TREE
+    /// Use the additional arguments other than other 
+    /// options provided by other args.
+    /// This is different from override_args_species
+    /// and override_args_genes, which will override
+    /// the arguments provided by the other args.
+    #[arg(
+        long,
+        help = "Optional arguments for IQ-TREE"
+    )]
+    pub optinal_args_species: Option<String>,
+    /// Optional arguments for IQ-TREE
+    /// gene tree inference. Behaves the same as
+    /// optional_args_species.
+    #[arg(
+        long,
+        help = "Optional arguments for IQ-TREE gene tree inference"
+    )]
+    pub optional_args_genes: Option<String>,
+    /// Override arguments for IQ-TREE
+    /// species tree inference. It will override
+    /// bootstrap, threads, and models.
     #[arg(
         long,
         help = "Override arguments for IQ-TREE species tree inference"

@@ -32,7 +32,12 @@ impl<'a> TreeInferenceInit<'a> {
             methods: match &args.specify_methods {
                 Some(methods) => methods
                     .iter()
-                    .map(|m| m.parse().expect("Failed parsing tree inference methods"))
+                    .map(|m| {
+                        m.parse().expect(
+                            "Failed parsing tree inference methods. \
+                    Check the help message for valid options",
+                        )
+                    })
                     .collect(),
                 None => all::<TreeInferenceMethod>().collect(),
             },
@@ -80,7 +85,8 @@ impl<'a> TreeInferenceInit<'a> {
         &self,
         alignments: AlignmentFiles,
     ) -> Result<(PathBuf, TreeInferenceConfig), Box<dyn Error>> {
-        let mut config = TreeInferenceConfig::init(self.input_dir, &self.methods, alignments);
+        let mut config =
+            TreeInferenceConfig::init(self.input_dir, &self.methods, alignments, self.iqtree);
         let output_path = config.to_toml()?;
         Ok((output_path, config))
     }
