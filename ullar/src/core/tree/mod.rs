@@ -132,8 +132,13 @@ impl<'a> TreeEstimation<'a> {
             self.try_iqtree();
         }
         let iqtree = deps.expect("IQ-TREE dependency not found in the config");
-        let ml_analyses =
-            MlSpeciesTree::new(&config.alignments, iqtree, self.output_dir, prefix, false);
+        let ml_analyses = MlSpeciesTree::new(
+            &config.alignments,
+            &iqtree,
+            &config.iqtree_config,
+            &self.output_dir,
+            prefix,
+        );
         ml_analyses.infer(prefix);
     }
 

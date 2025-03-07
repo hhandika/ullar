@@ -4,7 +4,6 @@ use std::{
     process::{Command, Output},
 };
 
-use regex::Regex;
 use segul::{
     helper::{
         concat::Concat,
@@ -15,27 +14,19 @@ use segul::{
 };
 
 use crate::{
-    core::deps::{
-        iqtree::{IQTREE2_EXE, IQTREE_EXE},
-        DepMetadata,
-    },
+    core::deps::{iqtree::IQTREE2_EXE, DepMetadata},
     helper::{common, files::PathCheck},
-    parse_override_args,
     types::alignments::AlignmentFiles,
 };
 
-/// Default parameters for IQ-TREE 2
-const DEFAULT_MODELS: &str = "GTR+G+I";
-const DEFAULT_THREADS: &str = "4";
-const DEFAULT_BOOTSTRAP: &str = "1000";
-
-const DEFAULT_IQTREE2_ARGS: &str = "-m GTR+G+I -T 4 -B 1000 -bnni";
+use super::configs::IqTreeConfig;
 
 const SPECIES_TREE_DIR: &str = "species_tree";
 
 pub struct MlSpeciesTree<'a> {
     pub alignments: &'a AlignmentFiles,
     pub iqtree_meta: &'a DepMetadata,
+    pub iqtree_configs: &'a IqTreeConfig,
     pub output_dir: &'a Path,
     pub prefix: &'a str,
     pub enforce_v1: bool,
@@ -46,17 +37,23 @@ impl<'a> MlSpeciesTree<'a> {
     pub fn new(
         alignments: &'a AlignmentFiles,
         iqtree_meta: &'a DepMetadata,
+        iqtree_configs: &'a IqTreeConfig,
         output_dir: &'a Path,
         prefix: &'a str,
-        enforce_v1: bool,
     ) -> Self {
         Self {
             alignments,
             iqtree_meta,
+            iqtree_configs,
             output_dir,
             prefix,
-            enforce_v1,
+            enforce_v1: false,
         }
+    }
+
+    pub fn enforce_v1(mut self, enforce_v1: bool) -> Self {
+        self.enforce_v1 = enforce_v1;
+        self
     }
 
     pub fn infer(&self, prefix: &str) {
@@ -71,9 +68,10 @@ impl<'a> MlSpeciesTree<'a> {
         );
         spinner.set_message(spinner_msg);
         let output_path = output_dir.join(prefix);
-        let iqtree = self.run_iqtree(&alignment_path, &partition_path, &output_path);
+        let iqtree = IqTree::new(self.iqtree_configs, self.iqtree_meta);
+        let out = iqtree.run_species_tree(&alignment_path, &partition_path, &output_path);
         spinner.finish_with_message("IQ-TREE finished");
-        if !iqtree.status.success() {
+        if !out.status.success() {
             log::error!("IQ-TREE failed to run: {:?}", iqtree);
             return;
         }
@@ -109,31 +107,6 @@ impl<'a> MlSpeciesTree<'a> {
         part_writer.write_partition();
         (output_path, partition_path)
     }
-
-    fn run_iqtree(&self, alignment: &Path, partition: &Path, output_path: &Path) -> Output {
-        let mut iqtree = IqTree::new(self.iqtree_meta.override_args.as_deref(), self.enforce_v1);
-        iqtree.get_args(self.iqtree_meta.executable.as_deref());
-        let mut out = Command::new(IQTREE2_EXE);
-        out.arg("-s")
-            .arg(alignment)
-            .arg("-q")
-            .arg(partition)
-            .arg("-m")
-            .arg(iqtree.models)
-            .arg("--prefix")
-            .arg(output_path)
-            .arg("-B")
-            .arg(iqtree.bootstrap)
-            .arg("-T")
-            .arg(iqtree.threads);
-
-        let other_args = iqtree.args.trim();
-        if !other_args.is_empty() {
-            parse_override_args!(out, other_args);
-        }
-
-        out.output().expect("Failed to run IQ-TREE")
-    }
 }
 
 pub struct MLGeneTree<'a> {
@@ -162,113 +135,129 @@ impl<'a> MLGeneTree<'a> {
     }
 }
 
-struct IqTree {
-    args: String,
-    executable: String,
-    models: String,
-    threads: String,
-    bootstrap: String,
-    enforce_v1: bool,
+#[derive(Debug)]
+struct IqTree<'a> {
+    configs: &'a IqTreeConfig,
+    metadata: &'a DepMetadata,
 }
 
-impl IqTree {
-    fn new(override_args: Option<&str>, enforce_v1: bool) -> Self {
-        Self {
-            args: override_args.unwrap_or(DEFAULT_IQTREE2_ARGS).to_string(),
-            executable: String::new(),
-            models: String::new(),
-            threads: String::new(),
-            bootstrap: String::new(),
-            enforce_v1,
-        }
+impl<'a> IqTree<'a> {
+    fn new(configs: &'a IqTreeConfig, metadata: &'a DepMetadata) -> Self {
+        Self { configs, metadata }
     }
 
-    fn get_args(&mut self, executable: Option<&str>) {
-        match executable {
-            Some(e) => self.get_executable(e),
-            None => self.get_executable(IQTREE2_EXE),
+    fn run_species_tree(&self, alignment: &Path, partition: &Path, output_path: &Path) -> Output {
+        let executable = match &self.metadata.executable {
+            Some(e) => e,
+            None => IQTREE2_EXE,
         };
-        self.models = self.capture_models();
-        self.threads = self.capture_threads();
-        self.bootstrap = self.capture_bs_value();
+        let mut out = Command::new(executable);
+        out.arg("-s")
+            .arg(alignment)
+            .arg("-q")
+            .arg(partition)
+            .arg("-m")
+            .arg(&self.configs.models)
+            .arg("--prefix")
+            .arg(output_path)
+            .arg("-B")
+            .arg(&self.configs.bootstrap)
+            .arg("-T")
+            .arg(&self.configs.threads);
+
+        // if !other_args.is_empty() {
+        //     parse_override_args!(out, other_args);
+        // }
+
+        out.output().expect("Failed to run IQ-TREE")
     }
 
-    fn get_executable(&mut self, executable: &str) {
-        if self.enforce_v1 {
-            self.executable = IQTREE_EXE.to_string();
-        } else {
-            self.executable = executable.to_string();
-        }
-    }
+    // fn get_args(&mut self, executable: Option<&str>) {
+    //     match executable {
+    //         Some(e) => self.get_executable(e),
+    //         None => self.get_executable(IQTREE2_EXE),
+    //     };
+    //     self.models = self.capture_models();
+    //     self.threads = self.capture_threads();
+    //     self.bootstrap = self.capture_bs_value();
+    // }
 
-    fn capture_models(&mut self) -> String {
-        let re = Regex::new(r"(?<models>-m)\s+(?<value>\S+)").expect("Failed to compile regex");
-        let capture = re.captures(&self.args).expect("Failed to capture models");
-        match capture.name("value") {
-            Some(v) => {
-                let value = v.as_str().to_string();
-                let model = format!("{} {}", capture.name("models").unwrap().as_str(), value);
-                self.args = self.args.replace(&model, "");
-                value
-            }
-            None => DEFAULT_MODELS.to_string(),
-        }
-    }
+    // fn get_executable(&mut self, executable: &str) {
+    //     if self.enforce_v1 {
+    //         self.executable = IQTREE_EXE.to_string();
+    //     } else {
+    //         self.executable = executable.to_string();
+    //     }
+    // }
 
-    fn capture_bs_value(&mut self) -> String {
-        let re = Regex::new(r"(?<bs>-B|b)\s+(?<value>\d+)").expect("Failed to compile regex");
-        let bs = re
-            .captures(&self.args)
-            .expect("Failed to capture bootstrap value");
-        match bs.name("value") {
-            Some(v) => {
-                let value = v.as_str().to_string();
-                let arg = format!("{} {}", bs.name("bs").unwrap().as_str(), value);
-                self.args = self.args.replace(&arg, "");
-                value
-            }
-            None => DEFAULT_BOOTSTRAP.to_string(),
-        }
-    }
+    // fn capture_models(&mut self) -> String {
+    //     let re = Regex::new(r"(?<models>-m)\s+(?<value>\S+)").expect("Failed to compile regex");
+    //     let capture = re.captures(&self.args).expect("Failed to capture models");
+    //     match capture.name("value") {
+    //         Some(v) => {
+    //             let value = v.as_str().to_string();
+    //             let model = format!("{} {}", capture.name("models").unwrap().as_str(), value);
+    //             self.args = self.args.replace(&model, "");
+    //             value
+    //         }
+    //         None => DEFAULT_MODELS.to_string(),
+    //     }
+    // }
 
-    fn capture_threads(&mut self) -> String {
-        let re = Regex::new(r"(?<threads>-T|t)\s+(?<value>\d+)").expect("Failed to compile regex");
-        let thread = re
-            .captures(&self.args)
-            .expect("Failed to capture thread value");
-        match thread.name("value") {
-            Some(v) => {
-                let value = v.as_str().to_string();
-                let arg = format!("{} {}", thread.name("threads").unwrap().as_str(), value);
-                self.args = self.args.replace(&arg, "");
-                value
-            }
-            None => DEFAULT_THREADS.to_string(),
-        }
-    }
+    // fn capture_bs_value(&mut self) -> String {
+    //     let re = Regex::new(r"(?<bs>-B|b)\s+(?<value>\d+)").expect("Failed to compile regex");
+    //     let bs = re
+    //         .captures(&self.args)
+    //         .expect("Failed to capture bootstrap value");
+    //     match bs.name("value") {
+    //         Some(v) => {
+    //             let value = v.as_str().to_string();
+    //             let arg = format!("{} {}", bs.name("bs").unwrap().as_str(), value);
+    //             self.args = self.args.replace(&arg, "");
+    //             value
+    //         }
+    //         None => DEFAULT_BOOTSTRAP.to_string(),
+    //     }
+    // }
+
+    // fn capture_threads(&mut self) -> String {
+    //     let re = Regex::new(r"(?<threads>-T|t)\s+(?<value>\d+)").expect("Failed to compile regex");
+    //     let thread = re
+    //         .captures(&self.args)
+    //         .expect("Failed to capture thread value");
+    //     match thread.name("value") {
+    //         Some(v) => {
+    //             let value = v.as_str().to_string();
+    //             let arg = format!("{} {}", thread.name("threads").unwrap().as_str(), value);
+    //             self.args = self.args.replace(&arg, "");
+    //             value
+    //         }
+    //         None => DEFAULT_THREADS.to_string(),
+    //     }
+    // }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
 
-    macro_rules! init {
-        ($iqtree: ident) => {
-            let mut $iqtree = IqTree::new(None, false);
-        };
-    }
+//     macro_rules! init {
+//         ($iqtree: ident) => {
+//             let mut $iqtree = IqTree::new(None, false);
+//         };
+//     }
 
-    #[test]
-    fn test_bootstrap_value() {
-        init!(iqtree);
-        let bs = iqtree.capture_bs_value();
-        assert_eq!(bs, "1000");
-    }
+//     #[test]
+//     fn test_bootstrap_value() {
+//         init!(iqtree);
+//         let bs = iqtree.capture_bs_value();
+//         assert_eq!(bs, "1000");
+//     }
 
-    #[test]
-    fn test_threads_value() {
-        init!(iqtree);
-        let threads = iqtree.capture_threads();
-        assert_eq!(threads, "4");
-    }
-}
+//     #[test]
+//     fn test_threads_value() {
+//         init!(iqtree);
+//         let threads = iqtree.capture_threads();
+//         assert_eq!(threads, "4");
+//     }
+// }

@@ -34,7 +34,7 @@ pub struct TreeInferenceConfig {
     pub app: UllarConfig,
     pub input: TreeInferenceInput,
     pub dependencies: BTreeMap<String, DepMetadata>,
-    pub iqtree_config: IQTreeConfig,
+    pub iqtree_config: IqTreeConfig,
     pub alignments: AlignmentFiles,
 }
 
@@ -54,7 +54,7 @@ impl TreeInferenceConfig {
             input: TreeInferenceInput::new(input_dir, methods.to_vec()),
             dependencies: BTreeMap::new(),
             alignments,
-            iqtree_config: IQTreeConfig::from_args(iqtree_args),
+            iqtree_config: IqTreeConfig::from_args(iqtree_args),
         }
     }
 
@@ -169,18 +169,16 @@ impl TreeInferenceInput {
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
-pub struct IQTreeConfig {
+pub struct IqTreeConfig {
     pub partition_model: String,
     pub models: String,
     pub threads: String,
     pub bootstrap: String,
-    pub optinal_args_species: Option<String>,
+    pub optional_args_species: Option<String>,
     pub optional_args_genes: Option<String>,
-    pub override_args_species: Option<String>,
-    pub override_args_genes: Option<String>,
 }
 
-impl IQTreeConfig {
+impl IqTreeConfig {
     pub fn new() -> Self {
         Self::default()
     }
@@ -191,9 +189,7 @@ impl IQTreeConfig {
             models: args.models.to_string(),
             threads: args.threads.to_string(),
             bootstrap: args.bootstrap.to_string(),
-            override_args_species: args.override_args_species.clone(),
-            override_args_genes: args.override_args_genes.clone(),
-            optinal_args_species: args.optinal_args_species.clone(),
+            optional_args_species: args.optinal_args_species.clone(),
             optional_args_genes: args.optional_args_genes.clone(),
         }
     }
