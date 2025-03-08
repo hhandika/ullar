@@ -129,14 +129,14 @@ impl TreeInferenceConfig {
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct TreeInferenceInput {
     pub input_dir: PathBuf,
-    pub analysis_summary: Vec<TreeInferenceMethod>,
+    pub analyses: Vec<TreeInferenceMethod>,
 }
 
 impl TreeInferenceInput {
-    pub fn new(input_dir: &Path, analysis_summary: Vec<TreeInferenceMethod>) -> Self {
+    pub fn new(input_dir: &Path, analyses: Vec<TreeInferenceMethod>) -> Self {
         Self {
             input_dir: input_dir.to_path_buf(),
-            analysis_summary,
+            analyses,
         }
     }
 }
@@ -145,10 +145,13 @@ impl TreeInferenceInput {
 pub struct TreeInferenceAnalyses {
     pub dependency: DepMetadata,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(flatten)]
     pub species_tree_params: Option<IqTreeParams>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(flatten)]
     pub gene_tree_params: Option<IqTreeParams>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(flatten)]
     pub msc_tree_params: Option<IqTreeParams>,
 }
 
