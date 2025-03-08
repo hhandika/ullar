@@ -4,7 +4,8 @@ use std::{
 };
 
 use colored::Colorize;
-use configs::{TreeInferenceConfig, DEFAULT_ML_INFERENCE_CONFIG};
+use configs::{TreeInferenceConfig, DEFAULT_ML_INFERENCE_CONFIG, SPECIES_TREE_ANALYSIS};
+use iqtree::MlSpeciesTree;
 
 use crate::{
     cli::commands::tree::TreeInferenceArgs,
@@ -78,13 +79,13 @@ impl<'a> TreeEstimation<'a> {
     pub fn infer(&self) {
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
-        if config.input.analysis_summary.is_empty() {
+        if config.input.analyses.is_empty() {
             log::warn!(
                 "{} No tree inference method specified in the config files. Using all methods",
                 "Warning:".yellow()
             );
         }
-        self.run_tree_inference(&config.input.analysis_summary, &config);
+        self.run_tree_inference(&config);
     }
 
     fn parse_config(&self) -> Result<TreeInferenceConfig, Box<dyn Error>> {
@@ -104,36 +105,52 @@ impl<'a> TreeEstimation<'a> {
     }
 
     #[allow(unused_variables)]
-    fn run_tree_inference(&self, methods: &[TreeInferenceMethod], config: &TreeInferenceConfig) {
-        if methods.len() > 1 || methods.is_empty() {
-            // self.infer_all_trees(config);
-        } else {
-            match methods[0] {
-                TreeInferenceMethod::MlSpeciesTree => unimplemented!(),
-                TreeInferenceMethod::MlGeneTree => self.infer_ml_gene_tree(),
-                TreeInferenceMethod::GeneSiteConcordance => self.infer_gsc_tree(),
-                TreeInferenceMethod::MscSpeciesTree => self.infer_msc_tree(),
-            }
-        };
+    fn run_tree_inference(&self, config: &TreeInferenceConfig) {
+        config
+            .input
+            .analyses
+            .iter()
+            .for_each(|analysis| match analysis {
+                TreeInferenceMethod::MlSpeciesTree => self.infer_ml_species_tree(config),
+
+                _ => unimplemented!("Tree inference method not implemented"),
+            });
     }
 
-    // fn infer_ml_tree(&self, config: &TreeInferenceConfig) {
-    //     let prefix = "concat";
-    //     let deps: Option<&DepMetadata> = config.dependencies.get(TREE_INFERENCE_DEP_NAME);
-
-    //     if deps.is_none() {
-    //         self.try_iqtree();
-    //     }
-    //     let iqtree = deps.expect("IQ-TREE dependency not found in the config");
-    //     let ml_analyses = MlSpeciesTree::new(
-    //         &config.alignments,
-    //         &iqtree,
-    //         &config.iqtree_config,
-    //         &self.output_dir,
-    //         prefix,
-    //     );
-    //     ml_analyses.infer(prefix);
-    // }
+    fn infer_ml_species_tree(&self, config: &TreeInferenceConfig) {
+        let dep = config.analyses.get(SPECIES_TREE_ANALYSIS);
+        match dep {
+            Some(d) => {
+                let prefix = "concat";
+                if d.species_tree_params.is_none() {
+                    log::warn!(
+                        "{} No species tree parameters specified in the config files. Skipping",
+                        "Warning:".yellow()
+                    );
+                    return;
+                }
+                let params = d
+                    .species_tree_params
+                    .as_ref()
+                    .expect("Species tree parameters not found in the config files");
+                let ml_analyses = MlSpeciesTree::new(
+                    &config.alignments,
+                    &d.dependency,
+                    &params,
+                    &self.output_dir,
+                    prefix,
+                );
+                ml_analyses.infer(prefix);
+            }
+            None => {
+                log::warn!(
+                    "{} No ML species tree analysis specified in the config files. Skipping",
+                    "Warning:".yellow()
+                );
+                return;
+            }
+        }
+    }
 
     #[allow(dead_code)]
     fn try_iqtree(&self) -> DepMetadata {
@@ -147,6 +164,7 @@ impl<'a> TreeEstimation<'a> {
         }
     }
 
+    #[allow(dead_code)]
     fn infer_ml_gene_tree(&self) {
         let spinner = common::init_spinner();
         spinner.set_message("Estimating ML gene tree");
@@ -154,12 +172,15 @@ impl<'a> TreeEstimation<'a> {
     }
 
     // Gene Site Concordance Factor
+    #[allow(dead_code)]
     fn infer_gsc_tree(&self) {
         let spinner = common::init_spinner();
         spinner.set_message("Estimating Gene Site Concordance Factor");
         spinner.finish_with_message("Finished estimating Gene Site Concordance Factor\n");
     }
 
+    // Multi-Species Coalescent
+    #[allow(dead_code)]
     fn infer_msc_tree(&self) {
         let spinner = common::init_spinner();
         spinner.set_message("Estimating MSC species tree");
