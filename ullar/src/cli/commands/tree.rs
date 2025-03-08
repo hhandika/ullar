@@ -40,7 +40,7 @@ pub struct TreeInferenceInitArgs {
     /// 1. Maximum likelihood species tree inference (ml-species)
     /// 2. Maximum likelihood gene tree inference (ml-gene)
     /// 3. Gene species concordance (gsc)
-    /// 4. Multispecies coalescent (msc)
+    /// 4. Multi-species coalescent (msc)
     #[arg(
         num_args(..=4),
         long,
@@ -143,7 +143,7 @@ pub struct IqTreeSettingArgs {
         long,
         help = "Optional arguments for IQ-TREE"
     )]
-    pub optinal_args_species: Option<String>,
+    pub optional_args_species: Option<String>,
     /// Optional arguments for IQ-TREE
     /// gene tree inference. Behaves the same as
     /// optional_args_species.
