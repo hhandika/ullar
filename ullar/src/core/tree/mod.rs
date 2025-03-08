@@ -4,8 +4,7 @@ use std::{
 };
 
 use colored::Colorize;
-use configs::{TreeInferenceConfig, DEFAULT_ML_INFERENCE_CONFIG, TREE_INFERENCE_DEP_NAME};
-use iqtree::MlSpeciesTree;
+use configs::{TreeInferenceConfig, DEFAULT_ML_INFERENCE_CONFIG};
 
 use crate::{
     cli::commands::tree::TreeInferenceArgs,
@@ -79,13 +78,13 @@ impl<'a> TreeEstimation<'a> {
     pub fn infer(&self) {
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
-        if config.input.methods.is_empty() {
+        if config.input.analysis_summary.is_empty() {
             log::warn!(
                 "{} No tree inference method specified in the config files. Using all methods",
                 "Warning:".yellow()
             );
         }
-        self.run_tree_inference(&config.input.methods, &config);
+        self.run_tree_inference(&config.input.analysis_summary, &config);
     }
 
     fn parse_config(&self) -> Result<TreeInferenceConfig, Box<dyn Error>> {
@@ -104,12 +103,13 @@ impl<'a> TreeEstimation<'a> {
         log::info!("{:18}: {}\n", "File counts", config.alignments.file_counts);
     }
 
+    #[allow(unused_variables)]
     fn run_tree_inference(&self, methods: &[TreeInferenceMethod], config: &TreeInferenceConfig) {
         if methods.len() > 1 || methods.is_empty() {
-            self.infer_all_trees(config);
+            // self.infer_all_trees(config);
         } else {
             match methods[0] {
-                TreeInferenceMethod::MlSpeciesTree => self.infer_ml_tree(config),
+                TreeInferenceMethod::MlSpeciesTree => unimplemented!(),
                 TreeInferenceMethod::MlGeneTree => self.infer_ml_gene_tree(),
                 TreeInferenceMethod::GeneSiteConcordance => self.infer_gsc_tree(),
                 TreeInferenceMethod::MscSpeciesTree => self.infer_msc_tree(),
@@ -117,31 +117,25 @@ impl<'a> TreeEstimation<'a> {
         };
     }
 
-    fn infer_all_trees(&self, config: &TreeInferenceConfig) {
-        self.infer_ml_tree(config);
-        // self.infer_ml_gene_tree();
-        // self.infer_gsc_tree();
-        // self.infer_msc_tree();
-    }
+    // fn infer_ml_tree(&self, config: &TreeInferenceConfig) {
+    //     let prefix = "concat";
+    //     let deps: Option<&DepMetadata> = config.dependencies.get(TREE_INFERENCE_DEP_NAME);
 
-    fn infer_ml_tree(&self, config: &TreeInferenceConfig) {
-        let prefix = "concat";
-        let deps: Option<&DepMetadata> = config.dependencies.get(TREE_INFERENCE_DEP_NAME);
+    //     if deps.is_none() {
+    //         self.try_iqtree();
+    //     }
+    //     let iqtree = deps.expect("IQ-TREE dependency not found in the config");
+    //     let ml_analyses = MlSpeciesTree::new(
+    //         &config.alignments,
+    //         &iqtree,
+    //         &config.iqtree_config,
+    //         &self.output_dir,
+    //         prefix,
+    //     );
+    //     ml_analyses.infer(prefix);
+    // }
 
-        if deps.is_none() {
-            self.try_iqtree();
-        }
-        let iqtree = deps.expect("IQ-TREE dependency not found in the config");
-        let ml_analyses = MlSpeciesTree::new(
-            &config.alignments,
-            &iqtree,
-            &config.iqtree_config,
-            &self.output_dir,
-            prefix,
-        );
-        ml_analyses.infer(prefix);
-    }
-
+    #[allow(dead_code)]
     fn try_iqtree(&self) -> DepMetadata {
         let dep = IqtreeMetadata::new().get();
         match dep {

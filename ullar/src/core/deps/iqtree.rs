@@ -21,6 +21,10 @@ pub const IQTREE_EXE: &str = "iqtree";
 pub const IQTREE_NAME: &str = "IQ-TREE";
 pub const IQTREE2_NAME: &str = "IQ-TREE2";
 
+pub const DEFAULT_IQTREE_MODEL: &str = "GTR+I+G";
+pub const DEFAULT_IQTREE_THREADS: &str = "1";
+pub const DEFAULT_IQTREE_BOOTSTRAP: &str = "1000";
+
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub enum IQTreePartitions {
     /// Edge equal partitions,

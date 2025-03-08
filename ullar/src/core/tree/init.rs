@@ -85,10 +85,19 @@ impl<'a> TreeInferenceInit<'a> {
         &self,
         alignments: AlignmentFiles,
     ) -> Result<(PathBuf, TreeInferenceConfig), Box<dyn Error>> {
-        let mut config =
-            TreeInferenceConfig::init(self.input_dir, &self.methods, alignments, self.iqtree);
+        let mut config = TreeInferenceConfig::init(self.input_dir, &self.methods, alignments);
+        self.update_analyses(&mut config);
         let output_path = config.to_toml()?;
         Ok((output_path, config))
+    }
+
+    fn update_analyses(&self, config: &mut TreeInferenceConfig) {
+        self.methods.iter().for_each(|method| match method {
+            TreeInferenceMethod::MlSpeciesTree => config.set_species_tree_params(self.iqtree),
+            TreeInferenceMethod::MlGeneTree => config.set_gene_tree_params(self.iqtree),
+            TreeInferenceMethod::GeneSiteConcordance => unimplemented!(),
+            TreeInferenceMethod::MscSpeciesTree => unimplemented!(),
+        });
     }
 
     fn log_input(&self) {

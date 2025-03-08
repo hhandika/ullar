@@ -129,10 +129,9 @@ pub struct IqTreeSettingArgs {
     #[arg(
         short,
         long,
-        default_value = "1000",
-        help = "Number of bootstrap replicates for IQ-TREE"
+        help = "Number of bootstrap replicates for IQ-TREE. Default is 1000 for species tree inference"
     )]
-    pub bootstrap: String,
+    pub bootstrap: Option<String>,
     /// Optional arguments for IQ-TREE
     /// Use the additional arguments other than other 
     /// options provided by other args.
