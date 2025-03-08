@@ -105,6 +105,12 @@ impl DepMetadata {
         self
     }
 
+    /// We use this to override the default arguments
+    /// when mutable reference is possible.
+    pub fn set_methods(&mut self, methods: Vec<String>) {
+        self.methods = Some(methods);
+    }
+
     pub fn get_executable(&self, default: &str) -> String {
         self.executable
             .as_ref()
