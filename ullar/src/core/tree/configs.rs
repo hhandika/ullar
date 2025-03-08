@@ -189,7 +189,7 @@ impl IqTreeConfig {
             models: args.models.to_string(),
             threads: args.threads.to_string(),
             bootstrap: args.bootstrap.to_string(),
-            optional_args_species: args.optinal_args_species.clone(),
+            optional_args_species: args.optional_args_species.clone(),
             optional_args_genes: args.optional_args_genes.clone(),
         }
     }

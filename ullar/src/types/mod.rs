@@ -85,7 +85,8 @@ impl FromStr for Task {
 
 /// Supported data types
 /// Match data types for task execution
-#[derive(Debug, PartialEq, Clone, Copy, Eq)]
+#[derive(Debug, PartialEq, Clone, Copy, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum SupportedDataTypes {
     /// Raw reads data type
     RawReads,
@@ -124,7 +125,8 @@ impl FromStr for SupportedDataTypes {
 
 /// Supported file formats
 /// Match file formats for generic file search
-#[derive(Debug, PartialEq, Clone, Copy, Eq)]
+#[derive(Debug, PartialEq, Clone, Copy, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum SupportedFormats {
     /// Fastq file format for raw reads
     Fastq,
@@ -171,7 +173,8 @@ impl FromStr for SupportedFormats {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy, Eq)]
+#[derive(Debug, PartialEq, Clone, Copy, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum RawReadFormat {
     /// Infer file format from file extension
     Auto,
@@ -205,6 +208,7 @@ impl FromStr for RawReadFormat {
 }
 
 #[derive(Debug, PartialEq, Clone, Copy, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum SymlinkFileSearchFormat {
     /// For contigs file
     Contigs,
