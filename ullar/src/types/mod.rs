@@ -270,7 +270,7 @@ impl TreeInferenceMethod {
         match self {
             TreeInferenceMethod::MlSpeciesTree => "ml-species",
             TreeInferenceMethod::MlGeneTree => "ml-gene",
-            TreeInferenceMethod::GeneSiteConcordance => "gsc",
+            TreeInferenceMethod::GeneSiteConcordance => "gscf",
             TreeInferenceMethod::MscSpeciesTree => "msc",
         }
     }
@@ -283,7 +283,7 @@ impl FromStr for TreeInferenceMethod {
         match s {
             "ml-species" => Ok(TreeInferenceMethod::MlSpeciesTree),
             "ml-gene" => Ok(TreeInferenceMethod::MlGeneTree),
-            "gsc" => Ok(TreeInferenceMethod::GeneSiteConcordance),
+            "gscf" => Ok(TreeInferenceMethod::GeneSiteConcordance),
             "msc" => Ok(TreeInferenceMethod::MscSpeciesTree),
             _ => Err(format!("Unknown tree inference method: {}", s)),
         }
