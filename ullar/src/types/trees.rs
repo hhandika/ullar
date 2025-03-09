@@ -1,14 +1,22 @@
+//! Data types for tree inference methods
+
 use std::{fmt::Display, str::FromStr};
 
 use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
 
+/// Supported multi-species coalescent (MSC) inference methods
+/// Options provided based on ASTER software suite.
+/// ASTRAL: estimate species tree based on unrooted gene trees
+/// ASTRAL-Pro: tree inference estimation that extends ASTRAL inference
+/// to handle paralogs and ortologs.
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum MscInferenceMethod {
     #[default]
     Astral,
     AstralPro,
+    WeightedAstral,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Sequence)]
