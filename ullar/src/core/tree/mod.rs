@@ -13,7 +13,7 @@ use crate::{
         common,
         configs::{CONFIG_EXTENSION_TOML, DEFAULT_CONFIG_DIR},
     },
-    types::{runner::RunnerOptions, Task, TreeInferenceMethod},
+    types::{runner::RunnerOptions, trees::TreeInferenceMethod, Task},
 };
 
 use crate::core::deps::DepMetadata;
