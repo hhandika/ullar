@@ -15,11 +15,11 @@ use crate::{
         segul::{get_segul_metadata, SegulMethods},
     },
     helper::common::UllarConfig,
-    types::alignments::AlignmentFiles,
+    types::{alignments::AlignmentFiles, trees::MscInferenceMethod},
 };
 use crate::{
     core::deps::DepMetadata, helper::configs::generate_config_output_path,
-    types::TreeInferenceMethod,
+    types::trees::TreeInferenceMethod,
 };
 
 pub const DEFAULT_TREE_PREFIX: &str = "tree";
@@ -165,7 +165,7 @@ pub struct TreeInferenceAnalyses {
     pub concordance_factor: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(flatten)]
-    pub msc_tree_params: Option<IqTreeParams>,
+    pub msc_methods: Option<MscInferenceMethod>,
 }
 
 impl TreeInferenceAnalyses {
@@ -175,7 +175,7 @@ impl TreeInferenceAnalyses {
             species_tree_params: None,
             gene_tree_params: None,
             concordance_factor: None,
-            msc_tree_params: None,
+            msc_methods: None,
         }
     }
 
@@ -215,6 +215,10 @@ impl TreeInferenceAnalyses {
         let params =
             IqTreeParams::from_args(args).with_optional_args(args.optional_args_gscf.as_deref());
         self.concordance_factor = Some(params.models.clone());
+    }
+
+    pub fn set_msc_methods(&mut self, msc_methods: MscInferenceMethod) {
+        self.msc_methods = Some(msc_methods);
     }
 }
 

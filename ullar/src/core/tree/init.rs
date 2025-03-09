@@ -9,7 +9,7 @@ use segul::helper::types::{DataType, InputFmt};
 use crate::cli::commands::tree::{IqTreeSettingArgs, TreeInferenceInitArgs};
 use crate::helper::common;
 use crate::types::alignments::AlignmentFiles;
-use crate::types::TreeInferenceMethod;
+use crate::types::trees::TreeInferenceMethod;
 
 use super::configs::TreeInferenceConfig;
 
