@@ -63,17 +63,6 @@ impl Display for TreeInferenceMethod {
     }
 }
 
-// impl TreeInferenceMethod {
-//     pub fn as_str(&self) -> &str {
-//         match self {
-//             TreeInferenceMethod::MlSpeciesTree => "ml-species",
-//             TreeInferenceMethod::MlGeneTree => "ml-gene",
-//             TreeInferenceMethod::GeneSiteConcordance => "gscf",
-//             TreeInferenceMethod::MscSpeciesTree => "msc",
-//         }
-//     }
-// }
-
 impl FromStr for TreeInferenceMethod {
     type Err = String;
 
