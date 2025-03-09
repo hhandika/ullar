@@ -7,9 +7,10 @@ use serde::{Deserialize, Serialize};
 
 /// Supported multi-species coalescent (MSC) inference methods
 /// Options provided based on ASTER software suite.
-/// ASTRAL: estimate species tree based on unrooted gene trees
-/// ASTRAL-Pro: tree inference estimation that extends ASTRAL inference
-/// to handle paralogs and ortologs.
+/// - ASTRAL: estimate species tree based on unrooted gene trees
+/// - ASTRAL-Pro: tree inference estimation that extends ASTRAL inference
+/// to handle paralogs and orthologs.
+/// - Weighted ASTRAL: tree inference estimation that extends ASTRAL
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum MscInferenceMethod {
@@ -17,6 +18,29 @@ pub enum MscInferenceMethod {
     Astral,
     AstralPro,
     WeightedAstral,
+}
+
+impl Display for MscInferenceMethod {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MscInferenceMethod::Astral => write!(f, "ASTRAL"),
+            MscInferenceMethod::AstralPro => write!(f, "ASTRAL-Pro"),
+            MscInferenceMethod::WeightedAstral => write!(f, "Weighted ASTRAL"),
+        }
+    }
+}
+
+impl FromStr for MscInferenceMethod {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "astral" => Ok(MscInferenceMethod::Astral),
+            "astral-pro" => Ok(MscInferenceMethod::AstralPro),
+            "wastral" => Ok(MscInferenceMethod::WeightedAstral),
+            _ => Err(format!("Unknown MSC inference method: {}", s)),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Sequence)]
@@ -39,16 +63,16 @@ impl Display for TreeInferenceMethod {
     }
 }
 
-impl TreeInferenceMethod {
-    pub fn as_str(&self) -> &str {
-        match self {
-            TreeInferenceMethod::MlSpeciesTree => "ml-species",
-            TreeInferenceMethod::MlGeneTree => "ml-gene",
-            TreeInferenceMethod::GeneSiteConcordance => "gscf",
-            TreeInferenceMethod::MscSpeciesTree => "msc",
-        }
-    }
-}
+// impl TreeInferenceMethod {
+//     pub fn as_str(&self) -> &str {
+//         match self {
+//             TreeInferenceMethod::MlSpeciesTree => "ml-species",
+//             TreeInferenceMethod::MlGeneTree => "ml-gene",
+//             TreeInferenceMethod::GeneSiteConcordance => "gscf",
+//             TreeInferenceMethod::MscSpeciesTree => "msc",
+//         }
+//     }
+// }
 
 impl FromStr for TreeInferenceMethod {
     type Err = String;
