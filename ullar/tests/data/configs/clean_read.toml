@@ -11,8 +11,8 @@ file_counts = 2
 strategy = "regex"
 format = "descriptive"
 
-[dependencies]
-name = "fastp"
+[dependencies.qc]
+app_name = "fastp"
 version = "0.23.4"
 executable = "fastp"
 
