@@ -17,7 +17,7 @@ pub struct TreeInferenceInit<'a> {
     pub input_dir: &'a Path,
     pub input_format: InputFmt,
     pub datatype: DataType,
-    pub methods: Vec<TreeInferenceMethod>,
+    pub analyses: Vec<TreeInferenceMethod>,
     pub iqtree: &'a IqTreeSettingArgs,
 }
 
@@ -29,7 +29,7 @@ impl<'a> TreeInferenceInit<'a> {
                 .input_format
                 .parse::<InputFmt>()
                 .expect("Invalid input format"),
-            methods: match &args.specify_methods {
+            analyses: match &args.specify_analyses {
                 Some(methods) => methods
                     .iter()
                     .map(|m| {
@@ -85,14 +85,14 @@ impl<'a> TreeInferenceInit<'a> {
         &self,
         alignments: AlignmentFiles,
     ) -> Result<(PathBuf, TreeInferenceConfig), Box<dyn Error>> {
-        let mut config = TreeInferenceConfig::init(self.input_dir, &self.methods, alignments);
+        let mut config = TreeInferenceConfig::init(self.input_dir, &self.analyses, alignments);
         self.update_analyses(&mut config);
         let output_path = config.to_toml()?;
         Ok((output_path, config))
     }
 
     fn update_analyses(&self, config: &mut TreeInferenceConfig) {
-        self.methods.iter().for_each(|method| match method {
+        self.analyses.iter().for_each(|method| match method {
             TreeInferenceMethod::MlSpeciesTree => config.set_species_tree_params(self.iqtree),
             TreeInferenceMethod::MlGeneTree => config.set_gene_tree_params(self.iqtree),
             TreeInferenceMethod::GeneSiteConcordance => unimplemented!(),

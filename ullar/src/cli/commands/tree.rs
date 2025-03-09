@@ -37,17 +37,22 @@ pub struct TreeInferenceInitArgs {
     )]
     pub input_format: String,
     /// Phylogenetic tree inference method options:
-    /// 1. Maximum likelihood species tree inference (ml-species)
+    /// 1. Maximum likelihood species tree inference (ml-species).
     /// 2. Maximum likelihood gene tree inference (ml-gene)
     /// 3. Gene species concordance (gsc)
     /// 4. Multi-species coalescent (msc)
+    /// Notes: Species tree inference is a phylogenetic tree inference
+    /// using a concatenated alignment. The alignments can be species-level
+    /// samples or population-level samples. We use this term to distinguish
+    /// it from gene tree inference, which is a phylogenetic estimate infers
+    /// for each gene.
     #[arg(
         num_args(..=4),
         long,
         help = "Phylogenetic tree inference method",
-        value_parser = PossibleValuesParser::new(["ml-species", "ml-gene", "gsc", "msc"])
+        value_parser = PossibleValuesParser::new(["ml-species", "ml-gene", "gscf", "msc"])
     )]
-    pub specify_methods: Option<Vec<String>>,
+    pub specify_analyses: Option<Vec<String>>,
     /// Sequence data type. 
     /// Uses by SEGUL (https://segul.app) to parse the alignment files.
     /// We use DNA as the default because the pipeline
@@ -123,7 +128,8 @@ pub struct IqTreeSettingArgs {
         help = "Override arguments for IQ-TREE species tree inference"
     )]
     /// Number of threads to use
-    #[arg(short, long, default_value = "1", help = "Number of threads to use for IQ-TREE")]
+    /// It will be overridden by override_args_species
+    #[arg(short, long, default_value = "1", help = "Number of threads to use for IQ-TREE.")]
     pub threads: String,
     /// Number of bootstrap replicates
     #[arg(
@@ -153,12 +159,28 @@ pub struct IqTreeSettingArgs {
     pub optional_args_genes: Option<String>,
     /// Override arguments for IQ-TREE
     /// species tree inference. It will override
-    /// bootstrap, threads, and models.
+    /// bootstrap, threads, and models. 
+    /// DOES NOT include partition arguments.
+    /// ULLAR will parse the arguments that match 
+    /// models, threads, and bootstrap.
+    /// Example: -m GTR+G+I -T 2 -B 1000
+    /// Additional arguments will be considered as
+    /// optional arguments.
+    /// For example, -m GTR+G+I -T 2 -B 1000 -alrt 1000
+    /// will set the model to GTR+G+I, threads to 2, and
+    /// bootstrap to 1000. The -alrt 1000 will be
+    /// considered as optional arguments.
     #[arg(
         long,
         help = "Override arguments for IQ-TREE species tree inference"
     )]
     pub override_args_species: Option<String>,
+    /// Optional argument for IQ-TREE gene site concordance factor
+    #[arg(
+        long,
+        help = "Optional argument for IQ-TREE gene site concordance factor"
+    )]
+    pub optional_args_gscf: Option<String>,
     /// Override arguments for IQ-TREE
     /// gene tree inference.
     #[arg(
@@ -166,4 +188,18 @@ pub struct IqTreeSettingArgs {
         help = "Override arguments for IQ-TREE gene tree inference"
     )]
     pub override_args_genes: Option<String>,
+    /// Recompute likelihoods for gene-site concordance factors.
+    /// By default, ULLAR will run IQ-TREE using models from
+    /// species tree inference.
+    /// The model detection will look for file with extension "best_model.nex".
+    /// This method will speed up the process for large datasets.
+    /// Learn more here: 
+    /// http://www.iqtree.org/doc/Concordance-Factor#gene-concordance-factor-gcf
+    /// When this option is set, ULLAR will run IQ-TREE gscf
+    /// without model detection.
+    #[arg(
+        long,
+        help = "Recompute likelihoods for gene-site concordance factors"
+    )]
+    pub recompute_likelihoods: bool,
 }

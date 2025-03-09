@@ -169,7 +169,7 @@ impl<'a> ReadCleaner<'a> {
         log::info!("{:18}: {}", "Sample counts", config.input.sample_counts);
         log::info!("{:18}: {}", "File counts", config.input.file_counts);
         log::info!("{:18}: {}", "Task", self.task);
-        log::info!("{:18}: {} v{}\n", "QC", dep.name, dep.version);
+        log::info!("{:18}: {} v{}\n", "QC", dep.app_name, dep.version);
     }
 
     fn log_final_output(&self, reports: &[CleanReadReport]) {

@@ -184,7 +184,7 @@ impl<'a> Assembly<'a> {
         log::info!("{:18}: {}", "Config path", self.config_path.display());
         config.input.log_summary();
         log::info!("{:18}: {}", "Task", self.task);
-        log::info!("{:18}: {} v{}\n", "Assembler", dep.name, dep.version);
+        log::info!("{:18}: {} v{}\n", "Assembler", dep.app_name, dep.version);
     }
 
     fn log_output(&self) {

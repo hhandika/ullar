@@ -101,7 +101,7 @@ mod tests {
         assert_eq!(config.input.input_dir, input);
         assert_eq!(config.input.sample_counts, 1);
         assert_eq!(config.samples.len(), 1);
-        assert_eq!(dep.name, "fastp");
+        assert_eq!(dep.app_name, "fastp");
         assert_eq!(dep.version, "0.23.4");
         assert_eq!(config.samples[0].sample_name, sample_name);
         assert_eq!(

@@ -55,7 +55,7 @@ pub fn check_dependency_match(dep: &DepMetadata, config_version: &str) {
             "\n{} Installed {} version {} is different from the config version {}.\
             ULLAR will use the installed version",
             "Warning:".yellow(),
-            dep.name,
+            dep.app_name,
             dep.version,
             config_version
         );
@@ -77,7 +77,7 @@ pub fn dependency_not_found(dep: &str) {
 /// Shared by all dependencies
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct DepMetadata {
-    pub name: String,
+    pub app_name: String,
     pub version: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub executable: Option<String>,
@@ -90,9 +90,9 @@ pub struct DepMetadata {
 }
 
 impl DepMetadata {
-    pub fn new(name: &str, version: &str, executable: Option<&str>) -> Self {
+    pub fn new(app_name: &str, version: &str, executable: Option<&str>) -> Self {
         Self {
-            name: name.to_string(),
+            app_name: app_name.to_string(),
             version: version.to_string(),
             executable: executable.map(|s| s.to_string()),
             override_args: None,

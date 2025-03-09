@@ -27,6 +27,7 @@ pub const DEFAULT_ML_INFERENCE_CONFIG: &str = "ml_inference";
 
 pub const SPECIES_TREE_ANALYSIS: &str = "species_tree_inference";
 pub const GENE_TREE_ANALYSIS: &str = "gene_tree_inference";
+pub const GENE_SITE_CONCORDANCE_ANALYSIS: &str = "gene_site_concordance";
 pub const MSC_INFERENCE_DEP_NAME: &str = "msc_inference";
 pub const DATA_PREPARATION_DEP_NAME: &str = "data_preparation";
 
@@ -71,6 +72,14 @@ impl TreeInferenceConfig {
         let mut params = TreeInferenceAnalyses::new(dependency);
         params.set_gene_tree_params(args);
         self.analyses.insert(GENE_TREE_ANALYSIS.to_string(), params);
+    }
+
+    pub fn set_concordance_factor_params(&mut self, args: &IqTreeSettingArgs) {
+        let dependency = self.get_iqtree_metadata();
+        let mut params = TreeInferenceAnalyses::new(dependency);
+        params.set_concordance_factor_params(args);
+        self.analyses
+            .insert(GENE_SITE_CONCORDANCE_ANALYSIS.to_string(), params);
     }
 
     pub fn from_toml(config_path: &Path) -> Result<Self, Box<dyn Error>> {
@@ -143,6 +152,7 @@ impl TreeInferenceInput {
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct TreeInferenceAnalyses {
+    #[serde(flatten)]
     pub dependency: DepMetadata,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(flatten)]
@@ -150,6 +160,9 @@ pub struct TreeInferenceAnalyses {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(flatten)]
     pub gene_tree_params: Option<IqTreeParams>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(flatten)]
+    pub concordance_factor: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(flatten)]
     pub msc_tree_params: Option<IqTreeParams>,
@@ -161,6 +174,7 @@ impl TreeInferenceAnalyses {
             dependency,
             species_tree_params: None,
             gene_tree_params: None,
+            concordance_factor: None,
             msc_tree_params: None,
         }
     }
@@ -196,6 +210,12 @@ impl TreeInferenceAnalyses {
             }
         }
     }
+
+    pub fn set_concordance_factor_params(&mut self, args: &IqTreeSettingArgs) {
+        let params =
+            IqTreeParams::from_args(args).with_optional_args(args.optional_args_gscf.as_deref());
+        self.concordance_factor = Some(params.models.clone());
+    }
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -205,6 +225,8 @@ pub struct IqTreeParams {
     pub threads: String,
     pub bootstrap: Option<String>,
     pub optional_args: Option<String>,
+    // Only used for gene site concordance factor
+    pub recompute_likelihoods: bool,
 }
 
 impl IqTreeParams {
@@ -219,6 +241,7 @@ impl IqTreeParams {
             threads: args.threads.to_string(),
             bootstrap: args.bootstrap.clone(),
             optional_args: None,
+            recompute_likelihoods: args.recompute_likelihoods,
         }
     }
 
@@ -258,6 +281,12 @@ impl IqTreeParams {
             Some(v) => {
                 let value = v.as_str().to_string();
                 let arg = format!("{} {}", bs.name("bs").unwrap().as_str(), value);
+                // This approach is simple, but will require memory allocation.
+                // It will be a minor issue because the string input will be small.
+                // A better, also simple, option without memory allocation is available
+                // in the nightly Rust. We should switch to it when it becomes stable.
+                // params.remove_matches(&arg);
+                // https://doc.rust-lang.org/std/string/struct.String.html#method.remove_matches
                 *params = params.replace(&arg, "");
                 Some(value)
             }

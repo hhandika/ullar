@@ -116,6 +116,7 @@ impl AlignmentConfig {
         };
 
         let segul = get_segul_metadata();
-        self.dependencies.insert(segul.name.to_lowercase(), segul);
+        self.dependencies
+            .insert(segul.app_name.to_lowercase(), segul);
     }
 }
