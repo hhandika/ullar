@@ -5,12 +5,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use colored::Colorize;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    cli::commands::tree::IqTreeSettingArgs,
+    cli::commands::tree::{AsterSettingArgs, IqTreeSettingArgs},
     core::deps::{
         aster::AsterMetadata,
         iqtree::{IqtreeMetadata, DEFAULT_IQTREE_MODEL, DEFAULT_IQTREE_THREADS},
@@ -63,31 +62,27 @@ impl TreeInferenceConfig {
     }
 
     pub fn set_species_tree_params(&mut self, args: &IqTreeSettingArgs) {
-        let dependency = self.get_iqtree_metadata();
-        let params = TreeInferenceAnalyses::new(dependency).set_species_tree_params(args);
+        let params = TreeInferenceAnalyses::new().set_species_tree_params(args);
         self.analyses
             .insert(SPECIES_TREE_ANALYSIS.to_string(), params);
     }
 
     pub fn set_gene_tree_params(&mut self, args: &IqTreeSettingArgs) {
-        let dependency = self.get_iqtree_metadata();
-        let mut params = TreeInferenceAnalyses::new(dependency);
+        let mut params = TreeInferenceAnalyses::new();
         params.set_gene_tree_params(args);
         self.analyses.insert(GENE_TREE_ANALYSIS.to_string(), params);
     }
 
     pub fn set_concordance_factor_params(&mut self, args: &IqTreeSettingArgs) {
-        let dependency = self.get_iqtree_metadata();
-        let mut params = TreeInferenceAnalyses::new(dependency);
+        let mut params = TreeInferenceAnalyses::new();
         params.set_concordance_factor_params(args);
         self.analyses
             .insert(GENE_SITE_CONCORDANCE_ANALYSIS.to_string(), params);
     }
 
-    pub fn set_msc_params(&mut self, method: MscInferenceMethod) {
-        let metadata = self.get_msc_inference_metadata(&method);
-        let mut params = TreeInferenceAnalyses::new(metadata);
-        params.set_msc_methods(method);
+    pub fn set_msc_params(&mut self, args: &AsterSettingArgs) {
+        let mut params = TreeInferenceAnalyses::new();
+        params.set_msc_methods(args);
         self.analyses
             .insert(MSC_INFERENCE_ANALYSIS.to_string(), params);
     }
@@ -112,37 +107,6 @@ impl TreeInferenceConfig {
         let writer = File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
         Ok(output_path)
-    }
-
-    fn get_msc_inference_metadata(&mut self, method: &MscInferenceMethod) -> DepMetadata {
-        let dep = AsterMetadata::new().get_matching(method);
-        match dep {
-            Some(metadata) => metadata,
-            None => {
-                panic!(
-                    "{} {} is not found.
-                    Please ensure ASTER is installed and accessible in your PATH",
-                    "Error:".red(),
-                    method.to_string()
-                );
-            }
-        }
-    }
-
-    fn get_iqtree_metadata(&self) -> DepMetadata {
-        let dep = IqtreeMetadata::new().get();
-
-        match dep {
-            Some(metadata) => metadata,
-            None => {
-                panic!(
-                    "{} IQ-TREE not found. Please, install it first. \
-                ULLAR can use either iqtree v1 or v2. \
-                It will prioritize iqtree2 if both are installed.",
-                    "Error:".red(),
-                );
-            }
-        }
     }
 
     fn update_segul_metadata(&mut self) {
@@ -173,8 +137,6 @@ impl TreeInferenceInput {
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct TreeInferenceAnalyses {
-    #[serde(flatten)]
-    pub dependency: DepMetadata,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(flatten)]
     pub species_tree_params: Option<IqTreeParams>,
@@ -183,16 +145,15 @@ pub struct TreeInferenceAnalyses {
     pub gene_tree_params: Option<IqTreeParams>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(flatten)]
-    pub concordance_factor: Option<String>,
+    pub concordance_factor: Option<IqTreeParams>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(flatten)]
-    pub msc_methods: Option<MscInferenceMethod>,
+    pub msc_methods: Option<AsterParams>,
 }
 
 impl TreeInferenceAnalyses {
-    pub fn new(dependency: DepMetadata) -> Self {
+    pub fn new() -> Self {
         Self {
-            dependency,
             species_tree_params: None,
             gene_tree_params: None,
             concordance_factor: None,
@@ -235,16 +196,57 @@ impl TreeInferenceAnalyses {
     pub fn set_concordance_factor_params(&mut self, args: &IqTreeSettingArgs) {
         let params =
             IqTreeParams::from_args(args).with_optional_args(args.optional_args_gscf.as_deref());
-        self.concordance_factor = Some(params.models.clone());
+        self.concordance_factor = Some(params);
     }
 
-    pub fn set_msc_methods(&mut self, msc_methods: MscInferenceMethod) {
-        self.msc_methods = Some(msc_methods);
+    pub fn set_msc_methods(&mut self, args: &AsterSettingArgs) {
+        let params =
+            AsterParams::from_args(args).with_optional_args(args.optional_args_msc.as_deref());
+        self.msc_methods = Some(params);
+    }
+}
+
+// Include all ASTER software suites.
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct AsterParams {
+    pub dependency: Vec<Option<DepMetadata>>,
+    pub methods: Vec<MscInferenceMethod>,
+    pub optional_args: Option<String>,
+}
+
+impl AsterParams {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn from_args(args: &AsterSettingArgs) -> Self {
+        let methods = match &args.specify_msc_methods {
+            Some(methods) => methods
+                .iter()
+                .map(|m| m.parse::<MscInferenceMethod>().expect("Invalid method"))
+                .collect(),
+            None => vec![MscInferenceMethod::default()],
+        };
+        Self {
+            dependency: methods
+                .iter()
+                .map(|m| AsterMetadata::new().get_matching(m))
+                .collect(),
+            methods,
+            optional_args: args.optional_args_msc.clone(),
+        }
+    }
+
+    pub fn with_optional_args(mut self, args: Option<&str>) -> Self {
+        self.optional_args = args.map(|a| a.to_string());
+        self
     }
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct IqTreeParams {
+    #[serde(flatten)]
+    pub dependency: Option<DepMetadata>,
     pub partition_model: String,
     pub models: String,
     pub threads: String,
@@ -261,6 +263,7 @@ impl IqTreeParams {
 
     pub fn from_args(args: &IqTreeSettingArgs) -> Self {
         Self {
+            dependency: IqtreeMetadata::new().get(),
             partition_model: args.partition_model.to_string(),
             models: args.models.to_string(),
             threads: args.threads.to_string(),

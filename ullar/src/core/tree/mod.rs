@@ -133,13 +133,8 @@ impl<'a> TreeEstimation<'a> {
                     .species_tree_params
                     .as_ref()
                     .expect("Species tree parameters not found in the config files");
-                let ml_analyses = MlSpeciesTree::new(
-                    &config.alignments,
-                    &d.dependency,
-                    &params,
-                    &self.output_dir,
-                    prefix,
-                );
+                let ml_analyses =
+                    MlSpeciesTree::new(&config.alignments, &params, &self.output_dir, prefix);
                 ml_analyses.infer(prefix);
             }
             None => {

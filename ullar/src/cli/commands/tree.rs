@@ -68,30 +68,32 @@ pub struct TreeInferenceInitArgs {
     pub datatype: String,
     #[command(flatten)]
     pub iqtree: IqTreeSettingArgs,
+    #[command(flatten)]
+    pub aster: AsterSettingArgs,
     /// Search recursively for files
     #[arg(long, help = "Search recursively for files")]
     pub recursive: bool,
 }
 
 #[derive(Args)]
-pub struct MscInferenceArgs {
+pub struct AsterSettingArgs {
     /// Option to select MSC inference method
     /// Options: astral, astral-pro
     #[arg(
-        short,
         long,
+        num_args(..=3),
         default_value = "astral",
         help = "Option to select MSC inference method",
-        value_parser = PossibleValuesParser::new(["astral", "astral-pro"])
+        value_parser = PossibleValuesParser::new(["astral", "astral-pro", "wastral"])
     )]
-    pub msc_method: String,
+    pub specify_msc_methods: Option<Vec<String>>,
     /// Override arguments for MSC inference
     /// It will override based on the method selected.
     #[arg(
         long,
         help = "Override arguments for MSC inference"
     )]
-    pub override_args_msc: Option<String>,
+    pub optional_args_msc: Option<String>,
 }
 
 #[derive(Args)]
