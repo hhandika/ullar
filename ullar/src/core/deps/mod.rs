@@ -263,13 +263,24 @@ impl DependencyCheck {
         let app_names = format!("{}\n{}\n{}", "ASTRAL", "ASTRAL-Pro", "Weighted Astral");
         let mut version = String::new();
         let mut status = String::new();
-        self.update_aster_meta(&mut version, &mut status, self.aster.astral_meta.as_ref());
+        self.update_aster_meta(
+            &mut version,
+            &mut status,
+            self.aster.astral_meta.as_ref(),
+            true,
+        );
         self.update_aster_meta(
             &mut version,
             &mut status,
             self.aster.astral_pro_meta.as_ref(),
+            true,
         );
-        self.update_aster_meta(&mut version, &mut status, self.aster.wastral_meta.as_ref());
+        self.update_aster_meta(
+            &mut version,
+            &mut status,
+            self.aster.wastral_meta.as_ref(),
+            false,
+        );
 
         let cells = vec![
             Cell::new(feature),
@@ -285,16 +296,21 @@ impl DependencyCheck {
         version: &mut String,
         status: &mut String,
         dep: Option<&DepMetadata>,
+        with_line_break: bool,
     ) {
         match dep {
             Some(metadata) => {
-                version.push_str(&format!("{}\n", metadata.version));
-                status.push_str(&format!("{}\n", STATUS_OK));
+                version.push_str(&format!("{}", metadata.version));
+                status.push_str(&format!("{}", STATUS_OK));
             }
             None => {
-                version.push_str("Unknown\n");
-                status.push_str(&format!("{}\n", STATUS_NOT_FOUND));
+                version.push_str("Unknown");
+                status.push_str(&format!("{}", STATUS_NOT_FOUND));
             }
+        }
+        if with_line_break {
+            version.push_str("\n");
+            status.push_str("\n");
         }
     }
 
@@ -323,8 +339,8 @@ impl DependencyCheck {
     fn status_ok(&self, ok: Option<bool>) -> Cell {
         match ok {
             None => Cell::new(STATUS_BUILT_IN).fg(Color::Blue),
-            Some(true) => Cell::new(STATUS_OK).fg(Color::Green),
-            Some(false) => Cell::new(STATUS_NOT_FOUND).fg(Color::Red),
+            Some(true) => Cell::new(STATUS_OK),
+            Some(false) => Cell::new(STATUS_NOT_FOUND),
         }
     }
 }
