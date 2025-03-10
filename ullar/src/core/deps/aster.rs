@@ -37,7 +37,7 @@ impl AsterMetadata {
         self.wastral_meta = self.parse_wastral_meta();
     }
 
-    pub fn get_matching(&mut self, method: &MscInferenceMethod) -> Option<DepMetadata> {
+    pub fn get_matching(&self, method: &MscInferenceMethod) -> Option<DepMetadata> {
         match method {
             MscInferenceMethod::Astral => self.parse_astral_meta(),
             MscInferenceMethod::AstralPro => self.parse_astral_pro_meta(),
@@ -45,7 +45,7 @@ impl AsterMetadata {
         }
     }
 
-    fn parse_astral_meta(&mut self) -> Option<DepMetadata> {
+    fn parse_astral_meta(&self) -> Option<DepMetadata> {
         match version!(ASTRAL_EXECUTABLE) {
             Some(version) => Some(DepMetadata::new(
                 ASTRAL_NAME,
@@ -56,7 +56,7 @@ impl AsterMetadata {
         }
     }
 
-    fn parse_astral_pro_meta(&mut self) -> Option<DepMetadata> {
+    fn parse_astral_pro_meta(&self) -> Option<DepMetadata> {
         match version!(ASTRAL_PRO3_EXECUTABLE) {
             Some(version) => Some(DepMetadata::new(
                 ASTRAL_PRO3_NAME,
@@ -67,7 +67,7 @@ impl AsterMetadata {
         }
     }
 
-    fn parse_wastral_meta(&mut self) -> Option<DepMetadata> {
+    fn parse_wastral_meta(&self) -> Option<DepMetadata> {
         match version!(WASTRAL_EXECUTABLE) {
             Some(version) => Some(DepMetadata::new(
                 WASTRAL_NAME,

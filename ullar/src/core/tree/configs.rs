@@ -5,12 +5,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use colored::Colorize;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     cli::commands::tree::IqTreeSettingArgs,
     core::deps::{
+        aster::AsterMetadata,
         iqtree::{IqtreeMetadata, DEFAULT_IQTREE_MODEL, DEFAULT_IQTREE_THREADS},
         segul::{get_segul_metadata, SegulMethods},
     },
@@ -28,7 +30,7 @@ pub const DEFAULT_ML_INFERENCE_CONFIG: &str = "ml_inference";
 pub const SPECIES_TREE_ANALYSIS: &str = "species_tree_inference";
 pub const GENE_TREE_ANALYSIS: &str = "gene_tree_inference";
 pub const GENE_SITE_CONCORDANCE_ANALYSIS: &str = "gene_site_concordance";
-pub const MSC_INFERENCE_DEP_NAME: &str = "msc_inference";
+pub const MSC_INFERENCE_ANALYSIS: &str = "msc_inference";
 pub const DATA_PREPARATION_DEP_NAME: &str = "data_preparation";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -82,6 +84,14 @@ impl TreeInferenceConfig {
             .insert(GENE_SITE_CONCORDANCE_ANALYSIS.to_string(), params);
     }
 
+    pub fn set_msc_params(&mut self, method: MscInferenceMethod) {
+        let metadata = self.get_msc_inference_metadata(&method);
+        let mut params = TreeInferenceAnalyses::new(metadata);
+        params.set_msc_methods(method);
+        self.analyses
+            .insert(MSC_INFERENCE_ANALYSIS.to_string(), params);
+    }
+
     pub fn from_toml(config_path: &Path) -> Result<Self, Box<dyn Error>> {
         let content = std::fs::read_to_string(config_path)?;
         let config = toml::from_str(&content)?;
@@ -104,9 +114,19 @@ impl TreeInferenceConfig {
         Ok(output_path)
     }
 
-    #[allow(dead_code)]
-    fn get_msc_inference_metadata(&mut self, methods: Vec<String>) -> DepMetadata {
-        DepMetadata::new("msc", "TEST", None).with_methods(methods)
+    fn get_msc_inference_metadata(&mut self, method: &MscInferenceMethod) -> DepMetadata {
+        let dep = AsterMetadata::new().get_matching(method);
+        match dep {
+            Some(metadata) => metadata,
+            None => {
+                panic!(
+                    "{} {} is not found.
+                    Please ensure ASTER is installed and accessible in your PATH",
+                    "Error:".red(),
+                    method.to_string()
+                );
+            }
+        }
     }
 
     fn get_iqtree_metadata(&self) -> DepMetadata {
@@ -116,9 +136,10 @@ impl TreeInferenceConfig {
             Some(metadata) => metadata,
             None => {
                 panic!(
-                    "IQ-TREE not found. Please, install it first. \
+                    "{} IQ-TREE not found. Please, install it first. \
                 ULLAR can use either iqtree v1 or v2. \
-                It will prioritize iqtree2 if both are installed."
+                It will prioritize iqtree2 if both are installed.",
+                    "Error:".red(),
                 );
             }
         }
