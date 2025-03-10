@@ -82,7 +82,6 @@ pub struct AsterSettingArgs {
     #[arg(
         long,
         num_args(..=3),
-        default_value = "astral",
         help = "Option to select MSC inference method",
         value_parser = PossibleValuesParser::new(["astral", "astral-pro", "wastral"])
     )]

@@ -68,7 +68,10 @@ impl<'a> MlSpeciesTree<'a> {
         let meta = match &self.iqtree_configs.dependency {
             Some(m) => m,
             None => {
-                log::error!("IQ-TREE dependency not found in the config");
+                log::error!(
+                    "IQ-TREE dependency not found in the config.\
+                Check IQ-TREE installation and config files."
+                );
                 return;
             }
         };

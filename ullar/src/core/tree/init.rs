@@ -100,7 +100,7 @@ impl<'a> TreeInferenceInit<'a> {
             TreeInferenceMethod::GeneSiteConcordance => {
                 config.set_concordance_factor_params(self.iqtree)
             }
-            TreeInferenceMethod::MscSpeciesTree => unimplemented!(),
+            TreeInferenceMethod::MscSpeciesTree => config.set_msc_params(self.aster),
         });
     }
 
