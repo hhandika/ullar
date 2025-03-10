@@ -1,6 +1,7 @@
 //! Utilities for managing dependencies.
 use core::panic;
 
+use aster::AsterMetadata;
 use colored::Colorize;
 use comfy_table::{Cell, Color, Table};
 use fastp::FastpMetadata;
@@ -11,6 +12,7 @@ use segul::get_segul_metadata;
 use serde::{Deserialize, Serialize};
 use spades::SpadesMetadata;
 
+pub mod aster;
 pub mod fastp;
 pub mod iqtree;
 pub mod lastz;
@@ -127,6 +129,7 @@ pub struct DependencyCheck {
     mafft: Option<DepMetadata>,
     iqtree: Option<DepMetadata>,
     segul: Option<DepMetadata>,
+    aster: AsterMetadata,
 }
 
 impl DependencyCheck {
@@ -137,6 +140,11 @@ impl DependencyCheck {
             lastz: LastzMetadata::new().get(),
             mafft: MafftMetadata::new().get(),
             iqtree: IqtreeMetadata::new().get(),
+            aster: {
+                let mut aster = AsterMetadata::new();
+                aster.get();
+                aster
+            },
             segul: Some(get_segul_metadata()),
         }
     }
@@ -148,6 +156,11 @@ impl DependencyCheck {
             lastz: LastzMetadata::new().override_args(override_args).get(),
             mafft: MafftMetadata::new().override_args(override_args).get(),
             iqtree: IqtreeMetadata::new().get(),
+            aster: {
+                let mut aster = AsterMetadata::new();
+                aster.get();
+                aster
+            },
             segul: Some(get_segul_metadata()),
         }
     }
@@ -158,7 +171,8 @@ impl DependencyCheck {
         self.log_denovo_assembly(&mut table);
         self.log_contig_mapping(&mut table);
         self.log_sequence_alignment(&mut table);
-        self.log_phylogenetic_inference(&mut table);
+        self.log_ml_inference(&mut table);
+        self.log_msc_inference(&mut table);
         self.log_data_wrangling_summarization(&mut table);
         log::info!("{}", table);
     }
@@ -226,8 +240,8 @@ impl DependencyCheck {
         }
     }
 
-    fn log_phylogenetic_inference(&mut self, table: &mut Table) {
-        let feature = "Phylogenetic inference";
+    fn log_ml_inference(&mut self, table: &mut Table) {
+        let feature = "Maximum likelihood phylogenetic inference";
         match &self.iqtree {
             Some(metadata) => {
                 let cells = self.get_cell(feature, "IQ-TREE", &metadata.version, Some(true));
@@ -235,6 +249,24 @@ impl DependencyCheck {
             }
             None => {
                 let cells = self.get_cell(feature, "IQ-TREE", "Unknown", Some(false));
+                table.add_row(cells);
+            }
+        }
+    }
+
+    fn log_msc_inference(&mut self, table: &mut Table) {
+        let feature = "MSC inference";
+        let title_cell = Cell::new(feature).fg(Color::Blue);
+        table.add_row([title_cell]);
+        let apps = format!("{}\n{}\n{}", "ASTRAL", "ASTRAL-Pro", "Weighted Astral");
+
+        match &self.aster.astral_meta {
+            Some(metadata) => {
+                let cells = self.get_cell("ASTRAL", "Astral", &metadata.version, Some(true));
+                table.add_row(cells);
+            }
+            None => {
+                let cells = self.get_cell("ASTRAL", "Astral", "Unknown", Some(false));
                 table.add_row(cells);
             }
         }
@@ -272,7 +304,7 @@ impl DependencyCheck {
 }
 
 fn re_capture_version(version: &str) -> String {
-    let re = regex::Regex::new(r"\d+\.\d+\.\d+").expect("Failed to compile regex");
+    let re = regex::Regex::new(r"\d+\.\d+\.\d+(\.\d+)?").expect("Failed to compile regex");
     let captures = re.captures(version);
 
     match captures {

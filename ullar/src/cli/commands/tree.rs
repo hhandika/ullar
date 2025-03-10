@@ -71,6 +71,10 @@ pub struct TreeInferenceInitArgs {
     /// Search recursively for files
     #[arg(long, help = "Search recursively for files")]
     pub recursive: bool,
+}
+
+#[derive(Args)]
+pub struct MscInferenceArgs {
     /// Option to select MSC inference method
     /// Options: astral, astral-pro
     #[arg(
@@ -81,6 +85,13 @@ pub struct TreeInferenceInitArgs {
         value_parser = PossibleValuesParser::new(["astral", "astral-pro"])
     )]
     pub msc_method: String,
+    /// Override arguments for MSC inference
+    /// It will override based on the method selected.
+    #[arg(
+        long,
+        help = "Override arguments for MSC inference"
+    )]
+    pub override_args_msc: Option<String>,
 }
 
 #[derive(Args)]
