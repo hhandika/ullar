@@ -25,7 +25,6 @@ const SPECIES_TREE_DIR: &str = "species_tree";
 
 pub struct MlSpeciesTree<'a> {
     pub alignments: &'a AlignmentFiles,
-    pub iqtree_meta: &'a DepMetadata,
     pub iqtree_configs: &'a IqTreeParams,
     pub output_dir: &'a Path,
     pub prefix: &'a str,
@@ -36,14 +35,12 @@ impl<'a> MlSpeciesTree<'a> {
     /// Create a new instance of `MlIqTree`
     pub fn new(
         alignments: &'a AlignmentFiles,
-        iqtree_meta: &'a DepMetadata,
         iqtree_configs: &'a IqTreeParams,
         output_dir: &'a Path,
         prefix: &'a str,
     ) -> Self {
         Self {
             alignments,
-            iqtree_meta,
             iqtree_configs,
             output_dir,
             prefix,
@@ -68,7 +65,14 @@ impl<'a> MlSpeciesTree<'a> {
         );
         spinner.set_message(spinner_msg);
         let output_path = output_dir.join(prefix);
-        let iqtree = IqTree::new(self.iqtree_configs, self.iqtree_meta);
+        let meta = match &self.iqtree_configs.dependency {
+            Some(m) => m,
+            None => {
+                log::error!("IQ-TREE dependency not found in the config");
+                return;
+            }
+        };
+        let iqtree = IqTree::new(self.iqtree_configs, &meta);
         let out = iqtree.run_species_tree(&alignment_path, &partition_path, &output_path);
         spinner.finish_with_message("IQ-TREE finished");
         if !out.status.success() {

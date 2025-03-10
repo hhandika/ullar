@@ -6,7 +6,7 @@ use enum_iterator::all;
 use segul::helper::finder::SeqFileFinder;
 use segul::helper::types::{DataType, InputFmt};
 
-use crate::cli::commands::tree::{IqTreeSettingArgs, TreeInferenceInitArgs};
+use crate::cli::commands::tree::{AsterSettingArgs, IqTreeSettingArgs, TreeInferenceInitArgs};
 use crate::helper::common;
 use crate::types::alignments::AlignmentFiles;
 use crate::types::trees::TreeInferenceMethod;
@@ -19,6 +19,7 @@ pub struct TreeInferenceInit<'a> {
     pub datatype: DataType,
     pub analyses: Vec<TreeInferenceMethod>,
     pub iqtree: &'a IqTreeSettingArgs,
+    pub aster: &'a AsterSettingArgs,
 }
 
 impl<'a> TreeInferenceInit<'a> {
@@ -46,6 +47,7 @@ impl<'a> TreeInferenceInit<'a> {
                 .parse::<DataType>()
                 .expect("Invalid data type"),
             iqtree: &args.iqtree,
+            aster: &args.aster,
         }
     }
 
@@ -95,7 +97,9 @@ impl<'a> TreeInferenceInit<'a> {
         self.analyses.iter().for_each(|method| match method {
             TreeInferenceMethod::MlSpeciesTree => config.set_species_tree_params(self.iqtree),
             TreeInferenceMethod::MlGeneTree => config.set_gene_tree_params(self.iqtree),
-            TreeInferenceMethod::GeneSiteConcordance => unimplemented!(),
+            TreeInferenceMethod::GeneSiteConcordance => {
+                config.set_concordance_factor_params(self.iqtree)
+            }
             TreeInferenceMethod::MscSpeciesTree => unimplemented!(),
         });
     }
