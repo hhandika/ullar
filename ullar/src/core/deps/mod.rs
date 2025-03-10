@@ -258,7 +258,7 @@ impl DependencyCheck {
         let feature = "MSC inference";
         let title_cell = Cell::new(feature).fg(Color::Blue);
         table.add_row([title_cell]);
-        let apps = format!("{}\n{}\n{}", "ASTRAL", "ASTRAL-Pro", "Weighted Astral");
+        // let apps = format!("{}\n{}\n{}", "ASTRAL", "ASTRAL-Pro", "Weighted Astral");
 
         match &self.aster.astral_meta {
             Some(metadata) => {
