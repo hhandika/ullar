@@ -69,7 +69,7 @@ pub struct ContigMappingConfig {
 impl ContigMappingConfig {
     pub fn new(reference_regex: &str) -> Self {
         Self {
-            app: UllarConfig::default(),
+            app: UllarConfig::init(),
             input: ContigInput::default(),
             dependencies: BTreeMap::new(),
             contigs: Vec::new(),

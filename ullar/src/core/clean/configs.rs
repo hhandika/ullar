@@ -33,7 +33,7 @@ pub struct CleanReadConfig {
 impl CleanReadConfig {
     pub fn new(input: FastqInput, samples: Vec<FastqReads>) -> Self {
         Self {
-            app: UllarConfig::default(),
+            app: UllarConfig::init(),
             input,
             dependencies: BTreeMap::new(),
             samples,
