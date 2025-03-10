@@ -40,13 +40,14 @@ pub fn reorder_analyses(analyses: &mut Vec<TreeInferenceMethod>) {
     let ml_species = analyses
         .iter()
         .position(|a| a == &TreeInferenceMethod::MlSpeciesTree);
-    let ml_gene = analyses
-        .iter()
-        .position(|a| a == &TreeInferenceMethod::MlGeneTree);
     if let Some(index) = ml_species {
         let analysis = analyses.remove(index);
         reorder_analyses.push(analysis);
     }
+
+    let ml_gene = analyses
+        .iter()
+        .position(|a| a == &TreeInferenceMethod::MlGeneTree);
 
     if let Some(index) = ml_gene {
         let analysis = analyses.remove(index);
