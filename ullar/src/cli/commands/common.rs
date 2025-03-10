@@ -87,4 +87,10 @@ pub struct CommonInitArgs {
         help = "Optional parameters for the runner"
     )]
     pub override_args: Option<String>,
+    /// Auto run the pipeline
+    /// It reduces the need to run init
+    /// then run option. Useful when the users
+    /// don't need to check the config file.
+    #[arg(long, help = "Auto run the pipeline")]
+    pub autorun: bool,
 }
