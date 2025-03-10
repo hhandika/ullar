@@ -1,10 +1,10 @@
 use std::{
-    collections::BTreeMap,
     error::Error,
     fs::File,
     path::{Path, PathBuf},
 };
 
+use indexmap::IndexMap;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
@@ -32,13 +32,37 @@ pub const GENE_SITE_CONCORDANCE_ANALYSIS: &str = "gene_site_concordance";
 pub const MSC_INFERENCE_ANALYSIS: &str = "msc_inference";
 pub const DATA_PREPARATION_DEP_NAME: &str = "data_preparation";
 
+/// We need to reorder the analyses to ensure
+/// that species tree and gene tree are inferred first.
+/// The rest can be inferred in any order.
+pub fn reorder_analyses(analyses: &mut Vec<TreeInferenceMethod>) {
+    let mut reorder_analyses = Vec::with_capacity(analyses.len());
+    let ml_species = analyses
+        .iter()
+        .position(|a| a == &TreeInferenceMethod::MlSpeciesTree);
+    let ml_gene = analyses
+        .iter()
+        .position(|a| a == &TreeInferenceMethod::MlGeneTree);
+    if let Some(index) = ml_species {
+        let analysis = analyses.remove(index);
+        reorder_analyses.push(analysis);
+    }
+
+    if let Some(index) = ml_gene {
+        let analysis = analyses.remove(index);
+        reorder_analyses.push(analysis);
+    }
+    reorder_analyses.extend(analyses.drain(..));
+    *analyses = reorder_analyses;
+}
+
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct TreeInferenceConfig {
     #[serde(flatten)]
     pub app: UllarConfig,
     pub input: TreeInferenceInput,
     pub data_preparation: DepMetadata,
-    pub analyses: BTreeMap<String, TreeInferenceAnalyses>,
+    pub analyses: IndexMap<String, TreeInferenceAnalyses>,
     pub alignments: AlignmentFiles,
 }
 
@@ -56,35 +80,9 @@ impl TreeInferenceConfig {
             app: UllarConfig::init(),
             input: TreeInferenceInput::new(input_dir, methods.to_vec()),
             data_preparation: get_segul_metadata(),
-            analyses: BTreeMap::new(),
+            analyses: IndexMap::new(),
             alignments,
         }
-    }
-
-    pub fn set_species_tree_params(&mut self, args: &IqTreeSettingArgs) {
-        let params = TreeInferenceAnalyses::new().set_species_tree_params(args);
-        self.analyses
-            .insert(SPECIES_TREE_ANALYSIS.to_string(), params);
-    }
-
-    pub fn set_gene_tree_params(&mut self, args: &IqTreeSettingArgs) {
-        let mut params = TreeInferenceAnalyses::new();
-        params.set_gene_tree_params(args);
-        self.analyses.insert(GENE_TREE_ANALYSIS.to_string(), params);
-    }
-
-    pub fn set_concordance_factor_params(&mut self, args: &IqTreeSettingArgs) {
-        let mut params = TreeInferenceAnalyses::new();
-        params.set_concordance_factor_params(args);
-        self.analyses
-            .insert(GENE_SITE_CONCORDANCE_ANALYSIS.to_string(), params);
-    }
-
-    pub fn set_msc_params(&mut self, args: &AsterSettingArgs) {
-        let mut params = TreeInferenceAnalyses::new();
-        params.set_msc_methods(args);
-        self.analyses
-            .insert(MSC_INFERENCE_ANALYSIS.to_string(), params);
     }
 
     pub fn from_toml(config_path: &Path) -> Result<Self, Box<dyn Error>> {
@@ -101,12 +99,77 @@ impl TreeInferenceConfig {
         Ok(output_path)
     }
 
+    pub fn update_analyses(
+        &mut self,
+        analyses: &[TreeInferenceMethod],
+        iqtree_args: &IqTreeSettingArgs,
+        aster_args: &AsterSettingArgs,
+    ) {
+        for analysis in analyses {
+            match analysis {
+                TreeInferenceMethod::MlSpeciesTree => self.set_species_tree_params(iqtree_args),
+                TreeInferenceMethod::MlGeneTree => self.set_gene_tree_params(iqtree_args),
+                TreeInferenceMethod::GeneSiteConcordance => {
+                    self.set_concordance_factor_params(iqtree_args)
+                }
+                TreeInferenceMethod::MscSpeciesTree => self.set_msc_params(aster_args),
+            }
+        }
+    }
+
+    pub fn has_ml_species_tree(&self) -> bool {
+        self.input
+            .analyses
+            .iter()
+            .any(|a| a == &TreeInferenceMethod::MlSpeciesTree)
+    }
+
+    pub fn has_ml_gene_tree(&self) -> bool {
+        self.input
+            .analyses
+            .iter()
+            .any(|a| a == &TreeInferenceMethod::MlGeneTree)
+    }
+
+    pub fn has_msc(&self) -> bool {
+        self.input
+            .analyses
+            .iter()
+            .any(|a| a == &TreeInferenceMethod::MscSpeciesTree)
+    }
+
     #[deprecated(since = "0.5.0", note = "Use `to_toml` instead")]
     pub fn to_yaml(&mut self) -> Result<PathBuf, Box<dyn Error>> {
         let output_path = generate_config_output_path(DEFAULT_ML_INFERENCE_CONFIG);
         let writer = File::create(&output_path)?;
         serde_yaml::to_writer(&writer, self)?;
         Ok(output_path)
+    }
+
+    fn set_species_tree_params(&mut self, args: &IqTreeSettingArgs) {
+        let params = TreeInferenceAnalyses::new().set_species_tree_params(args);
+        self.analyses
+            .insert(SPECIES_TREE_ANALYSIS.to_string(), params);
+    }
+
+    fn set_gene_tree_params(&mut self, args: &IqTreeSettingArgs) {
+        let mut params = TreeInferenceAnalyses::new();
+        params.set_gene_tree_params(args);
+        self.analyses.insert(GENE_TREE_ANALYSIS.to_string(), params);
+    }
+
+    fn set_concordance_factor_params(&mut self, args: &IqTreeSettingArgs) {
+        let mut params = TreeInferenceAnalyses::new();
+        params.set_concordance_factor_params(args);
+        self.analyses
+            .insert(GENE_SITE_CONCORDANCE_ANALYSIS.to_string(), params);
+    }
+
+    fn set_msc_params(&mut self, args: &AsterSettingArgs) {
+        let mut params = TreeInferenceAnalyses::new();
+        params.set_msc_methods(args);
+        self.analyses
+            .insert(MSC_INFERENCE_ANALYSIS.to_string(), params);
     }
 
     fn update_segul_metadata(&mut self) {

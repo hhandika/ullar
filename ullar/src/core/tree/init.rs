@@ -11,7 +11,7 @@ use crate::helper::common;
 use crate::types::alignments::AlignmentFiles;
 use crate::types::trees::TreeInferenceMethod;
 
-use super::configs::TreeInferenceConfig;
+use super::configs::{reorder_analyses, TreeInferenceConfig};
 
 pub struct TreeInferenceInit<'a> {
     pub input_dir: &'a Path,
@@ -24,24 +24,26 @@ pub struct TreeInferenceInit<'a> {
 
 impl<'a> TreeInferenceInit<'a> {
     pub fn from_arg(args: &'a TreeInferenceInitArgs) -> Self {
+        let mut analyses = match &args.specify_analyses {
+            Some(methods) => methods
+                .iter()
+                .map(|m| {
+                    m.parse().expect(
+                        "Failed parsing tree inference methods. \
+                Check the help message for valid options",
+                    )
+                })
+                .collect(),
+            None => all::<TreeInferenceMethod>().collect(),
+        };
+        reorder_analyses(&mut analyses);
         Self {
             input_dir: &args.dir,
             input_format: args
                 .input_format
                 .parse::<InputFmt>()
                 .expect("Invalid input format"),
-            analyses: match &args.specify_analyses {
-                Some(methods) => methods
-                    .iter()
-                    .map(|m| {
-                        m.parse().expect(
-                            "Failed parsing tree inference methods. \
-                    Check the help message for valid options",
-                        )
-                    })
-                    .collect(),
-                None => all::<TreeInferenceMethod>().collect(),
-            },
+            analyses,
             datatype: args
                 .datatype
                 .parse::<DataType>()
@@ -88,20 +90,9 @@ impl<'a> TreeInferenceInit<'a> {
         alignments: AlignmentFiles,
     ) -> Result<(PathBuf, TreeInferenceConfig), Box<dyn Error>> {
         let mut config = TreeInferenceConfig::init(self.input_dir, &self.analyses, alignments);
-        self.update_analyses(&mut config);
+        config.update_analyses(&self.analyses, &self.iqtree, &self.aster);
         let output_path = config.to_toml()?;
         Ok((output_path, config))
-    }
-
-    fn update_analyses(&self, config: &mut TreeInferenceConfig) {
-        self.analyses.iter().for_each(|method| match method {
-            TreeInferenceMethod::MlSpeciesTree => config.set_species_tree_params(self.iqtree),
-            TreeInferenceMethod::MlGeneTree => config.set_gene_tree_params(self.iqtree),
-            TreeInferenceMethod::GeneSiteConcordance => {
-                config.set_concordance_factor_params(self.iqtree)
-            }
-            TreeInferenceMethod::MscSpeciesTree => config.set_msc_params(self.aster),
-        });
     }
 
     fn log_input(&self) {

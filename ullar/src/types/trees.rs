@@ -43,7 +43,7 @@ impl FromStr for MscInferenceMethod {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, Sequence)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Sequence)]
 #[serde(rename_all = "snake_case")]
 pub enum TreeInferenceMethod {
     MlSpeciesTree,

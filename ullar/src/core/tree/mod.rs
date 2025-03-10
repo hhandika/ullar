@@ -110,6 +110,7 @@ impl<'a> TreeEstimation<'a> {
 
     #[allow(unused_variables)]
     fn run_tree_inference(&self, config: &TreeInferenceConfig) {
+        let has_msc = config.has_msc();
         config
             .input
             .analyses
