@@ -20,6 +20,10 @@ pub mod mafft;
 pub mod segul;
 pub mod spades;
 
+const STATUS_OK: &str = "✅ OK";
+const STATUS_NOT_FOUND: &str = "❌ NOT FOUND";
+const STATUS_BUILT_IN: &str = "🔧 BUILT-IN";
+
 pub enum Dependency {
     Fastp,
     Spades,
@@ -241,7 +245,7 @@ impl DependencyCheck {
     }
 
     fn log_ml_inference(&mut self, table: &mut Table) {
-        let feature = "Maximum likelihood phylogenetic inference";
+        let feature = "ML phylogenetic inference";
         match &self.iqtree {
             Some(metadata) => {
                 let cells = self.get_cell(feature, "IQ-TREE", &metadata.version, Some(true));
@@ -255,19 +259,41 @@ impl DependencyCheck {
     }
 
     fn log_msc_inference(&mut self, table: &mut Table) {
-        let feature = "MSC inference";
-        let title_cell = Cell::new(feature).fg(Color::Blue);
-        table.add_row([title_cell]);
-        // let apps = format!("{}\n{}\n{}", "ASTRAL", "ASTRAL-Pro", "Weighted Astral");
+        let feature = "MSC phylogenetic inference";
+        let app_names = format!("{}\n{}\n{}", "ASTRAL", "ASTRAL-Pro", "Weighted Astral");
+        let mut version = String::new();
+        let mut status = String::new();
+        self.update_aster_meta(&mut version, &mut status, self.aster.astral_meta.as_ref());
+        self.update_aster_meta(
+            &mut version,
+            &mut status,
+            self.aster.astral_pro_meta.as_ref(),
+        );
+        self.update_aster_meta(&mut version, &mut status, self.aster.wastral_meta.as_ref());
 
-        match &self.aster.astral_meta {
+        let cells = vec![
+            Cell::new(feature),
+            Cell::new(app_names),
+            Cell::new(version),
+            Cell::new(status),
+        ];
+        table.add_row(cells);
+    }
+
+    fn update_aster_meta(
+        &self,
+        version: &mut String,
+        status: &mut String,
+        dep: Option<&DepMetadata>,
+    ) {
+        match dep {
             Some(metadata) => {
-                let cells = self.get_cell("ASTRAL", "Astral", &metadata.version, Some(true));
-                table.add_row(cells);
+                version.push_str(&format!("{}\n", metadata.version));
+                status.push_str(&format!("{}\n", STATUS_OK));
             }
             None => {
-                let cells = self.get_cell("ASTRAL", "Astral", "Unknown", Some(false));
-                table.add_row(cells);
+                version.push_str("Unknown\n");
+                status.push_str(&format!("{}\n", STATUS_NOT_FOUND));
             }
         }
     }
@@ -296,9 +322,9 @@ impl DependencyCheck {
 
     fn status_ok(&self, ok: Option<bool>) -> Cell {
         match ok {
-            None => Cell::new("🔧 BUILT-IN").fg(Color::Blue),
-            Some(true) => Cell::new("✅ OK").fg(Color::Green),
-            Some(false) => Cell::new("❌ NOT FOUND").fg(Color::Red),
+            None => Cell::new(STATUS_BUILT_IN).fg(Color::Blue),
+            Some(true) => Cell::new(STATUS_OK).fg(Color::Green),
+            Some(false) => Cell::new(STATUS_NOT_FOUND).fg(Color::Red),
         }
     }
 }
