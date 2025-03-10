@@ -24,9 +24,13 @@ pub mod configs;
 pub mod init;
 pub mod iqtree;
 
-pub const DEFAULT_PHYLO_OUTPUT_DIR: &str = "phylogenetic_tree";
-pub const DEFAULT_ML_OUTPUT_DIR: &str = "ml_iqtree";
-pub const DEFAULT_MSC_OUTPUT_DIR: &str = "msc_aster";
+pub const DEFAULT_PHYLO_OUTPUT_DIR: &str = "output_phylogenetic_inference";
+pub const DEFAULT_ML_SPECIES_TREE_OUTPUT_DIR: &str = "ml_species_tree";
+pub const DEFAULT_ML_GENE_TREE_OUTPUT_DIR: &str = "ml_gene_trees";
+pub const DEFAULT_GSC_OUTPUT_DIR: &str = "gsc_trees";
+pub const DEFAULT_MSC_ASTRAL_OUTPUT_DIR: &str = "msc_astral_trees";
+pub const DEFAULT_MSC_ASTRAL_PRO_OUTPUT_DIR: &str = "msc_astral_pro_trees";
+pub const DEFAULT_MSC_WASTRAL_OUTPUT_DIR: &str = "msc_wastral_trees";
 
 pub struct TreeEstimation<'a> {
     /// Path to raw read config file
