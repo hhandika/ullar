@@ -62,6 +62,8 @@ pub struct TreeInferenceConfig {
     pub app: UllarConfig,
     pub input: TreeInferenceInput,
     pub data_preparation: DepMetadata,
+    // We use an IndexMap instead of BTreeMap
+    // or HashMap to maintain the order of analyses.
     pub analyses: IndexMap<String, TreeInferenceAnalyses>,
     pub alignments: AlignmentFiles,
 }
