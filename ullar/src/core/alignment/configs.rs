@@ -34,7 +34,7 @@ pub struct AlignmentConfig {
 impl AlignmentConfig {
     pub fn new(sequences: Vec<FileMetadata>) -> Self {
         Self {
-            app: UllarConfig::default(),
+            app: UllarConfig::init(),
             input: SequenceInput::default(),
             dependencies: BTreeMap::new(),
             sequences,

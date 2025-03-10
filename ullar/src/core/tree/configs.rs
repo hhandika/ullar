@@ -53,7 +53,7 @@ impl TreeInferenceConfig {
         alignments: AlignmentFiles,
     ) -> Self {
         Self {
-            app: UllarConfig::default(),
+            app: UllarConfig::init(),
             input: TreeInferenceInput::new(input_dir, methods.to_vec()),
             data_preparation: get_segul_metadata(),
             analyses: BTreeMap::new(),

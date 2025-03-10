@@ -51,15 +51,30 @@ pub fn init_progress_bar(len: u64) -> ProgressBar {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UllarConfig {
-    pub timestamp: String,
-    pub ullar_version: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timestamp: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ullar_version: Option<String>,
 }
 
 impl Default for UllarConfig {
     fn default() -> Self {
         Self {
-            timestamp: get_timestamp(),
-            ullar_version: get_api_version(),
+            timestamp: None,
+            ullar_version: None,
+        }
+    }
+}
+
+impl UllarConfig {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn init() -> Self {
+        Self {
+            timestamp: Some(get_timestamp()),
+            ullar_version: Some(get_api_version()),
         }
     }
 }
