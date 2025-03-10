@@ -32,9 +32,9 @@ impl AsterMetadata {
     }
 
     pub fn get(&mut self) {
-        self.parse_astral_meta();
-        self.parse_astral_pro_meta();
-        self.parse_wastral_meta();
+        self.astral_meta = self.parse_astral_meta();
+        self.astral_pro_meta = self.parse_astral_pro_meta();
+        self.wastral_meta = self.parse_wastral_meta();
     }
 
     pub fn get_matching(&mut self, method: &MscInferenceMethod) -> Option<DepMetadata> {
