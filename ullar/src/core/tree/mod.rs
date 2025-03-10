@@ -108,9 +108,18 @@ impl<'a> TreeEstimation<'a> {
         log::info!("{:18}: {}\n", "File counts", config.alignments.file_counts);
     }
 
-    #[allow(unused_variables)]
     fn run_tree_inference(&self, config: &TreeInferenceConfig) {
+        let has_gene_tree = config.has_ml_gene_tree();
         let has_msc = config.has_msc();
+
+        if !has_gene_tree && has_msc {
+            log::warn!(
+                "{} Gene tree inference not specified in the config files.\
+                It is required for MSC analysis. Exiting...",
+                "Error:".red()
+            );
+            return;
+        }
         config
             .input
             .analyses
