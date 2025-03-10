@@ -25,8 +25,8 @@ pub mod reports;
 pub mod summary;
 pub mod writer;
 
-pub const DEFAULT_CONTIG_MAPPING_OUTPUT_DIR: &str = "mapped_contigs";
-pub const DEFAULT_READ_MAPPING_OUTPUT_DIR: &str = "mapped_reads";
+pub const DEFAULT_CONTIG_MAPPING_OUTPUT_DIR: &str = "output_contig_mapping";
+pub const DEFAULT_READ_MAPPING_OUTPUT_DIR: &str = "output_read_mapping";
 
 pub struct ContigMapping<'a> {
     pub config_path: &'a Path,
