@@ -252,7 +252,7 @@ impl<'a> TreeEstimation<'a> {
             .analyses
             .iter()
             .any(|f| *f == TreeInferenceMethod::GeneSiteConcordance);
-        if required_v2 && iqtree_version.starts_with("2") {
+        if required_v2 && !iqtree_version.starts_with("2") {
             let error = format!(
                 "{} IQ-TREE v2 is required for GSC analysis. \
                 Please install IQ-TREE v2 and regenerate the config file.",
