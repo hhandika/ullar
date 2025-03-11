@@ -6,10 +6,10 @@ use std::{
 use anyhow::Context;
 use colored::Colorize;
 use configs::{
-    AsterParams, TreeInferenceConfig, DEFAULT_ML_INFERENCE_CONFIG, GENE_TREE_ANALYSIS,
-    MSC_INFERENCE_ANALYSIS, SPECIES_TREE_ANALYSIS,
+    AsterParams, TreeInferenceConfig, DEFAULT_ML_INFERENCE_CONFIG, GENE_SITE_CONCORDANCE_ANALYSIS,
+    GENE_TREE_ANALYSIS, MSC_INFERENCE_ANALYSIS, SPECIES_TREE_ANALYSIS,
 };
-use iqtree::{IQTreeResults, MlSpeciesTree};
+use iqtree::{GeneSiteConcordance, IQTreeResults, MlGeneTree, MlSpeciesTree};
 
 use crate::{
     cli::commands::tree::TreeInferenceArgs,
@@ -109,12 +109,14 @@ impl<'a> TreeEstimation<'a> {
         for analysis in &config.input.analyses {
             match analysis {
                 TreeInferenceMethod::MlSpeciesTree => {
-                    let tree_path = self.infer_ml_species_tree(config)?;
-                    iqtree_results.add_species_tree(tree_path);
+                    self.infer_ml_species_tree(config, &mut iqtree_results)?
                 }
+
                 TreeInferenceMethod::MlGeneTree => {
-                    let tree_path = self.infer_ml_gene_trees(config)?;
-                    iqtree_results.add_gene_trees(tree_path);
+                    self.infer_ml_gene_trees(config, &mut iqtree_results)?
+                }
+                TreeInferenceMethod::GeneSiteConcordance => {
+                    self.infer_concordance_factor(config, &mut iqtree_results)?
                 }
                 _ => unimplemented!("Tree inference method not implemented"),
             }
@@ -125,7 +127,8 @@ impl<'a> TreeEstimation<'a> {
     fn infer_ml_species_tree(
         &self,
         config: &TreeInferenceConfig,
-    ) -> Result<PathBuf, Box<dyn Error>> {
+        iqtree_result: &mut IQTreeResults,
+    ) -> Result<(), Box<dyn Error>> {
         let dep = config.analyses.get(SPECIES_TREE_ANALYSIS);
         match dep {
             Some(d) => {
@@ -137,8 +140,8 @@ impl<'a> TreeEstimation<'a> {
                     .as_ref()
                     .with_context(|| "Species tree parameters not found")?;
                 let ml_analyses = MlSpeciesTree::new(&config.alignments, &params, &output_dir);
-                let tree_path = ml_analyses.infer_species_tree(prefix)?;
-                Ok(tree_path)
+                ml_analyses.infer_species_tree(iqtree_result, prefix)?;
+                Ok(())
             }
             None => {
                 let error = format!(
@@ -150,7 +153,11 @@ impl<'a> TreeEstimation<'a> {
         }
     }
 
-    fn infer_ml_gene_trees(&self, config: &TreeInferenceConfig) -> Result<PathBuf, Box<dyn Error>> {
+    fn infer_ml_gene_trees(
+        &self,
+        config: &TreeInferenceConfig,
+        iqtree_result: &mut IQTreeResults,
+    ) -> Result<(), Box<dyn Error>> {
         let dep = config.analyses.get(GENE_TREE_ANALYSIS);
         match dep {
             Some(d) => {
@@ -160,9 +167,38 @@ impl<'a> TreeEstimation<'a> {
                     .gene_tree_params
                     .as_ref()
                     .with_context(|| "Gene tree parameters not found.")?;
-                let ml_analyses = MlSpeciesTree::new(&config.alignments, &params, &output_dir);
-                let tree_path = ml_analyses.infer_gene_trees();
-                Ok(tree_path)
+                let ml_analyses = MlGeneTree::new(&config.alignments, &params, &output_dir);
+                ml_analyses.infer_gene_trees(iqtree_result);
+                Ok(())
+            }
+            None => {
+                let error = format!(
+                    "{} No ML gene tree analysis specified in the config files. Skipping",
+                    "Warning:".yellow()
+                );
+                Err(error.into())
+            }
+        }
+    }
+
+    fn infer_concordance_factor(
+        &self,
+        config: &TreeInferenceConfig,
+        iqtree_results: &mut IQTreeResults,
+    ) -> Result<(), Box<dyn Error>> {
+        let dep = config.analyses.get(GENE_SITE_CONCORDANCE_ANALYSIS);
+        match dep {
+            Some(d) => {
+                let output_dir = self.output_dir.join(DEFAULT_GSC_OUTPUT_DIR);
+                PathCheck::new(&output_dir).is_dir().prompt_exists(false);
+                let prefix = "gene_site_cf";
+                let params = d
+                    .concordance_factor
+                    .as_ref()
+                    .with_context(|| "Gene tree parameters not found.")?;
+                let ml_analyses = GeneSiteConcordance::new(&params, &output_dir);
+                ml_analyses.infer_concordance_factor(iqtree_results, prefix)?;
+                Ok(())
             }
             None => {
                 let error = format!(
