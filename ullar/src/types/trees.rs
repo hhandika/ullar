@@ -78,6 +78,7 @@ impl FromStr for TreeInferenceMethod {
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum IQTreePartitions {
     /// Edge equal partitions,
     /// using '-q' option in IQ-TREE

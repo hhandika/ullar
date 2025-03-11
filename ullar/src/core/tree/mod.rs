@@ -89,6 +89,7 @@ impl<'a> TreeEstimation<'a> {
         let spinner = common::init_spinner();
         spinner.set_message("Parsing and checking the config file");
         let config = self.parse_config().expect("Failed to parse config");
+        println!("{:?}", config);
         self.log_input(&config);
         self.check_dependencies(&config)
             .expect("Failed finding dependencies");
@@ -166,7 +167,7 @@ impl<'a> TreeEstimation<'a> {
                 let params = d
                     .gene_tree_params
                     .as_ref()
-                    .with_context(|| "Gene tree parameters not found.")?;
+                    .with_context(|| "Gene tree parameters not found")?;
                 let ml_analyses = MlGeneTree::new(&config.alignments, &params, &output_dir);
                 ml_analyses.infer_gene_trees(iqtree_result);
                 Ok(())
