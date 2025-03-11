@@ -50,7 +50,7 @@ pub struct TreeInferenceInitArgs {
         num_args(..=4),
         long,
         help = "Phylogenetic tree inference method",
-        value_parser = PossibleValuesParser::new(["ml-species", "ml-gene", "gscf", "msc"])
+        value_parser = PossibleValuesParser::new(["ml-species", "ml-genes", "gscf", "msc"])
     )]
     pub specify_analyses: Option<Vec<String>>,
     /// Sequence data type. 
@@ -226,7 +226,7 @@ pub struct AsterSettingArgs {
     #[arg(
         long,
         num_args(..=3),
-        help = "Option to select MSC inference method",
+        help = "Option to select MSC inference method. Use astral by default",
         value_parser = PossibleValuesParser::new(["astral", "astral-pro", "wastral"])
     )]
     pub specify_msc_methods: Option<Vec<String>>,

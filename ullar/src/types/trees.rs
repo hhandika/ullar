@@ -69,7 +69,7 @@ impl FromStr for TreeInferenceMethod {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "ml-species" => Ok(TreeInferenceMethod::MlSpeciesTree),
-            "ml-gene" => Ok(TreeInferenceMethod::MlGeneTree),
+            "ml-genes" => Ok(TreeInferenceMethod::MlGeneTree),
             "gscf" => Ok(TreeInferenceMethod::GeneSiteConcordance),
             "msc" => Ok(TreeInferenceMethod::MscSpeciesTree),
             _ => Err(format!("Unknown tree inference method: {}", s)),
