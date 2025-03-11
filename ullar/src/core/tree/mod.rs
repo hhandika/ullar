@@ -89,7 +89,6 @@ impl<'a> TreeEstimation<'a> {
         let spinner = common::init_spinner();
         spinner.set_message("Parsing and checking the config file");
         let config = self.parse_config().expect("Failed to parse config");
-        println!("{:?}", config);
         self.log_input(&config);
         self.check_dependencies(&config)
             .expect("Failed finding dependencies");
