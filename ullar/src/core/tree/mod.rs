@@ -347,7 +347,7 @@ impl<'a> TreeEstimation<'a> {
         let not_found = "Not found".red();
         match &params.dependency {
             Some(dep) => {
-                log::info!("{:18}: {}", "App", "IQ-TREE".cyan());
+                log::info!("{:18}: {}", "App", "IQ-TREE");
                 log::info!("{:18}: {}", "Version", dep.version);
                 log::info!(
                     "{:18}: {}\n",
