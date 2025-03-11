@@ -251,15 +251,22 @@ impl<'a> GeneSiteConcordance<'a> {
         let out_gene = iqtree.infer_gene_concordance(&iqtree_result, &output_path);
         spinner.set_message("Running IQ-TREE for site concordance factor");
         let out_site = iqtree.infer_site_concordance(&iqtree_result, &output_path);
-        spinner.finish_with_message("IQ-TREE finished");
+        let mut error = String::new();
+
         if !out_gene.status.success() {
-            return Err("IQ-TREE failed to run".into());
+            if !out_gene.status.success() {
+                let err = str::from_utf8(&out_gene.stderr).expect("Failed to read error message");
+                let message = format!("Failed to run IQ-TREE for gene concordance: {}\n\n", err);
+                error.push_str(&message);
+            }
         }
 
         if !out_site.status.success() {
-            return Err("IQ-TREE failed to run".into());
+            let err = str::from_utf8(&out_site.stderr).expect("Failed to read error message");
+            let message = format!("Failed to run IQ-TREE for site concordance: {}\n", err);
+            error.push_str(&message);
         }
-
+        spinner.finish_with_message("IQ-TREE finished");
         log::info!("IQ-TREE finished successfully.");
         Ok(())
     }

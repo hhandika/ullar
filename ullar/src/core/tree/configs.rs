@@ -12,7 +12,9 @@ use crate::{
     cli::commands::tree::{AsterSettingArgs, IqTreeSettingArgs},
     core::deps::{
         aster::AsterMetadata,
-        iqtree::{IqtreeMetadata, DEFAULT_IQTREE_MODEL, DEFAULT_IQTREE_THREADS},
+        iqtree::{
+            IqtreeMetadata, DEFAULT_IQTREE_BOOTSTRAP, DEFAULT_IQTREE_MODEL, DEFAULT_IQTREE_THREADS,
+        },
         segul::{get_segul_metadata, SegulMethods},
     },
     helper::common::UllarConfig,
@@ -249,7 +251,7 @@ impl TreeInferenceAnalyses {
     pub fn set_gene_tree_params(&mut self, args: &IqTreeSettingArgs) {
         match &args.override_args_genes {
             Some(arg) => {
-                let mut params = IqTreeParams::new();
+                let mut params = IqTreeParams::new().force_single_thread();
                 params.override_params(arg);
                 self.gene_tree_params = Some(params);
             }
@@ -321,8 +323,17 @@ pub struct IqTreeParams {
     pub bootstrap: Option<String>,
     pub optional_args: Option<String>,
     // Only used for gene site concordance factor
+    // analysis. Will not be serialized if false.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub recompute_likelihoods: bool,
+    // Enforce IQ-TREE version 1 for gene tree and species tree analyses.
+    // Will not be serialized if false.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub force_v1: bool,
+    #[serde(skip_serializing)]
+    force_single_thread: bool,
+    #[serde(skip_serializing)]
+    pub use_default_bs: bool,
 }
 
 impl IqTreeParams {
@@ -340,7 +351,20 @@ impl IqTreeParams {
             optional_args: None,
             recompute_likelihoods: args.recompute_likelihoods,
             force_v1: args.force_v1,
+            force_single_thread: false,
+            use_default_bs: false,
         }
+    }
+
+    pub fn force_single_thread(mut self) -> Self {
+        self.force_single_thread = true;
+        self.threads = "1".to_string();
+        self
+    }
+
+    pub fn use_default_bs(mut self) -> Self {
+        self.use_default_bs = true;
+        self
     }
 
     pub fn with_optional_args(mut self, args: Option<&str>) -> Self {
@@ -351,57 +375,76 @@ impl IqTreeParams {
     pub fn override_params(&mut self, args: &str) {
         let mut params = args.to_string();
         self.models = self.capture_models(&mut params);
-        self.threads = self.capture_threads(&mut params);
+        if self.force_single_thread {
+            "1".to_string()
+        } else {
+            self.capture_threads(&mut params)
+        };
         self.bootstrap = self.capture_bs_value(&mut params);
-        self.optional_args = Some(args.to_string());
+        self.optional_args = Some(params.to_string());
     }
 
     fn capture_models(&self, params: &mut String) -> String {
         let re = Regex::new(r"(?<models>-m)\s+(?<value>\S+)").expect("Failed to compile regex");
-        let capture = re.captures(params).expect("Failed to capture models");
-        match capture.name("value") {
-            Some(v) => {
-                let value = v.as_str().to_string();
-                let model = format!("{} {}", capture.name("models").unwrap().as_str(), value);
-                *params = params.replace(&model, "");
-                value
-            }
+        let model = re.captures(params);
+        match model {
+            Some(m) => match m.name("value") {
+                Some(v) => {
+                    let value = v.as_str().to_string();
+                    let model = format!("{} {}", m.name("models").unwrap().as_str(), value);
+                    *params = params.replace(&model, "");
+                    value
+                }
+                None => DEFAULT_IQTREE_MODEL.to_string(),
+            },
             None => DEFAULT_IQTREE_MODEL.to_string(),
         }
     }
 
     fn capture_bs_value(&self, params: &mut String) -> Option<String> {
         let re = Regex::new(r"(?<bs>-B|b)\s+(?<value>\d+)").expect("Failed to compile regex");
-        let bs = re
-            .captures(params)
-            .expect("Failed to capture bootstrap value");
-        match bs.name("value") {
-            Some(v) => {
-                let value = v.as_str().to_string();
-                let arg = format!("{} {}", bs.name("bs").unwrap().as_str(), value);
-                // This approach is simple, but will require memory allocation.
-                // It will be a minor issue because the string input will be small.
-                // A better, also simple, option without memory allocation is available
-                // in the nightly Rust. We should switch to it when it becomes stable.
-                // params.remove_matches(&arg);
-                // https://doc.rust-lang.org/std/string/struct.String.html#method.remove_matches
-                *params = params.replace(&arg, "");
-                Some(value)
-            }
-            None => None,
+        let bootstrap = re.captures(params);
+        match bootstrap {
+            Some(bs) => match bs.name("value") {
+                Some(v) => {
+                    let value = v.as_str().to_string();
+                    let arg = format!("{} {}", bs.name("bs").unwrap().as_str(), value);
+                    // This approach is simple, but will require memory allocation.
+                    // It will be a minor issue because the string input will be small.
+                    // A better, also simple, option without memory allocation is available
+                    // in the nightly Rust. We should switch to it when it becomes stable.
+                    // params.remove_matches(&arg);
+                    // https://doc.rust-lang.org/std/string/struct.String.html#method.remove_matches
+                    *params = params.replace(&arg, "");
+                    Some(value)
+                }
+                None => self.get_default_bs(),
+            },
+            None => self.get_default_bs(),
+        }
+    }
+
+    fn get_default_bs(&self) -> Option<String> {
+        if self.use_default_bs {
+            Some(DEFAULT_IQTREE_BOOTSTRAP.to_string())
+        } else {
+            None
         }
     }
 
     fn capture_threads(&self, params: &mut String) -> String {
         let re = Regex::new(r"(?<threads>-T|t)\s+(?<value>\d+)").expect("Failed to compile regex");
-        let thread = re.captures(params).expect("Failed to capture thread value");
-        match thread.name("value") {
-            Some(v) => {
-                let value = v.as_str().to_string();
-                let arg = format!("{} {}", thread.name("threads").unwrap().as_str(), value);
-                *params = params.replace(&arg, "");
-                value
-            }
+        let thread = re.captures(params);
+        match thread {
+            Some(t) => match t.name("value") {
+                Some(v) => {
+                    let value = v.as_str().to_string();
+                    let arg = format!("{} {}", t.name("threads").unwrap().as_str(), value);
+                    *params = params.replace(&arg, "");
+                    value
+                }
+                None => DEFAULT_IQTREE_THREADS.to_string(),
+            },
             None => DEFAULT_IQTREE_THREADS.to_string(),
         }
     }
