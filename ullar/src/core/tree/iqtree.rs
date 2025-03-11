@@ -149,7 +149,6 @@ impl<'a> MlGeneTree<'a> {
         let progress_bar = common::init_progress_bar(self.alignments.file_counts as u64);
         log::info!("Running IQ-TREE for gene trees");
         progress_bar.set_message("Gene trees");
-        create_dir_all(&self.output_dir).expect("Failed to create output directory");
         self.alignments.files.par_iter().for_each(|f| {
             let alignment_path = f.parent_dir.join(&f.file_name);
             let file_stem = alignment_path.file_stem().expect("Failed to get file stem");
@@ -236,6 +235,7 @@ impl<'a> GeneSiteConcordance<'a> {
         }
         let spinner = common::init_spinner();
         spinner.set_message("Running IQ-TREE for gene concordance factor");
+        create_dir_all(&self.output_dir).expect("Failed to create output directory");
         let output_path = self.output_dir.join(prefix);
         let meta = match &self.iqtree_configs.dependency {
             Some(m) => m,
