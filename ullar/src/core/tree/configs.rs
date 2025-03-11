@@ -53,7 +53,9 @@ pub fn reorder_analyses(analyses: &mut Vec<TreeInferenceMethod>) {
         let analysis = analyses.remove(index);
         reorder_analyses.push(analysis);
     }
-    reorder_analyses.extend(analyses.drain(..));
+    if !analyses.is_empty() {
+        reorder_analyses.extend(analyses.drain(..));
+    }
     *analyses = reorder_analyses;
 }
 
@@ -320,6 +322,7 @@ pub struct IqTreeParams {
     pub optional_args: Option<String>,
     // Only used for gene site concordance factor
     pub recompute_likelihoods: bool,
+    pub force_v1: bool,
 }
 
 impl IqTreeParams {
@@ -336,6 +339,7 @@ impl IqTreeParams {
             bootstrap: args.bootstrap.clone(),
             optional_args: None,
             recompute_likelihoods: args.recompute_likelihoods,
+            force_v1: args.force_v1,
         }
     }
 

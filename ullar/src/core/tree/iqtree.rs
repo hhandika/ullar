@@ -1,9 +1,12 @@
 //! Species and gene tree inference using IQ-TREE.
 use std::{
+    fs::File,
+    io::{BufWriter, Write},
     path::{Path, PathBuf},
     process::{Command, Output},
 };
 
+use rayon::prelude::*;
 use segul::{
     helper::{
         concat::Concat,
@@ -14,21 +17,24 @@ use segul::{
 };
 
 use crate::{
-    core::deps::{iqtree::IQTREE2_EXE, DepMetadata},
-    helper::{common, files::PathCheck},
+    core::deps::{
+        iqtree::{IQTREE2_EXE, IQTREE_EXE},
+        DepMetadata,
+    },
+    helper::common,
+    parse_override_args,
     types::alignments::AlignmentFiles,
 };
 
 use super::configs::IqTreeParams;
 
-const SPECIES_TREE_DIR: &str = "species_tree";
+const GENE_TREE_FILENAME: &str = "genes";
+const MULTI_TREE_EXTENSION: &str = "trees";
 
 pub struct MlSpeciesTree<'a> {
     pub alignments: &'a AlignmentFiles,
     pub iqtree_configs: &'a IqTreeParams,
     pub output_dir: &'a Path,
-    pub prefix: &'a str,
-    pub enforce_v1: bool,
 }
 
 impl<'a> MlSpeciesTree<'a> {
@@ -37,34 +43,23 @@ impl<'a> MlSpeciesTree<'a> {
         alignments: &'a AlignmentFiles,
         iqtree_configs: &'a IqTreeParams,
         output_dir: &'a Path,
-        prefix: &'a str,
     ) -> Self {
         Self {
             alignments,
             iqtree_configs,
             output_dir,
-            prefix,
-            enforce_v1: false,
         }
     }
 
-    pub fn enforce_v1(mut self, enforce_v1: bool) -> Self {
-        self.enforce_v1 = enforce_v1;
-        self
-    }
-
-    pub fn infer(&self, prefix: &str) {
-        let output_dir = self.output_dir.join(SPECIES_TREE_DIR);
-        PathCheck::new(&output_dir).is_dir().prompt_exists(false);
+    pub fn infer_species_tree(
+        &self,
+        prefix: &'a str,
+    ) -> Result<PathBuf, Box<dyn std::error::Error>> {
         let spinner = common::init_spinner();
         spinner.set_message("Concatenating alignments");
-        let (alignment_path, partition_path) = self.concat_alignments(&output_dir);
-        let spinner_msg = format!(
-            "Running IQ-TREE. Check the IQ-TREE log for details: {}",
-            output_dir.join(prefix).with_extension("log").display()
-        );
-        spinner.set_message(spinner_msg);
-        let output_path = output_dir.join(prefix);
+        let (alignment_path, partition_path) = self.concat_alignments(&self.output_dir, prefix);
+        spinner.set_message("Running IQ-TREE for species tree");
+        let output_path = self.output_dir.join(prefix);
         let meta = match &self.iqtree_configs.dependency {
             Some(m) => m,
             None => {
@@ -72,21 +67,59 @@ impl<'a> MlSpeciesTree<'a> {
                     "IQ-TREE dependency not found in the config.\
                 Check IQ-TREE installation and config files."
                 );
-                return;
+                return Err("IQ-TREE dependency not found".into());
             }
         };
         let iqtree = IqTree::new(self.iqtree_configs, &meta);
-        let out = iqtree.run_species_tree(&alignment_path, &partition_path, &output_path);
+        let out = iqtree.infer_species_tree(&alignment_path, &partition_path, &self.output_dir);
         spinner.finish_with_message("IQ-TREE finished");
         if !out.status.success() {
-            log::error!("IQ-TREE failed to run: {:?}", iqtree);
-            return;
+            return Err("IQ-TREE failed to run".into());
         }
         log::info!("IQ-TREE finished successfully.");
+        let tree_path = output_path.join(prefix).with_extension("treefile");
+        if !tree_path.exists() {
+            return Err("Species tree file not found. Check IQ-TREE output \
+                 if it ran successfully."
+                .into());
+        }
+        Ok(tree_path)
     }
 
-    fn concat_alignments(&self, output_dir: &Path) -> (PathBuf, PathBuf) {
-        let output_pre = Path::new(self.prefix);
+    pub fn infer_gene_trees(&self) -> PathBuf {
+        let progress_bar = common::init_progress_bar(self.alignments.file_counts as u64);
+        log::info!("Running IQ-TREE for gene trees");
+        progress_bar.set_message("Gene trees");
+        self.alignments.files.par_iter().for_each(|f| {
+            let alignment_path = self.output_dir.join(&f.file_name);
+            let file_stem = alignment_path.file_stem().expect("Failed to get file stem");
+            let output_dir = self.output_dir.join(file_stem);
+            let meta = match &self.iqtree_configs.dependency {
+                Some(m) => m,
+                None => {
+                    log::error!(
+                        "IQ-TREE dependency not found in the config.\
+                    Check IQ-TREE installation and config files."
+                    );
+                    return;
+                }
+            };
+            let iqtree = IqTree::new(self.iqtree_configs, &meta);
+            let out = iqtree.infer_gene_trees(&alignment_path, &output_dir);
+            if !out.status.success() {
+                log::error!("IQ-TREE failed to run: {:?}", iqtree);
+                return;
+            }
+            progress_bar.inc(1);
+        });
+        progress_bar.finish_with_message("Finished running IQ-TREE for gene trees");
+        let gene_trees = self.find_gene_trees(&self.output_dir);
+        let gene_tree_path = self.combine_gene_trees(&gene_trees);
+        gene_tree_path
+    }
+
+    fn concat_alignments(&self, output_dir: &Path, prefix: &str) -> (PathBuf, PathBuf) {
+        let output_pre = Path::new(prefix);
         let input_fmt = InputFmt::Auto;
         let output_fmt = OutputFmt::Phylip;
         let partition_fmt = PartitionFmt::Raxml;
@@ -113,6 +146,52 @@ impl<'a> MlSpeciesTree<'a> {
         );
         part_writer.write_partition();
         (output_path, partition_path)
+    }
+
+    fn find_gene_trees(&self, output_dir: &Path) -> Vec<PathBuf> {
+        let pattern = format!("{}/*/*.treefile", output_dir.display());
+        let gene_trees = glob::glob(&pattern)
+            .expect("Failed to find gene trees")
+            .filter_map(|f| f.ok())
+            .collect::<Vec<PathBuf>>();
+        gene_trees
+    }
+
+    fn combine_gene_trees(&self, gene_trees: &[PathBuf]) -> PathBuf {
+        let output_path = self
+            .output_dir
+            .join(GENE_TREE_FILENAME)
+            .with_extension(MULTI_TREE_EXTENSION);
+        let file = File::create(&output_path).expect("Failed to create file");
+        let mut buff = BufWriter::new(&file);
+        for tree in gene_trees {
+            let content = std::fs::read_to_string(tree).expect("Failed to read file");
+            writeln!(buff, "{}", content).expect("Failed to write to file");
+        }
+        buff.flush().expect("Failed to flush buffer");
+        output_path
+    }
+}
+
+pub struct IQTreeResults {
+    pub species_tree: PathBuf,
+    pub gene_trees: PathBuf,
+}
+
+impl IQTreeResults {
+    pub fn new() -> Self {
+        Self {
+            species_tree: PathBuf::new(),
+            gene_trees: PathBuf::new(),
+        }
+    }
+
+    pub fn add_species_tree(&mut self, path: PathBuf) {
+        self.species_tree = path;
+    }
+
+    pub fn add_gene_trees(&mut self, path: PathBuf) {
+        self.gene_trees = path;
     }
 }
 
@@ -153,11 +232,8 @@ impl<'a> IqTree<'a> {
         Self { configs, metadata }
     }
 
-    fn run_species_tree(&self, alignment: &Path, partition: &Path, output_path: &Path) -> Output {
-        let executable = match &self.metadata.executable {
-            Some(e) => e,
-            None => IQTREE2_EXE,
-        };
+    fn infer_species_tree(&self, alignment: &Path, partition: &Path, output_path: &Path) -> Output {
+        let executable = self.get_executable();
         let mut out = Command::new(executable);
         out.arg("-s")
             .arg(alignment)
@@ -172,11 +248,40 @@ impl<'a> IqTree<'a> {
             .arg("-T")
             .arg(&self.configs.threads);
 
-        // if !other_args.is_empty() {
-        //     parse_override_args!(out, other_args);
-        // }
+        if let Some(opt_args) = &self.configs.optional_args {
+            parse_override_args!(out, opt_args);
+        }
 
         out.output().expect("Failed to run IQ-TREE")
+    }
+
+    fn infer_gene_trees(&self, alignments: &Path, output_path: &Path) -> Output {
+        let executable = self.get_executable();
+        let mut out = Command::new(executable);
+
+        out.arg("-s")
+            .arg(&alignments.join(","))
+            .arg("-m")
+            .arg(&self.configs.models)
+            .arg("--prefix")
+            .arg(output_path)
+            .arg("-T")
+            .arg(&self.configs.threads);
+        if let Some(opt_args) = &self.configs.optional_args {
+            parse_override_args!(out, opt_args);
+        }
+
+        out.output().expect("Failed to run IQ-TREE")
+    }
+
+    fn get_executable(&self) -> String {
+        if self.configs.force_v1 {
+            return IQTREE_EXE.to_string();
+        }
+        match &self.metadata.executable {
+            Some(e) => e.to_string(),
+            None => IQTREE2_EXE.to_string(),
+        }
     }
 
     fn get_bootstrap_species(&self) -> String {
