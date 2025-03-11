@@ -237,7 +237,7 @@ impl TreeInferenceAnalyses {
     pub fn set_species_tree_params(mut self, args: &IqTreeSettingArgs) -> Self {
         match &args.override_args_species {
             Some(arg) => {
-                let mut params = IqTreeParams::new();
+                let mut params = IqTreeParams::from_args(args).use_default_bs();
                 params.override_params(arg);
                 self.species_tree_params = Some(params);
                 self
@@ -254,7 +254,7 @@ impl TreeInferenceAnalyses {
     pub fn set_gene_tree_params(&mut self, args: &IqTreeSettingArgs) {
         match &args.override_args_genes {
             Some(arg) => {
-                let mut params = IqTreeParams::new()
+                let mut params = IqTreeParams::from_args(args)
                     .force_single_thread()
                     .without_partition_model();
                 params.override_params(arg);
@@ -262,6 +262,8 @@ impl TreeInferenceAnalyses {
             }
             None => {
                 let params = IqTreeParams::from_args(args)
+                    .force_single_thread()
+                    .without_partition_model()
                     .with_optional_args(args.optional_args_genes.as_deref());
                 self.gene_tree_params = Some(params);
             }
@@ -392,10 +394,10 @@ impl IqTreeParams {
         let mut params = args.to_string();
         self.models = self.capture_models(&mut params);
         if self.force_single_thread {
-            "1".to_string()
+            self.threads = "1".to_string();
         } else {
-            self.capture_threads(&mut params)
-        };
+            self.threads = self.capture_threads(&mut params);
+        }
         self.bootstrap = self.capture_bs_value(&mut params);
         self.optional_args = Some(params.to_string());
     }
