@@ -76,3 +76,40 @@ impl FromStr for TreeInferenceMethod {
         }
     }
 }
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub enum IQTreePartitions {
+    /// Edge equal partitions,
+    /// using '-q' option in IQ-TREE
+    #[default]
+    EdgeEqual,
+    /// Edge proportional partitions,
+    /// using '-spp' option in IQ-TREE
+    EdgeProportional,
+    /// Edge linked partitions,
+    /// using '-sp' option in IQ-TREE
+    EdgeUnlinked,
+}
+
+impl IQTreePartitions {
+    pub fn get_arg(&self) -> String {
+        match self {
+            Self::EdgeEqual => "-q".to_string(),
+            Self::EdgeProportional => "-spp".to_string(),
+            Self::EdgeUnlinked => "-sp".to_string(),
+        }
+    }
+}
+
+impl FromStr for IQTreePartitions {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "equal" => Ok(Self::EdgeEqual),
+            "proportional" => Ok(Self::EdgeProportional),
+            "unlinked" => Ok(Self::EdgeUnlinked),
+            _ => Err(format!("Unknown IQ-TREE partition: {}", s)),
+        }
+    }
+}

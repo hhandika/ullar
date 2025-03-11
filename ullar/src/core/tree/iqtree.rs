@@ -24,7 +24,7 @@ use crate::{
     },
     helper::common,
     parse_override_args,
-    types::alignments::AlignmentFiles,
+    types::{alignments::AlignmentFiles, trees::IQTreePartitions},
 };
 
 use super::configs::IqTreeParams;
@@ -328,7 +328,7 @@ impl<'a> IqTree<'a> {
         let mut out = Command::new(executable);
         out.arg("-s")
             .arg(alignment)
-            .arg("-q")
+            .arg(&self.get_partition_arg())
             .arg(partition)
             .arg("-m")
             .arg(&self.configs.models)
@@ -344,6 +344,13 @@ impl<'a> IqTree<'a> {
         }
 
         out.output().expect("Failed to run IQ-TREE")
+    }
+
+    fn get_partition_arg(&self) -> String {
+        match &self.configs.partition_model {
+            Some(p) => p.get_arg(),
+            None => IQTreePartitions::default().get_arg(),
+        }
     }
 
     fn infer_gene_trees(&self, alignment: &Path, full_path: &Path) -> Output {
