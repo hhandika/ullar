@@ -14,7 +14,7 @@ use iqtree::{GeneSiteConcordance, IQTreeResults, MlGeneTree, MlSpeciesTree};
 use crate::{
     cli::commands::tree::TreeInferenceArgs,
     helper::{
-        common,
+        common::{self, PrettyHeader},
         configs::{CONFIG_EXTENSION_TOML, DEFAULT_CONFIG_DIR},
         files::PathCheck,
     },
@@ -108,6 +108,7 @@ impl<'a> TreeEstimation<'a> {
     fn run_tree_inference(&self, config: &TreeInferenceConfig) -> Result<(), Box<dyn Error>> {
         let mut iqtree_results = IQTreeResults::new();
         for analysis in &config.input.analyses {
+            self.print_header(analysis);
             match analysis {
                 TreeInferenceMethod::MlSpeciesTree => {
                     self.infer_ml_species_tree(config, &mut iqtree_results)?
@@ -209,6 +210,12 @@ impl<'a> TreeEstimation<'a> {
                 Err(error.into())
             }
         }
+    }
+
+    fn print_header(&self, analysis: &TreeInferenceMethod) {
+        let mut decorator = PrettyHeader::new();
+        let header = decorator.get_section_header(&analysis.to_string());
+        log::info!("{}", header);
     }
 
     // We check the dependency separately earlier

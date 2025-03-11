@@ -74,11 +74,11 @@ impl<'a> FastpRunner<'a> {
         match reports {
             Ok(report) => {
                 self.print_output_summary(&report);
-                decorator.get_sample_footer();
+                decorator.get_section_footer();
                 Ok(report)
             }
             Err(e) => {
-                decorator.get_sample_footer();
+                decorator.get_section_footer();
                 Err(e)
             }
         }
@@ -109,7 +109,7 @@ impl<'a> FastpRunner<'a> {
 
     fn print_header(&self) -> PrettyHeader {
         let mut decorator = PrettyHeader::new();
-        let header = decorator.get_sample_header(&self.sample.sample_name);
+        let header = decorator.get_section_header(&self.sample.sample_name);
         log::info!("{}", header);
         decorator
     }
