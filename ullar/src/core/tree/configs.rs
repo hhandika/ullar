@@ -24,7 +24,7 @@ use crate::{
 };
 
 pub const DEFAULT_TREE_PREFIX: &str = "tree";
-pub const DEFAULT_ML_INFERENCE_CONFIG: &str = "ml_inference";
+pub const DEFAULT_ML_INFERENCE_CONFIG: &str = "phylogenetic_inference";
 
 pub const SPECIES_TREE_ANALYSIS: &str = "species_tree_inference";
 pub const GENE_TREE_ANALYSIS: &str = "gene_tree_inference";
