@@ -7,11 +7,55 @@ use segul::helper::finder::SeqFileFinder;
 use segul::helper::types::{DataType, InputFmt};
 
 use crate::cli::commands::tree::{AsterSettingArgs, IqTreeSettingArgs, TreeInferenceInitArgs};
+use crate::core::deps::aster::AsterMetadata;
+use crate::core::deps::iqtree::IqtreeMetadata;
 use crate::helper::common;
 use crate::types::alignments::AlignmentFiles;
-use crate::types::trees::TreeInferenceMethod;
+use crate::types::trees::{MscInferenceMethod, TreeInferenceMethod};
 
 use super::configs::{reorder_analyses, TreeInferenceConfig};
+
+const ASTER_ERROR_MSG: &str = "Please install the ASTER software suite from \
+    https://github.com/chaoszhang/ASTER to use this method.";
+
+pub enum DependencyError {
+    MissingIqTree,
+    MissingAstral,
+    MissingAstralPro,
+    MissingWeightedAstral,
+}
+
+impl std::fmt::Display for DependencyError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DependencyError::MissingAstral => write!(
+                f,
+                "{} Missing ASTRAL binary. {}",
+                "Error:".red(),
+                ASTER_ERROR_MSG
+            ),
+            DependencyError::MissingIqTree => write!(
+                f,
+                "{} Missing IQ-TREE binary. Please install IQ-TREE to use this method.",
+                "Error:".red()
+            ),
+            DependencyError::MissingAstralPro => write!(
+                f,
+                "{} Missing ASTER-Pro binary. {}",
+                "Error:".red(),
+                ASTER_ERROR_MSG
+            ),
+            DependencyError::MissingWeightedAstral => {
+                write!(
+                    f,
+                    "{} Missing Weighted ASTER binary. {}.",
+                    "Error:".red(),
+                    ASTER_ERROR_MSG
+                )
+            }
+        }
+    }
+}
 
 pub struct TreeInferenceInit<'a> {
     pub input_dir: &'a Path,
@@ -25,7 +69,7 @@ pub struct TreeInferenceInit<'a> {
 impl<'a> TreeInferenceInit<'a> {
     pub fn from_arg(args: &'a TreeInferenceInitArgs) -> Self {
         let mut analyses = match &args.specify_analyses {
-            Some(methods) => methods
+            Some(analyses) => analyses
                 .iter()
                 .map(|m| {
                     m.parse().expect(
@@ -55,6 +99,10 @@ impl<'a> TreeInferenceInit<'a> {
 
     pub fn init(&self) {
         self.log_input();
+        if let Err(e) = self.check_all_dependencies() {
+            log::error!("Missing dependency errrors: {}", e);
+            return;
+        }
         let spin = common::init_spinner();
         spin.set_message("Finding alignments...");
         let alignments = self.find_alignments();
@@ -81,6 +129,50 @@ impl<'a> TreeInferenceInit<'a> {
                 log::error!("{}", e);
             }
         }
+    }
+
+    fn check_all_dependencies(&self) -> Result<(), Box<dyn Error>> {
+        for anlysis in &self.analyses {
+            match anlysis {
+                TreeInferenceMethod::MlSpeciesTree
+                | TreeInferenceMethod::MlGeneTree
+                | TreeInferenceMethod::GeneSiteConcordance => {
+                    let iqtree = IqtreeMetadata::new().get();
+                    if iqtree.is_none() {
+                        return Err(DependencyError::MissingIqTree.to_string().into());
+                    }
+                }
+                TreeInferenceMethod::MscSpeciesTree => {
+                    self.check_msc_dependencies()?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn check_msc_dependencies(&self) -> Result<(), Box<dyn Error>> {
+        let dependencies = match &self.aster.specify_msc_methods {
+            Some(methods) => methods
+                .iter()
+                .map(|m| m.parse::<MscInferenceMethod>().unwrap())
+                .collect(),
+            None => vec![MscInferenceMethod::Astral],
+        };
+
+        for dependency in dependencies {
+            let aster = AsterMetadata::new();
+            let dep = aster.get_matching(&dependency);
+            if dep.is_none() {
+                return Err(match dependency {
+                    MscInferenceMethod::Astral => DependencyError::MissingAstral,
+                    MscInferenceMethod::AstralPro => DependencyError::MissingAstralPro,
+                    MscInferenceMethod::WeightedAstral => DependencyError::MissingWeightedAstral,
+                }
+                .to_string()
+                .into());
+            }
+        }
+        Ok(())
     }
 
     fn find_alignments(&self) -> AlignmentFiles {
