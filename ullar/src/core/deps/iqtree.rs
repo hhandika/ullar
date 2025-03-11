@@ -121,7 +121,20 @@ impl IqtreeMetadata {
         if self.both_versions {
             IQTREE2_EXE.to_string()
         } else {
-            IQTREE_EXE.to_string()
+            self.get_available_executable()
+        }
+    }
+
+    fn get_available_executable(&self) -> String {
+        match &self.version {
+            Some(v) => {
+                if v.starts_with("2") {
+                    IQTREE2_EXE.to_string()
+                } else {
+                    IQTREE_EXE.to_string()
+                }
+            }
+            None => "".to_string(),
         }
     }
 
