@@ -1,6 +1,7 @@
 //! Species and gene tree inference using IQ-TREE.
+use core::str;
 use std::{
-    fs::File,
+    fs::{create_dir_all, File},
     io::{BufWriter, Write},
     path::{Path, PathBuf},
     process::{Command, Output},
@@ -148,10 +149,13 @@ impl<'a> MlGeneTree<'a> {
         let progress_bar = common::init_progress_bar(self.alignments.file_counts as u64);
         log::info!("Running IQ-TREE for gene trees");
         progress_bar.set_message("Gene trees");
+        create_dir_all(&self.output_dir).expect("Failed to create output directory");
         self.alignments.files.par_iter().for_each(|f| {
-            let alignment_path = self.output_dir.join(&f.file_name);
+            let alignment_path = f.parent_dir.join(&f.file_name);
             let file_stem = alignment_path.file_stem().expect("Failed to get file stem");
             let output_dir = self.output_dir.join(file_stem);
+            create_dir_all(&output_dir).expect("Failed to create output directory");
+            let full_path = output_dir.join(file_stem);
             let meta = match &self.iqtree_configs.dependency {
                 Some(m) => m,
                 None => {
@@ -163,9 +167,15 @@ impl<'a> MlGeneTree<'a> {
                 }
             };
             let iqtree = IqTree::new(self.iqtree_configs, &meta);
-            let out = iqtree.infer_gene_trees(&alignment_path, &output_dir);
+            let out = iqtree.infer_gene_trees(&alignment_path, &full_path);
             if !out.status.success() {
-                log::error!("IQ-TREE failed to run: {:?}", iqtree);
+                let error = str::from_utf8(&out.stderr).expect("Failed to read error message");
+                let message = format!(
+                    "Failed to run IQ-TREE for gene {}: {}",
+                    file_stem.to_string_lossy(),
+                    error
+                );
+                log::error!("{}", message);
                 return;
             }
             progress_bar.inc(1);
@@ -194,7 +204,7 @@ impl<'a> MlGeneTree<'a> {
         let mut buff = BufWriter::new(&file);
         for tree in gene_trees {
             let content = std::fs::read_to_string(tree).expect("Failed to read file");
-            writeln!(buff, "{}", content).expect("Failed to write to file");
+            writeln!(buff, "{}", content.trim()).expect("Failed to write to file");
         }
         buff.flush().expect("Failed to flush buffer");
         output_path
@@ -329,18 +339,18 @@ impl<'a> IqTree<'a> {
         out.output().expect("Failed to run IQ-TREE")
     }
 
-    fn infer_gene_trees(&self, alignments: &Path, output_path: &Path) -> Output {
+    fn infer_gene_trees(&self, alignment: &Path, full_path: &Path) -> Output {
         let executable = self.get_executable();
         let mut out = Command::new(executable);
 
         out.arg("-s")
-            .arg(&alignments.join(","))
+            .arg(&alignment)
             .arg("-m")
             .arg(&self.configs.models)
             .arg("--prefix")
-            .arg(output_path)
+            .arg(full_path)
             .arg("-T")
-            .arg(&self.configs.threads);
+            .arg("1");
         if let Some(opt_args) = &self.configs.optional_args {
             parse_override_args!(out, opt_args);
         }
