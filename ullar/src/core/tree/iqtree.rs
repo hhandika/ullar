@@ -30,6 +30,7 @@ use super::configs::IqTreeParams;
 
 const GENE_TREE_FILENAME: &str = "genes";
 const MULTI_TREE_EXTENSION: &str = "trees";
+const TREE_FILE_EXTENSION: &str = "treefile";
 const SPECIES_TREE_BEST_MODEL_EXTENSION: &str = "best_model.nex";
 
 pub struct MlSpeciesTree<'a> {
@@ -61,6 +62,7 @@ impl<'a> MlSpeciesTree<'a> {
         spinner.set_message("Concatenating alignments");
         let (alignment_path, partition_path) = self.concat_alignments(&self.output_dir, prefix);
         spinner.set_message("Running IQ-TREE for species tree");
+        let output_dir = self.output_dir.join(prefix);
         let meta = match &self.iqtree_configs.dependency {
             Some(m) => m,
             None => {
@@ -72,22 +74,19 @@ impl<'a> MlSpeciesTree<'a> {
             }
         };
         let iqtree = IqTree::new(self.iqtree_configs, &meta);
-        let out = iqtree.infer_species_tree(&alignment_path, &partition_path, &self.output_dir);
+        let out = iqtree.infer_species_tree(&alignment_path, &partition_path, &output_dir);
         spinner.finish_with_message("IQ-TREE finished");
         if !out.status.success() {
             return Err("IQ-TREE failed to run".into());
         }
         log::info!("IQ-TREE finished successfully.");
-        let tree_path = self.output_dir.join(prefix).with_extension("treefile");
+        let tree_path = output_dir.with_extension(TREE_FILE_EXTENSION);
         if !tree_path.exists() {
             return Err("Species tree file not found. Check IQ-TREE output \
                  if it ran successfully."
                 .into());
         }
-        let best_model_path = self
-            .output_dir
-            .join(prefix)
-            .with_extension(SPECIES_TREE_BEST_MODEL_EXTENSION);
+        let best_model_path = output_dir.with_extension(SPECIES_TREE_BEST_MODEL_EXTENSION);
         iqtree_result.add_alignment(alignment_path);
         iqtree_result.add_partition(partition_path);
         iqtree_result.add_species_tree(tree_path);
