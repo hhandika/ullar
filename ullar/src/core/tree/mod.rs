@@ -6,8 +6,9 @@ use std::{
 use anyhow::Context;
 use colored::Colorize;
 use configs::{
-    AsterParams, TreeInferenceConfig, DEFAULT_ML_INFERENCE_CONFIG, GENE_SITE_CONCORDANCE_ANALYSIS,
-    GENE_TREE_ANALYSIS, MSC_INFERENCE_ANALYSIS, SPECIES_TREE_ANALYSIS,
+    AsterParams, IqTreeParams, TreeInferenceConfig, DEFAULT_ML_INFERENCE_CONFIG,
+    GENE_SITE_CONCORDANCE_ANALYSIS, GENE_TREE_ANALYSIS, MSC_INFERENCE_ANALYSIS,
+    SPECIES_TREE_ANALYSIS,
 };
 use iqtree::{GeneSiteConcordance, IQTreeResults, MlGeneTree, MlSpeciesTree};
 
@@ -132,15 +133,17 @@ impl<'a> TreeEstimation<'a> {
         iqtree_result: &mut IQTreeResults,
     ) -> Result<(), Box<dyn Error>> {
         let dep = config.analyses.get(SPECIES_TREE_ANALYSIS);
+
         match dep {
             Some(d) => {
-                let output_dir = self.output_dir.join(SPECIES_TREE_DIR);
-                PathCheck::new(&output_dir).is_dir().prompt_exists(false);
                 let prefix = "concat";
                 let params = d
                     .species_tree_params
                     .as_ref()
                     .with_context(|| "Species tree parameters not found")?;
+                self.log_iqtree(params);
+                let output_dir = self.output_dir.join(SPECIES_TREE_DIR);
+                PathCheck::new(&output_dir).is_dir().prompt_exists(false);
                 let ml_analyses = MlSpeciesTree::new(&config.alignments, &params, &output_dir);
                 ml_analyses.infer_species_tree(iqtree_result, prefix)?;
                 Ok(())
@@ -163,12 +166,13 @@ impl<'a> TreeEstimation<'a> {
         let dep = config.analyses.get(GENE_TREE_ANALYSIS);
         match dep {
             Some(d) => {
-                let output_dir = self.output_dir.join(DEFAULT_ML_GENE_TREE_OUTPUT_DIR);
-                PathCheck::new(&output_dir).is_dir().prompt_exists(false);
                 let params = d
                     .gene_tree_params
                     .as_ref()
                     .with_context(|| "Gene tree parameters not found")?;
+                self.log_iqtree(params);
+                let output_dir = self.output_dir.join(DEFAULT_ML_GENE_TREE_OUTPUT_DIR);
+                PathCheck::new(&output_dir).is_dir().prompt_exists(false);
                 let ml_analyses = MlGeneTree::new(&config.alignments, &params, &output_dir);
                 ml_analyses.infer_gene_trees(iqtree_result);
                 Ok(())
@@ -191,13 +195,14 @@ impl<'a> TreeEstimation<'a> {
         let dep = config.analyses.get(GENE_SITE_CONCORDANCE_ANALYSIS);
         match dep {
             Some(d) => {
-                let output_dir = self.output_dir.join(DEFAULT_GSC_OUTPUT_DIR);
-                PathCheck::new(&output_dir).is_dir().prompt_exists(false);
                 let prefix = "gene_site_cf";
                 let params = d
                     .concordance_factor
                     .as_ref()
                     .with_context(|| "Gene tree parameters not found.")?;
+                self.log_iqtree(params);
+                let output_dir = self.output_dir.join(DEFAULT_GSC_OUTPUT_DIR);
+                PathCheck::new(&output_dir).is_dir().prompt_exists(false);
                 let ml_analyses = GeneSiteConcordance::new(&params, &output_dir);
                 ml_analyses.infer_concordance_factor(iqtree_results, prefix)?;
                 Ok(())
@@ -328,7 +333,7 @@ impl<'a> TreeEstimation<'a> {
     }
 
     fn log_input(&self, config: &TreeInferenceConfig) {
-        log::info!("{}", "Input".cyan());
+        log::info!("\n{}", "Input".cyan());
         log::info!("{:18}: {}", "Config file", self.config_path.display());
         log::info!(
             "{:18}: {}",
@@ -336,5 +341,37 @@ impl<'a> TreeEstimation<'a> {
             config.alignments.sample_counts
         );
         log::info!("{:18}: {}\n", "File counts", config.alignments.file_counts);
+    }
+
+    fn log_iqtree(&self, params: &IqTreeParams) {
+        let not_found = "Not found".red();
+        match &params.dependency {
+            Some(dep) => {
+                log::info!("{:18}: {}", "App", "IQ-TREE".cyan());
+                log::info!("{:18}: {}", "Version", dep.version);
+                log::info!(
+                    "{:18}: {}\n",
+                    "Executable",
+                    dep.executable
+                        .as_ref()
+                        .unwrap_or(&not_found.to_string())
+                        .as_str()
+                );
+            }
+            None => {
+                log::info!("{:18}: {}", "App", "IQ-TREE".cyan());
+            }
+        }
+
+        if let Some(partition) = &params.partition_model {
+            log::info!("{:18}: {}", "Partition model", partition.to_string());
+        }
+        log::info!("{:18}: {}", "Threads", params.threads);
+
+        if let Some(bootstrap) = &params.bootstrap {
+            log::info!("{:18}: {}", "Bootstrap", bootstrap);
+        }
+
+        log::info!("{:18}: {}", "Models", params.models);
     }
 }
