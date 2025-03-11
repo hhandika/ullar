@@ -28,7 +28,7 @@ use crate::core::deps::mafft::MafftMetadata;
 
 use super::deps::DepMetadata;
 
-pub const DEFAULT_ALIGNMENT_OUTPUT_DIR: &str = "output_sequence_alignment";
+pub const DEFAULT_ALIGNMENT_OUTPUT_DIR: &str = "out_sequence_alignment";
 
 pub struct SequenceAlignment<'a> {
     /// Path to the alignment config file

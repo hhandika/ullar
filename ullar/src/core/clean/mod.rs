@@ -26,7 +26,7 @@ use crate::types::runner::RunnerOptions;
 use crate::types::Task;
 
 pub const DEFAULT_RAW_READS_DIR: &str = "raw_reads";
-pub const DEFAULT_CLEAN_READ_OUTPUT_DIR: &str = "output_read_cleaning";
+pub const DEFAULT_CLEAN_READ_OUTPUT_DIR: &str = "out_read_cleaning";
 
 pub struct ReadCleaner<'a> {
     /// Path to the raw read config file
