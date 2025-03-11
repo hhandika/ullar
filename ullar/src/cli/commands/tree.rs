@@ -194,12 +194,14 @@ pub struct IqTreeSettingArgs {
     /// considered as optional arguments.
     #[arg(
         long,
+        require_equals = true,
         help = "Override arguments for IQ-TREE species tree inference"
     )]
     pub override_args_species: Option<String>,
     /// Optional argument for IQ-TREE gene site concordance factor
     #[arg(
         long,
+        require_equals = true,
         help = "Optional argument for IQ-TREE gene site concordance factor"
     )]
     pub optional_args_gscf: Option<String>,
@@ -207,6 +209,7 @@ pub struct IqTreeSettingArgs {
     /// gene tree inference.
     #[arg(
         long,
+        require_equals = true,
         help = "Override arguments for IQ-TREE gene tree inference"
     )]
     pub override_args_genes: Option<String>,
