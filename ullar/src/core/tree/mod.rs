@@ -372,6 +372,6 @@ impl<'a> TreeEstimation<'a> {
             log::info!("{:18}: {}", "Bootstrap", bootstrap);
         }
 
-        log::info!("{:18}: {}", "Models", params.models);
+        log::info!("{:18}: {}\n", "Models", params.models);
     }
 }
