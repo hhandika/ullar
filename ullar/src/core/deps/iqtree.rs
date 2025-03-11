@@ -112,29 +112,24 @@ impl IqtreeMetadata {
 
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {
         let version = re_capture_version(version_data);
-        let executable = self.get_executable();
+        let executable = self.get_executable(&version);
         let name = self.name();
         Some(DepMetadata::new(&name, &version, Some(&executable)))
     }
 
-    fn get_executable(&self) -> String {
+    fn get_executable(&self, version: &str) -> String {
         if self.both_versions {
             IQTREE2_EXE.to_string()
         } else {
-            self.get_available_executable()
+            self.get_available_executable(version)
         }
     }
 
-    fn get_available_executable(&self) -> String {
-        match &self.version {
-            Some(v) => {
-                if v.starts_with("2") {
-                    IQTREE2_EXE.to_string()
-                } else {
-                    IQTREE_EXE.to_string()
-                }
-            }
-            None => "".to_string(),
+    fn get_available_executable(&self, version: &str) -> String {
+        if version.starts_with("2.") {
+            IQTREE2_EXE.to_string()
+        } else {
+            IQTREE_EXE.to_string()
         }
     }
 
