@@ -111,7 +111,7 @@ impl PrettyHeader {
         SystemInfo::new().get_system_info();
     }
 
-    pub fn get_sample_header(&mut self, header_text: &str) -> String {
+    pub fn get_section_header(&mut self, header_text: &str) -> String {
         let mut text = header_text.to_string();
         if header_text.len() < self.len {
             text = self.get_header(header_text);
@@ -121,7 +121,7 @@ impl PrettyHeader {
         text.cyan().to_string()
     }
 
-    pub fn get_sample_footer(&self) {
+    pub fn get_section_footer(&self) {
         let decorator = self.generate_footer_symbols().cyan().to_string();
         log::info!("{}", decorator);
     }
