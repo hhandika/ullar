@@ -18,7 +18,10 @@ use crate::{
         segul::{get_segul_metadata, SegulMethods},
     },
     helper::common::UllarConfig,
-    types::{alignments::AlignmentFiles, trees::MscInferenceMethod},
+    types::{
+        alignments::AlignmentFiles,
+        trees::{IQTreePartitions, MscInferenceMethod},
+    },
 };
 use crate::{
     core::deps::DepMetadata, helper::configs::generate_config_output_path,
@@ -251,7 +254,9 @@ impl TreeInferenceAnalyses {
     pub fn set_gene_tree_params(&mut self, args: &IqTreeSettingArgs) {
         match &args.override_args_genes {
             Some(arg) => {
-                let mut params = IqTreeParams::new().force_single_thread();
+                let mut params = IqTreeParams::new()
+                    .force_single_thread()
+                    .without_partition_model();
                 params.override_params(arg);
                 self.gene_tree_params = Some(params);
             }
@@ -264,8 +269,9 @@ impl TreeInferenceAnalyses {
     }
 
     pub fn set_concordance_factor_params(&mut self, args: &IqTreeSettingArgs) {
-        let params =
-            IqTreeParams::from_args(args).with_optional_args(args.optional_args_gscf.as_deref());
+        let params = IqTreeParams::from_args(args)
+            .with_optional_args(args.optional_args_gscf.as_deref())
+            .without_partition_model();
         self.concordance_factor = Some(params);
     }
 
@@ -317,7 +323,8 @@ impl AsterParams {
 pub struct IqTreeParams {
     #[serde(flatten)]
     pub dependency: Option<DepMetadata>,
-    pub partition_model: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub partition_model: Option<IQTreePartitions>,
     pub models: String,
     pub threads: String,
     pub bootstrap: Option<String>,
@@ -344,7 +351,11 @@ impl IqTreeParams {
     pub fn from_args(args: &IqTreeSettingArgs) -> Self {
         Self {
             dependency: IqtreeMetadata::new().get(),
-            partition_model: args.partition_model.to_string(),
+            partition_model: Some(
+                args.partition_model
+                    .parse()
+                    .expect("Invalid partition model"),
+            ),
             models: args.models.to_string(),
             threads: args.threads.to_string(),
             bootstrap: args.bootstrap.clone(),
@@ -354,6 +365,11 @@ impl IqTreeParams {
             force_single_thread: false,
             use_default_bs: false,
         }
+    }
+
+    pub fn without_partition_model(mut self) -> Self {
+        self.partition_model = None;
+        self
     }
 
     pub fn force_single_thread(mut self) -> Self {
