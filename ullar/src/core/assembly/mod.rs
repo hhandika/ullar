@@ -30,7 +30,7 @@ pub mod init;
 pub mod reports;
 pub mod spades;
 
-pub const DEFAULT_ASSEMBLY_OUTPUT_DIR: &str = "output_denovo_assembly";
+pub const DEFAULT_ASSEMBLY_OUTPUT_DIR: &str = "out_denovo_assembly";
 
 pub struct Assembly<'a> {
     /// Path to the assembly config file
