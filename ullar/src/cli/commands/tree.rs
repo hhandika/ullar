@@ -224,4 +224,10 @@ pub struct IqTreeSettingArgs {
         help = "Recompute likelihoods for gene-site concordance factors"
     )]
     pub recompute_likelihoods: bool,
+    /// Enforce v1 for IQ-TREE gene tree and species tree analyses.
+    #[arg(
+        long,
+        help = "Enforce IQ-TREE version 1 for gene tree and species tree analyses"
+    )]
+    pub force_v1: bool,
 }

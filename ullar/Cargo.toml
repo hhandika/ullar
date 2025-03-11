@@ -22,6 +22,7 @@ data-encoding = "2.6.0"
 dialoguer = "0.11.0"
 enum-iterator = "2.1.0"
 features = "0.10.0"
+glob = "0.3.2"
 indexmap = { version = "2.4.0", features = ["serde"] }
 indicatif = { version = "0.17.8", features = ["rayon"] }
 infer = "0.15.0"

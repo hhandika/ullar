@@ -68,11 +68,19 @@ impl<'a> TreeInferenceInit<'a> {
             return;
         }
         spin.set_message("Writing config...");
-        let (path, config) = self
-            .write_config(alignments)
-            .expect("Failed to write config");
-        spin.finish_with_message(format!("{} Finished creating a config file\n", "✔".green()));
-        self.log_final_output(&path, &config);
+        match self.write_config(alignments) {
+            Ok((path, config)) => {
+                spin.finish_with_message(format!(
+                    "{} Finished creating a config file\n",
+                    "✔".green()
+                ));
+                self.log_final_output(&path, &config);
+            }
+            Err(e) => {
+                spin.finish_with_message(format!("{} Failed to create a config file\n", "✖".red()));
+                log::error!("{}", e);
+            }
+        }
     }
 
     fn find_alignments(&self) -> AlignmentFiles {
@@ -91,6 +99,18 @@ impl<'a> TreeInferenceInit<'a> {
     ) -> Result<(PathBuf, TreeInferenceConfig), Box<dyn Error>> {
         let mut config = TreeInferenceConfig::init(self.input_dir, &self.analyses, alignments);
         config.update_analyses(&self.analyses, &self.iqtree, &self.aster);
+        let has_gene_tree = config.has_ml_gene_tree();
+        let has_msc = config.has_msc();
+
+        if !has_gene_tree && has_msc {
+            let error = format!(
+                "{} Cannot infer MSC inference without specifying a gene tree inference method.\n\
+                If you want to infer MSC, use this argument: {}\n",
+                "Error:".red(),
+                "--specify-analyses ml-gene msc".yellow()
+            );
+            return Err(error.into());
+        }
         let output_path = config.to_toml()?;
         Ok((output_path, config))
     }
