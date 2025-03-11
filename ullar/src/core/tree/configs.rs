@@ -333,15 +333,13 @@ pub struct IqTreeParams {
     pub optional_args: Option<String>,
     // Only used for gene site concordance factor
     // analysis. Will not be serialized if false.
-    #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub recompute_likelihoods: bool,
     // Enforce IQ-TREE version 1 for gene tree and species tree analyses.
     // Will not be serialized if false.
-    #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub force_v1: bool,
-    #[serde(skip_serializing)]
+    #[serde(skip)]
     force_single_thread: bool,
-    #[serde(skip_serializing)]
+    #[serde(skip)]
     pub use_default_bs: bool,
 }
 
