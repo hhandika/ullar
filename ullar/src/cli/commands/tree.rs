@@ -75,25 +75,6 @@ pub struct TreeInferenceInitArgs {
     pub recursive: bool,
 }
 
-#[derive(Args)]
-pub struct AsterSettingArgs {
-    /// Option to select MSC inference method
-    /// Options: astral, astral-pro
-    #[arg(
-        long,
-        num_args(..=3),
-        help = "Option to select MSC inference method",
-        value_parser = PossibleValuesParser::new(["astral", "astral-pro", "wastral"])
-    )]
-    pub specify_msc_methods: Option<Vec<String>>,
-    /// Override arguments for MSC inference
-    /// It will override based on the method selected.
-    #[arg(
-        long,
-        help = "Override arguments for MSC inference"
-    )]
-    pub optional_args_msc: Option<String>,
-}
 
 #[derive(Args)]
 pub struct TreeInferenceArgs {
@@ -168,6 +149,7 @@ pub struct IqTreeSettingArgs {
     /// the arguments provided by the other args.
     #[arg(
         long,
+        require_equals = true,
         help = "Optional arguments for IQ-TREE"
     )]
     pub optional_args_species: Option<String>,
@@ -176,6 +158,7 @@ pub struct IqTreeSettingArgs {
     /// optional_args_species.
     #[arg(
         long,
+        require_equals = true,
         help = "Optional arguments for IQ-TREE gene tree inference"
     )]
     pub optional_args_genes: Option<String>,
@@ -233,4 +216,26 @@ pub struct IqTreeSettingArgs {
         help = "Enforce IQ-TREE version 1 for gene tree and species tree analyses"
     )]
     pub force_v1: bool,
+}
+
+
+#[derive(Args)]
+pub struct AsterSettingArgs {
+    /// Option to select MSC inference method
+    /// Options: astral, astral-pro
+    #[arg(
+        long,
+        num_args(..=3),
+        help = "Option to select MSC inference method",
+        value_parser = PossibleValuesParser::new(["astral", "astral-pro", "wastral"])
+    )]
+    pub specify_msc_methods: Option<Vec<String>>,
+    /// Override arguments for MSC inference
+    /// It will override based on the method selected.
+    #[arg(
+        long,
+        require_equals = true,
+        help = "Override arguments for MSC inference"
+    )]
+    pub optional_args_msc: Option<String>,
 }
