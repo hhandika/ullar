@@ -32,7 +32,6 @@ pub struct ContigMapping<'a> {
     pub config_path: &'a Path,
     pub output_dir: &'a Path,
     pub runner: RunnerOptions,
-    #[allow(dead_code)]
     task: Task,
 }
 
