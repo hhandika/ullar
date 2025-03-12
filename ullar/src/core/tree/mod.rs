@@ -208,10 +208,10 @@ impl<'a> TreeEstimation<'a> {
                     .as_ref()
                     .with_context(|| "Gene tree parameters not found.")?;
                 self.log_iqtree(params);
-                let output_dir = self.output_dir.join(DEFAULT_GSC_OUTPUT_DIR);
+                let output_dir = self.output_dir.join(DEFAULT_GSC_OUTPUT_DIR).join(prefix);
                 PathCheck::new(&output_dir).is_dir().prompt_exists(false);
                 let ml_analyses = GeneSiteConcordance::new(&params, &output_dir);
-                ml_analyses.infer_concordance_factor(iqtree_results, prefix)?;
+                ml_analyses.infer_concordance_factor(iqtree_results)?;
                 Ok(())
             }
             None => {

@@ -225,7 +225,6 @@ impl<'a> GeneSiteConcordance<'a> {
     pub fn infer_concordance_factor(
         &self,
         iqtree_result: &IQTreeResults,
-        prefix: &'a str,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let invalid_result =
             !iqtree_result.concatenated_alignment.exists() && !iqtree_result.species_tree.exists();
@@ -235,7 +234,7 @@ impl<'a> GeneSiteConcordance<'a> {
         let spinner = common::init_spinner();
         spinner.set_message("Running IQ-TREE for gene concordance factor");
         create_dir_all(&self.output_dir).expect("Failed to create output directory");
-        let output_path = self.output_dir.join(prefix);
+
         let meta = match &self.iqtree_configs.dependency {
             Some(m) => m,
             None => {
@@ -246,10 +245,14 @@ impl<'a> GeneSiteConcordance<'a> {
                 return Err("IQ-TREE dependency not found".into());
             }
         };
+        let prefix_gene = "gene_concordance";
+        let output_gene = self.output_dir.join(prefix_gene);
         let iqtree = IqTree::new(self.iqtree_configs, &meta);
-        let out_gene = iqtree.infer_gene_concordance(&iqtree_result, &output_path);
+        let out_gene = iqtree.infer_gene_concordance(&iqtree_result, &output_gene);
         spinner.set_message("Running IQ-TREE for site concordance factor");
-        let out_site = iqtree.infer_site_concordance(&iqtree_result, &output_path);
+        let prefix_site = "site_concordance";
+        let output_site = self.output_dir.join(prefix_site);
+        let out_site = iqtree.infer_site_concordance(&iqtree_result, &output_site);
         let mut error = String::new();
 
         if !out_gene.status.success() {
