@@ -1,6 +1,6 @@
 use crate::cli::commands::common::CommonRunnerArgs;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct RunnerOptions {
     /// Ignore checksum flag
     pub ignore_checksum: bool,
@@ -10,6 +10,17 @@ pub struct RunnerOptions {
     pub skip_config_check: bool,
     /// Overwrite existing files
     pub overwrite: bool,
+}
+
+impl Default for RunnerOptions {
+    fn default() -> Self {
+        Self {
+            ignore_checksum: true,
+            dry_run: false,
+            skip_config_check: true,
+            overwrite: false,
+        }
+    }
 }
 
 impl RunnerOptions {

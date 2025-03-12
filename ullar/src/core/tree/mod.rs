@@ -19,7 +19,7 @@ use crate::{
         configs::{CONFIG_EXTENSION_TOML, DEFAULT_CONFIG_DIR},
         files::PathCheck,
     },
-    types::{runner::RunnerOptions, trees::TreeInferenceMethod, Task},
+    types::{runner::RunnerOptions, trees::TreeInferenceMethod},
 };
 
 use super::deps::{aster::AsterMetadata, iqtree::IqtreeMetadata};
@@ -42,30 +42,20 @@ const SPECIES_TREE_DIR: &str = "species_tree";
 pub struct TreeEstimation<'a> {
     /// Path to raw read config file
     pub config_path: PathBuf,
-    /// Checksum verification flag
-    pub ignore_checksum: bool,
     /// Parent output directory
     pub output_dir: &'a Path,
     /// Runner options
     pub runner: RunnerOptions,
-    #[allow(dead_code)]
-    task: Task,
 }
 
 impl<'a> TreeEstimation<'a> {
     /// Initialize a new TreeEstimation instance
     /// with the given parameters
-    pub fn new<P: AsRef<Path>>(
-        config_path: P,
-        ignore_checksum: bool,
-        output_dir: &'a Path,
-    ) -> Self {
+    pub fn new<P: AsRef<Path>>(config_path: P, output_dir: &'a Path) -> Self {
         Self {
             config_path: config_path.as_ref().to_path_buf(),
-            ignore_checksum,
             output_dir,
             runner: RunnerOptions::default(),
-            task: Task::TreeInference,
         }
     }
 
@@ -80,24 +70,19 @@ impl<'a> TreeEstimation<'a> {
         };
         Self {
             config_path,
-            ignore_checksum: args.common.ignore_checksum,
             output_dir: &args.output,
             runner: RunnerOptions::from_arg(&args.common),
-            task: Task::TreeInference,
         }
     }
 
-    pub fn from_config<P: AsRef<Path>>(
-        config_path: P,
-        ignore_checksum: bool,
-        output_dir: &'a Path,
-    ) -> Self {
+    /// Initialize a new TreeEstimation instance
+    /// from a given config path and output directory
+    ///
+    pub fn from_config_path<P: AsRef<Path>>(config_path: P, output_dir: &'a Path) -> Self {
         Self {
             config_path: config_path.as_ref().to_path_buf(),
-            ignore_checksum,
             output_dir,
             runner: RunnerOptions::default(),
-            task: Task::TreeInference,
         }
     }
 
@@ -331,7 +316,11 @@ impl<'a> TreeEstimation<'a> {
             "Sample counts",
             config.alignments.sample_counts
         );
-        log::info!("{:18}: {}\n", "File counts", config.alignments.file_counts);
+        log::info!(
+            "{:18}: {}\n\n",
+            "File counts",
+            config.alignments.file_counts
+        );
     }
 
     fn log_iqtree(&self, params: &IqTreeParams) {
@@ -355,7 +344,7 @@ impl<'a> TreeEstimation<'a> {
         }
 
         log::info!("{}", "Parameters".cyan());
-        log::info!("{:18}: {}", "Substitution models", params.models);
+        log::info!("{:18}: {}", "Subs. model", params.models);
         if let Some(partition) = &params.partition_model {
             log::info!("{:18}: {}", "Partition model", partition.to_string());
         }
@@ -366,6 +355,6 @@ impl<'a> TreeEstimation<'a> {
         if let Some(optional) = &params.optional_args {
             log::info!("{:18}: {}", "Additional", optional);
         }
-        log::info!("\n");
+        log::info!("");
     }
 }
