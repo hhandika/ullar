@@ -145,6 +145,12 @@ impl<'a> TreeEstimation<'a> {
                 PathCheck::new(&output_dir).is_dir().prompt_exists(false);
                 let ml_analyses = MlSpeciesTree::new(&config.alignments, &params, &output_dir);
                 ml_analyses.infer_species_tree(iqtree_result, prefix)?;
+                self.log_output(&output_dir);
+                log::info!(
+                    "{:18}: {}",
+                    "Treefile",
+                    iqtree_result.species_tree.display()
+                );
                 Ok(())
             }
             None => {
@@ -174,6 +180,8 @@ impl<'a> TreeEstimation<'a> {
                 PathCheck::new(&output_dir).is_dir().prompt_exists(false);
                 let ml_analyses = MlGeneTree::new(&config.alignments, &params, &output_dir);
                 ml_analyses.infer_gene_trees(iqtree_result);
+                self.log_output(&output_dir);
+                log::info!("{:18}: {}", "Treefile", iqtree_result.gene_trees.display());
                 Ok(())
             }
             None => {
@@ -356,5 +364,10 @@ impl<'a> TreeEstimation<'a> {
             log::info!("{:18}: {}", "Additional", optional);
         }
         log::info!("");
+    }
+
+    fn log_output(&self, output_dir: &Path) {
+        log::info!("\n{}", "Output".cyan());
+        log::info!("{:18}: {}", "Output directory", output_dir.display());
     }
 }
