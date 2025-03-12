@@ -76,11 +76,10 @@ impl<'a> MlSpeciesTree<'a> {
         };
         let iqtree = IqTree::new(self.iqtree_configs, &meta);
         let out = iqtree.infer_species_tree(&alignment_path, &partition_path, &output_dir);
-        spinner.finish_with_message("IQ-TREE finished");
+        spinner.finish_with_message("IQ-TREE finished estimating the species tree\n");
         if !out.status.success() {
             return Err("IQ-TREE failed to run".into());
         }
-        log::info!("IQ-TREE finished successfully.");
         let tree_path = output_dir.with_extension(TREE_FILE_EXTENSION);
         if !tree_path.exists() {
             return Err("Species tree file not found. Check IQ-TREE output \
@@ -148,7 +147,7 @@ impl<'a> MlGeneTree<'a> {
     pub fn infer_gene_trees(&self, iqtree_result: &mut IQTreeResults) {
         let progress_bar = common::init_progress_bar(self.alignments.file_counts as u64);
         log::info!("Running IQ-TREE for gene trees");
-        progress_bar.set_message("Gene trees");
+        progress_bar.set_message("gene trees");
         self.alignments.files.par_iter().for_each(|f| {
             let alignment_path = f.parent_dir.join(&f.file_name);
             let file_stem = alignment_path.file_stem().expect("Failed to get file stem");
@@ -179,7 +178,7 @@ impl<'a> MlGeneTree<'a> {
             }
             progress_bar.inc(1);
         });
-        progress_bar.finish_with_message("Finished running IQ-TREE for gene trees");
+        progress_bar.finish_with_message("gene trees\n");
         let gene_trees = self.find_gene_trees(&self.output_dir);
         let gene_tree_path = self.combine_gene_trees(&gene_trees);
         iqtree_result.add_gene_trees(gene_tree_path);
@@ -266,8 +265,7 @@ impl<'a> GeneSiteConcordance<'a> {
             let message = format!("Failed to run IQ-TREE for site concordance: {}\n", err);
             error.push_str(&message);
         }
-        spinner.finish_with_message("IQ-TREE finished");
-        log::info!("IQ-TREE finished successfully.");
+        spinner.finish_with_message("IQ-TREE finished estimating concordance factors\n");
         Ok(())
     }
 }
@@ -393,8 +391,6 @@ impl<'a> IqTree<'a> {
             .arg(&iqtree_result.species_tree)
             .arg("-s")
             .arg(&iqtree_result.concatenated_alignment)
-            .arg("-q")
-            .arg(&iqtree_result.species_tree_best_model)
             .arg("--prefix")
             .arg(output_path);
 
