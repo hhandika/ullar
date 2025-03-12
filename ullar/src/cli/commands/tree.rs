@@ -4,7 +4,7 @@ use clap::{builder::{self, PossibleValuesParser}, Args, Subcommand};
 
 use crate::core::tree::DEFAULT_PHYLO_OUTPUT_DIR;
 
-use super::common::CommonRunnerArgs;
+use super::common::{CommonInitArgs, CommonRunnerArgs};
 
 
 #[derive(Subcommand)]
@@ -73,6 +73,9 @@ pub struct TreeInferenceInitArgs {
     /// Search recursively for files
     #[arg(long, help = "Search recursively for files")]
     pub recursive: bool,
+    /// Common arguments for all commands
+    #[command(flatten)]
+    pub common: CommonInitArgs,
 }
 
 

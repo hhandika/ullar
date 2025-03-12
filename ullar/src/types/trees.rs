@@ -95,9 +95,9 @@ pub enum IQTreePartitions {
 impl Display for IQTreePartitions {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            IQTreePartitions::EdgeEqual => write!(f, "Equal (-q)"),
-            IQTreePartitions::EdgeProportional => write!(f, "Proportional (-spp)"),
-            IQTreePartitions::EdgeUnlinked => write!(f, "edge-unlinked (-sp)"),
+            IQTreePartitions::EdgeEqual => write!(f, "Equal-equal (-q argument)"),
+            IQTreePartitions::EdgeProportional => write!(f, "Edge-proportional (-spp argument)"),
+            IQTreePartitions::EdgeUnlinked => write!(f, "Edge-unlinked (-sp argument)"),
         }
     }
 }
