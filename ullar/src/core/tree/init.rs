@@ -10,7 +10,8 @@ use crate::cli::commands::common::CommonInitArgs;
 use crate::cli::commands::tree::{AsterSettingArgs, IqTreeSettingArgs, TreeInferenceInitArgs};
 use crate::core::deps::aster::AsterMetadata;
 use crate::core::deps::iqtree::IqtreeMetadata;
-use crate::helper::common;
+use crate::core::tree::DEFAULT_PHYLO_OUTPUT_DIR;
+use crate::helper::common::{self, PrettyHeader};
 use crate::types::alignments::AlignmentFiles;
 use crate::types::trees::{MscInferenceMethod, TreeInferenceMethod};
 
@@ -128,8 +129,9 @@ impl<'a> TreeInferenceInit<'a> {
                 ));
                 self.log_final_output(&path, &config);
                 if self.common.autorun {
-                    let runner = TreeEstimation::from_config(&path, false, &self.common.output);
-                    runner.infer();
+                    let footer = PrettyHeader::new();
+                    footer.get_section_footer();
+                    self.autorun_pipeline(&path);
                 }
             }
             Err(e) => {
@@ -137,6 +139,14 @@ impl<'a> TreeInferenceInit<'a> {
                 log::error!("{}", e);
             }
         }
+    }
+
+    fn autorun_pipeline(&self, config_path: &Path) {
+        let header = "Starting tree inference pipeline...".to_string();
+        log::info!("{}", header.cyan());
+        let output_dir = Path::new(DEFAULT_PHYLO_OUTPUT_DIR);
+        let runner = TreeEstimation::from_config_path(&config_path, output_dir);
+        runner.infer();
     }
 
     fn check_all_dependencies(&self) -> Result<(), Box<dyn Error>> {
