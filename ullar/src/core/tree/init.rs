@@ -6,6 +6,7 @@ use enum_iterator::all;
 use segul::helper::finder::SeqFileFinder;
 use segul::helper::types::{DataType, InputFmt};
 
+use crate::cli::commands::common::CommonInitArgs;
 use crate::cli::commands::tree::{AsterSettingArgs, IqTreeSettingArgs, TreeInferenceInitArgs};
 use crate::core::deps::aster::AsterMetadata;
 use crate::core::deps::iqtree::IqtreeMetadata;
@@ -14,6 +15,7 @@ use crate::types::alignments::AlignmentFiles;
 use crate::types::trees::{MscInferenceMethod, TreeInferenceMethod};
 
 use super::configs::{reorder_analyses, TreeInferenceConfig};
+use super::TreeEstimation;
 
 const ASTER_ERROR_MSG: &str = "Please install the ASTER software suite from \
     https://github.com/chaoszhang/ASTER to use this method.";
@@ -64,6 +66,7 @@ pub struct TreeInferenceInit<'a> {
     pub analyses: Vec<TreeInferenceMethod>,
     pub iqtree: &'a IqTreeSettingArgs,
     pub aster: &'a AsterSettingArgs,
+    pub common: &'a CommonInitArgs,
 }
 
 impl<'a> TreeInferenceInit<'a> {
@@ -94,13 +97,14 @@ impl<'a> TreeInferenceInit<'a> {
                 .expect("Invalid data type"),
             iqtree: &args.iqtree,
             aster: &args.aster,
+            common: &args.common,
         }
     }
 
     pub fn init(&self) {
         self.log_input();
         if let Err(e) = self.check_all_dependencies() {
-            log::error!("Missing dependency errrors: {}", e);
+            log::error!("Missing dependency errors: {}", e);
             return;
         }
         let spin = common::init_spinner();
@@ -123,6 +127,10 @@ impl<'a> TreeInferenceInit<'a> {
                     "✔".green()
                 ));
                 self.log_final_output(&path, &config);
+                if self.common.autorun {
+                    let runner = TreeEstimation::from_config(&path, false, &self.common.output);
+                    runner.infer();
+                }
             }
             Err(e) => {
                 spin.finish_with_message(format!("{} Failed to create a config file\n", "✖".red()));
@@ -132,8 +140,8 @@ impl<'a> TreeInferenceInit<'a> {
     }
 
     fn check_all_dependencies(&self) -> Result<(), Box<dyn Error>> {
-        for anlysis in &self.analyses {
-            match anlysis {
+        for analysis in &self.analyses {
+            match analysis {
                 TreeInferenceMethod::MlSpeciesTree
                 | TreeInferenceMethod::MlGeneTree
                 | TreeInferenceMethod::GeneSiteConcordance => {

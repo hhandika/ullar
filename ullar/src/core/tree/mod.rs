@@ -87,9 +87,23 @@ impl<'a> TreeEstimation<'a> {
         }
     }
 
+    pub fn from_config<P: AsRef<Path>>(
+        config_path: P,
+        ignore_checksum: bool,
+        output_dir: &'a Path,
+    ) -> Self {
+        Self {
+            config_path: config_path.as_ref().to_path_buf(),
+            ignore_checksum,
+            output_dir,
+            runner: RunnerOptions::default(),
+            task: Task::TreeInference,
+        }
+    }
+
     pub fn infer(&self) {
         let spinner = common::init_spinner();
-        spinner.set_message("Parsing and checking the config file");
+        spinner.set_message("Parsing and checking the config file\n");
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
         self.check_dependencies(&config)
@@ -309,29 +323,6 @@ impl<'a> TreeEstimation<'a> {
         Ok(config)
     }
 
-    #[allow(dead_code)]
-    fn infer_ml_gene_tree(&self) {
-        let spinner = common::init_spinner();
-        spinner.set_message("Estimating ML gene tree");
-        spinner.finish_with_message("Finished estimating ML gene tree\n");
-    }
-
-    // Gene Site Concordance Factor
-    #[allow(dead_code)]
-    fn infer_gsc_tree(&self) {
-        let spinner = common::init_spinner();
-        spinner.set_message("Estimating Gene Site Concordance Factor");
-        spinner.finish_with_message("Finished estimating Gene Site Concordance Factor\n");
-    }
-
-    // Multi-Species Coalescent
-    #[allow(dead_code)]
-    fn infer_msc_tree(&self) {
-        let spinner = common::init_spinner();
-        spinner.set_message("Estimating MSC species tree");
-        spinner.finish_with_message("Finished estimating MSC species tree\n");
-    }
-
     fn log_input(&self, config: &TreeInferenceConfig) {
         log::info!("\n{}", "Input".cyan());
         log::info!("{:18}: {}", "Config file", self.config_path.display());
@@ -363,15 +354,18 @@ impl<'a> TreeEstimation<'a> {
             }
         }
 
+        log::info!("{}", "Parameters".cyan());
+        log::info!("{:18}: {}", "Substitution models", params.models);
         if let Some(partition) = &params.partition_model {
             log::info!("{:18}: {}", "Partition model", partition.to_string());
         }
         log::info!("{:18}: {}", "Threads", params.threads);
-
         if let Some(bootstrap) = &params.bootstrap {
             log::info!("{:18}: {}", "Bootstrap", bootstrap);
         }
-
-        log::info!("{:18}: {}\n", "Models", params.models);
+        if let Some(optional) = &params.optional_args {
+            log::info!("{:18}: {}", "Additional", optional);
+        }
+        log::info!("\n");
     }
 }
