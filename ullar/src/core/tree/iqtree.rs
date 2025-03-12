@@ -393,7 +393,7 @@ impl<'a> IqTree<'a> {
             .arg(&iqtree_result.species_tree)
             .arg("-s")
             .arg(&iqtree_result.concatenated_alignment)
-            .arg("-m")
+            .arg("-q")
             .arg(&iqtree_result.species_tree_best_model)
             .arg("--prefix")
             .arg(output_path);
