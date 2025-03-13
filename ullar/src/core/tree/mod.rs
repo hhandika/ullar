@@ -293,7 +293,7 @@ impl<'a> TreeEstimation<'a> {
         }
         let aster_params = aster.expect("MSC parameters not found in the config files");
         let mut missing = Vec::new();
-        for method in &aster_params.methods {
+        for method in aster_params.methods.keys() {
             let dep = AsterMetadata::new().get_matching(method);
             if dep.is_none() {
                 missing.push(method);
