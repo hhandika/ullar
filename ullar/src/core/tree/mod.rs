@@ -24,6 +24,7 @@ use crate::{
 
 use super::deps::{aster::AsterMetadata, iqtree::IqtreeMetadata};
 
+pub mod aster;
 pub mod configs;
 pub mod init;
 pub mod iqtree;
