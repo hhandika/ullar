@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 /// - ASTRAL-Pro: tree inference estimation that extends ASTRAL inference
 /// to handle paralogs and orthologs.
 /// - Weighted ASTRAL: tree inference estimation that extends ASTRAL
-#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 #[serde(rename_all = "snake_case")]
 pub enum MscInferenceMethod {
     #[default]

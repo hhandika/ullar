@@ -287,8 +287,7 @@ impl TreeInferenceAnalyses {
 // Include all ASTER software suites.
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AsterParams {
-    pub dependency: Vec<Option<DepMetadata>>,
-    pub methods: Vec<MscInferenceMethod>,
+    pub methods: IndexMap<MscInferenceMethod, Option<DepMetadata>>,
     pub optional_args: Option<String>,
 }
 
@@ -305,12 +304,14 @@ impl AsterParams {
                 .collect(),
             None => vec![MscInferenceMethod::default()],
         };
+        let mut method_deps = IndexMap::new();
+        methods.iter().for_each(|m| {
+            let aster = AsterMetadata::new();
+            let dep = aster.get_matching(m);
+            method_deps.insert(m.clone(), dep);
+        });
         Self {
-            dependency: methods
-                .iter()
-                .map(|m| AsterMetadata::new().get_matching(m))
-                .collect(),
-            methods,
+            methods: method_deps,
             optional_args: args.optional_args_msc.clone(),
         }
     }
