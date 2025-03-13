@@ -378,7 +378,7 @@ impl<'a> IqTree<'a> {
         let mut out = Command::new(executable);
         out.arg("-t")
             .arg(&iqtree_result.species_tree)
-            .arg("-gcf")
+            .arg("--gcf")
             .arg(&iqtree_result.gene_trees)
             .arg("--prefix")
             .arg(output_path);
