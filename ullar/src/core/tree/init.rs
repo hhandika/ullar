@@ -144,6 +144,7 @@ impl<'a> TreeInferenceInit<'a> {
     fn autorun_pipeline(&self, config_path: &Path) {
         let header = "Starting tree inference pipeline...".to_string();
         log::info!("{}", header.cyan());
+        log::info!("");
         let output_dir = Path::new(DEFAULT_PHYLO_OUTPUT_DIR);
         let runner = TreeEstimation::from_config_path(&config_path, output_dir);
         runner.infer();

@@ -202,13 +202,12 @@ impl<'a> TreeEstimation<'a> {
         let dep = config.analyses.get(GENE_SITE_CONCORDANCE_ANALYSIS);
         match dep {
             Some(d) => {
-                let prefix = "gene_site_cf";
                 let params = d
                     .concordance_factor
                     .as_ref()
                     .with_context(|| "Gene tree parameters not found.")?;
                 self.log_iqtree(params);
-                let output_dir = self.output_dir.join(DEFAULT_GSC_OUTPUT_DIR).join(prefix);
+                let output_dir = self.output_dir.join(DEFAULT_GSC_OUTPUT_DIR);
                 PathCheck::new(&output_dir).is_dir().prompt_exists(false);
                 let ml_analyses = GeneSiteConcordance::new(&params, &output_dir);
                 ml_analyses.infer_concordance_factor(iqtree_results)?;
