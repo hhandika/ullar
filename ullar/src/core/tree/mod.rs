@@ -239,6 +239,7 @@ impl<'a> TreeEstimation<'a> {
                     .msc_methods
                     .as_ref()
                     .with_context(|| "MSC parameters not found")?;
+                self.log_msc_inference(params, iqtree_results);
                 let output_dir = self.output_dir.join(DEFAULT_MSC_ASTRAL_OUTPUT_DIR);
                 PathCheck::new(&output_dir).is_dir().prompt_exists(false);
                 let msc_analyses = MscAster::new(&params, &iqtree_results.gene_trees, &output_dir);
@@ -393,6 +394,33 @@ impl<'a> TreeEstimation<'a> {
         }
         if let Some(optional) = &params.optional_args {
             log::info!("{:18}: {}", "Additional", optional);
+        }
+        log::info!("");
+    }
+
+    fn log_msc_inference(&self, params: &AsterParams, trees: &IQTreeResults) {
+        log::info!("{:18}: {}", "App", "ASTER");
+        params.methods.iter().for_each(|(method, dep)| {
+            log::info!("{:18}: {}", "Method", method);
+            match dep {
+                Some(d) => {
+                    log::info!("{:18}: {}", "Version", d.version);
+                    log::info!(
+                        "{:18}: {}",
+                        "Executable",
+                        d.executable.as_ref().unwrap_or(&"Not found".to_string())
+                    );
+                }
+                None => {
+                    log::info!("{:18}: {}", "Executable", "Not found".red());
+                }
+            }
+        });
+
+        log::info!("{}", "Input".cyan());
+        log::info!("{:18}: {}", "Gene trees", trees.gene_trees.display());
+        if let Some(opts) = &params.optional_args {
+            log::info!("{:18}: {}", "Optional args", opts);
         }
         log::info!("");
     }

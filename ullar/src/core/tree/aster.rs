@@ -1,10 +1,22 @@
 //! Multi-species coalescent model tree estimation using ASTER
 
-use std::{path::Path, process::Command};
+use std::{
+    fs::create_dir_all,
+    path::{Path, PathBuf},
+    process::{Command, Output},
+};
 
 use crate::{core::deps::DepMetadata, parse_override_args, types::trees::MscInferenceMethod};
 
 use super::configs::AsterParams;
+
+const ASTRAL_FNAME: &str = "astral";
+const ASTRAL_PRO_FNAME: &str = "astral_pro";
+const WASTRAL_FNAME: &str = "wastral";
+const TREE_EXTENSION: &str = "tre";
+
+const LOG_EXTENSION: &str = "log";
+
 pub struct MscAster<'a> {
     configs: &'a AsterParams,
     gene_trees: &'a Path,
@@ -21,33 +33,71 @@ impl<'a> MscAster<'a> {
     }
 
     pub fn infer(&self) {
-        self.configs
-            .methods
-            .iter()
-            .for_each(|(method, dep)| match method {
-                MscInferenceMethod::Astral => self.run_astral(dep.as_ref()),
-                _ => unimplemented!(),
-            });
+        create_dir_all(self.output_dir).expect("Failed to create output directory.");
+        self.configs.methods.iter().for_each(|(method, dep)| {
+            self.run_aster(method, dep.as_ref());
+        });
     }
 
-    fn run_astral(&self, dep: Option<&DepMetadata>) {
+    fn run_aster(&self, method: &MscInferenceMethod, dep: Option<&DepMetadata>) {
         match dep {
             Some(dep) => {
-                let runner = AstralRunner::new(dep, self.gene_trees, None);
-                runner.run(self.output_dir);
+                let output_path = self.get_output_path(method);
+                let runner = AsterRunner::new(dep, self.gene_trees, None);
+                let output = runner.run(&output_path).expect("Failed to run ASTRAL.");
+                self.log_output(method, output);
             }
             None => panic!("Astral dependency not found. Please check the configuration."),
         }
     }
+
+    fn log_output(&self, method: &MscInferenceMethod, output: Output) {
+        let log_path = self.get_log_path(method);
+        std::fs::write(log_path, output.stderr).expect("Failed to write log file.");
+    }
+
+    fn get_log_path(&self, method: &MscInferenceMethod) -> PathBuf {
+        match method {
+            MscInferenceMethod::Astral => self
+                .output_dir
+                .join(ASTRAL_FNAME)
+                .with_extension(LOG_EXTENSION),
+            MscInferenceMethod::AstralPro => self
+                .output_dir
+                .join(ASTRAL_PRO_FNAME)
+                .with_extension(LOG_EXTENSION),
+            MscInferenceMethod::WeightedAstral => self
+                .output_dir
+                .join(WASTRAL_FNAME)
+                .with_extension(LOG_EXTENSION),
+        }
+    }
+
+    fn get_output_path(&self, method: &MscInferenceMethod) -> PathBuf {
+        match method {
+            MscInferenceMethod::Astral => self
+                .output_dir
+                .join(ASTRAL_FNAME)
+                .with_extension(TREE_EXTENSION),
+            MscInferenceMethod::AstralPro => self
+                .output_dir
+                .join(ASTRAL_PRO_FNAME)
+                .with_extension(TREE_EXTENSION),
+            MscInferenceMethod::WeightedAstral => self
+                .output_dir
+                .join(WASTRAL_FNAME)
+                .with_extension(TREE_EXTENSION),
+        }
+    }
 }
 
-pub struct AstralRunner<'a> {
+pub struct AsterRunner<'a> {
     pub dependency: &'a DepMetadata,
     pub gene_trees: &'a Path,
     pub optional_args: Option<&'a str>,
 }
 
-impl<'a> AstralRunner<'a> {
+impl<'a> AsterRunner<'a> {
     pub fn new(
         dependency: &'a DepMetadata,
         gene_trees: &'a Path,
@@ -60,15 +110,20 @@ impl<'a> AstralRunner<'a> {
         }
     }
 
-    pub fn run(&self, output_dir: &Path) {
+    pub fn run(&self, output_path: &Path) -> Result<Output, std::io::Error> {
         let executable = self.get_executable();
         let mut out = Command::new(executable);
 
-        out.arg("-i").arg(self.gene_trees).arg("-o").arg(output_dir);
+        out.arg("-i")
+            .arg(self.gene_trees)
+            .arg("-o")
+            .arg(output_path);
 
         if let Some(opt_args) = &self.optional_args {
             parse_override_args!(out, opt_args);
         }
+
+        out.output()
     }
 
     fn get_executable(&self) -> String {
