@@ -39,8 +39,6 @@ pub const DEFAULT_MSC_ASTRAL_OUTPUT_DIR: &str = "msc_astral_trees";
 pub const DEFAULT_MSC_ASTRAL_PRO_OUTPUT_DIR: &str = "msc_astral_pro_trees";
 pub const DEFAULT_MSC_WASTRAL_OUTPUT_DIR: &str = "msc_wastral_trees";
 
-const SPECIES_TREE_DIR: &str = "species_tree";
-
 pub struct TreeEstimation<'a> {
     /// Path to raw read config file
     pub config_path: PathBuf,
@@ -109,31 +107,58 @@ impl<'a> TreeEstimation<'a> {
 
     fn run_tree_inference(&self, config: &TreeInferenceConfig) -> Result<(), Box<dyn Error>> {
         let mut iqtree_results = IQTreeResults::new();
+        self.check_path_exists(&config.input.analyses);
         for analysis in &config.input.analyses {
             self.print_header(analysis);
+            let output_dir = self.generate_output_path(analysis);
             match analysis {
                 TreeInferenceMethod::MlSpeciesTree => {
-                    self.infer_ml_species_tree(config, &mut iqtree_results)?
+                    self.infer_ml_species_tree(config, &mut iqtree_results, &output_dir)?
                 }
 
                 TreeInferenceMethod::MlGeneTree => {
-                    self.infer_ml_gene_trees(config, &mut iqtree_results)?
+                    self.infer_ml_gene_trees(config, &mut iqtree_results, &output_dir)?
                 }
                 TreeInferenceMethod::GeneSiteConcordance => {
-                    self.infer_concordance_factor(config, &mut iqtree_results)?
+                    self.infer_concordance_factor(config, &mut iqtree_results, &output_dir)?
                 }
                 TreeInferenceMethod::MscSpeciesTree => {
-                    self.infer_msc_trees(config, &mut iqtree_results)?
+                    self.infer_msc_trees(config, &mut iqtree_results, &output_dir)?
                 }
             }
         }
         Ok(())
     }
 
+    fn generate_output_path(&self, analysis: &TreeInferenceMethod) -> PathBuf {
+        match analysis {
+            TreeInferenceMethod::MlSpeciesTree => {
+                self.output_dir.join(DEFAULT_ML_SPECIES_TREE_OUTPUT_DIR)
+            }
+            TreeInferenceMethod::MlGeneTree => {
+                self.output_dir.join(DEFAULT_ML_GENE_TREE_OUTPUT_DIR)
+            }
+            TreeInferenceMethod::GeneSiteConcordance => {
+                self.output_dir.join(DEFAULT_GSC_OUTPUT_DIR)
+            }
+            TreeInferenceMethod::MscSpeciesTree => {
+                self.output_dir.join(DEFAULT_MSC_ASTRAL_OUTPUT_DIR)
+            }
+        }
+    }
+
+    fn check_path_exists(&self, analysis: &[TreeInferenceMethod]) {
+        analysis.iter().for_each(|a| {
+            let output_dir = self.generate_output_path(a);
+            PathCheck::new(&output_dir).is_dir().prompt_exists(false);
+        });
+    }
+
     fn infer_ml_species_tree(
         &self,
         config: &TreeInferenceConfig,
         iqtree_result: &mut IQTreeResults,
+        output_dir: &Path,
     ) -> Result<(), Box<dyn Error>> {
         let dep = config.analyses.get(SPECIES_TREE_ANALYSIS);
 
@@ -145,8 +170,6 @@ impl<'a> TreeEstimation<'a> {
                     .as_ref()
                     .with_context(|| "Species tree parameters not found")?;
                 self.log_iqtree(params);
-                let output_dir = self.output_dir.join(SPECIES_TREE_DIR);
-                PathCheck::new(&output_dir).is_dir().prompt_exists(false);
                 let ml_analyses = MlSpeciesTree::new(&config.alignments, &params, &output_dir);
                 ml_analyses.infer_species_tree(iqtree_result, prefix)?;
                 self.log_output(&output_dir);
@@ -171,6 +194,7 @@ impl<'a> TreeEstimation<'a> {
         &self,
         config: &TreeInferenceConfig,
         iqtree_result: &mut IQTreeResults,
+        output_dir: &Path,
     ) -> Result<(), Box<dyn Error>> {
         let dep = config.analyses.get(GENE_TREE_ANALYSIS);
         match dep {
@@ -180,8 +204,6 @@ impl<'a> TreeEstimation<'a> {
                     .as_ref()
                     .with_context(|| "Gene tree parameters not found")?;
                 self.log_iqtree(params);
-                let output_dir = self.output_dir.join(DEFAULT_ML_GENE_TREE_OUTPUT_DIR);
-                PathCheck::new(&output_dir).is_dir().prompt_exists(false);
                 let ml_analyses = MlGeneTree::new(&config.alignments, &params, &output_dir);
                 ml_analyses.infer_gene_trees(iqtree_result);
                 self.log_output(&output_dir);
@@ -202,6 +224,7 @@ impl<'a> TreeEstimation<'a> {
         &self,
         config: &TreeInferenceConfig,
         iqtree_results: &mut IQTreeResults,
+        output_dir: &Path,
     ) -> Result<(), Box<dyn Error>> {
         let dep = config.analyses.get(GENE_SITE_CONCORDANCE_ANALYSIS);
         match dep {
@@ -211,10 +234,9 @@ impl<'a> TreeEstimation<'a> {
                     .as_ref()
                     .with_context(|| "Gene tree parameters not found.")?;
                 self.log_iqtree(params);
-                let output_dir = self.output_dir.join(DEFAULT_GSC_OUTPUT_DIR);
-                PathCheck::new(&output_dir).is_dir().prompt_exists(false);
                 let ml_analyses = GeneSiteConcordance::new(&params, &output_dir);
                 ml_analyses.infer_concordance_factor(iqtree_results)?;
+                self.log_output(&output_dir);
                 Ok(())
             }
             None => {
@@ -231,6 +253,7 @@ impl<'a> TreeEstimation<'a> {
         &self,
         config: &TreeInferenceConfig,
         iqtree_results: &mut IQTreeResults,
+        output_dir: &Path,
     ) -> Result<(), Box<dyn Error>> {
         let dep = config.analyses.get(MSC_INFERENCE_ANALYSIS);
         match dep {
@@ -240,10 +263,9 @@ impl<'a> TreeEstimation<'a> {
                     .as_ref()
                     .with_context(|| "MSC parameters not found")?;
                 self.log_msc_inference(params, iqtree_results);
-                let output_dir = self.output_dir.join(DEFAULT_MSC_ASTRAL_OUTPUT_DIR);
-                PathCheck::new(&output_dir).is_dir().prompt_exists(false);
                 let msc_analyses = MscAster::new(&params, &iqtree_results.gene_trees, &output_dir);
                 msc_analyses.infer();
+                self.log_output(&output_dir);
                 Ok(())
             }
             None => {
@@ -417,7 +439,7 @@ impl<'a> TreeEstimation<'a> {
             }
         });
 
-        log::info!("{}", "Input".cyan());
+        log::info!("\n{}", "Input".cyan());
         log::info!("{:18}: {}", "Gene trees", trees.gene_trees.display());
         if let Some(opts) = &params.optional_args {
             log::info!("{:18}: {}", "Optional args", opts);
