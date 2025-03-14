@@ -6,7 +6,9 @@ use std::{
     process::{Command, Output},
 };
 
-use crate::{core::deps::DepMetadata, parse_override_args, types::trees::MscInferenceMethod};
+use crate::{
+    core::deps::DepMetadata, helper::common, parse_override_args, types::trees::MscInferenceMethod,
+};
 
 use super::configs::AsterParams;
 
@@ -34,9 +36,13 @@ impl<'a> MscAster<'a> {
 
     pub fn infer(&self) {
         create_dir_all(self.output_dir).expect("Failed to create output directory.");
+        let progress_bar = common::init_progress_bar(self.configs.methods.len() as u64);
+        progress_bar.set_message("msc trees");
         self.configs.methods.iter().for_each(|(method, dep)| {
             self.run_aster(method, dep.as_ref());
+            progress_bar.inc(1);
         });
+        progress_bar.finish_with_message("msc trees\n");
     }
 
     fn run_aster(&self, method: &MscInferenceMethod, dep: Option<&DepMetadata>) {
