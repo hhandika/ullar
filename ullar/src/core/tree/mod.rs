@@ -4,6 +4,7 @@ use std::{
 };
 
 use anyhow::Context;
+use aster::MscAster;
 use colored::Colorize;
 use configs::{
     AsterParams, IqTreeParams, TreeInferenceConfig, DEFAULT_ML_INFERENCE_CONFIG,
@@ -121,7 +122,9 @@ impl<'a> TreeEstimation<'a> {
                 TreeInferenceMethod::GeneSiteConcordance => {
                     self.infer_concordance_factor(config, &mut iqtree_results)?
                 }
-                _ => unimplemented!("Tree inference method not implemented"),
+                TreeInferenceMethod::MscSpeciesTree => {
+                    self.infer_msc_trees(config, &mut iqtree_results)?
+                }
             }
         }
         Ok(())
@@ -217,6 +220,34 @@ impl<'a> TreeEstimation<'a> {
             None => {
                 let error = format!(
                     "{} No ML gene tree analysis specified in the config files. Skipping",
+                    "Warning:".yellow()
+                );
+                Err(error.into())
+            }
+        }
+    }
+
+    fn infer_msc_trees(
+        &self,
+        config: &TreeInferenceConfig,
+        iqtree_results: &mut IQTreeResults,
+    ) -> Result<(), Box<dyn Error>> {
+        let dep = config.analyses.get(MSC_INFERENCE_ANALYSIS);
+        match dep {
+            Some(d) => {
+                let params = d
+                    .msc_methods
+                    .as_ref()
+                    .with_context(|| "MSC parameters not found")?;
+                let output_dir = self.output_dir.join(DEFAULT_MSC_ASTRAL_OUTPUT_DIR);
+                PathCheck::new(&output_dir).is_dir().prompt_exists(false);
+                let msc_analyses = MscAster::new(&params, &iqtree_results.gene_trees, &output_dir);
+                msc_analyses.infer();
+                Ok(())
+            }
+            None => {
+                let error = format!(
+                    "{} No MSC analysis specified in the config files. Skipping",
                     "Warning:".yellow()
                 );
                 Err(error.into())
