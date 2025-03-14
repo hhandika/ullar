@@ -23,7 +23,7 @@ use crate::{
     types::{runner::RunnerOptions, trees::TreeInferenceMethod},
 };
 
-use super::deps::{aster::AsterMetadata, iqtree::IqtreeMetadata};
+use super::deps::{aster::AsterMetadata, iqtree::IqtreeMetadata, DepMetadata};
 
 pub mod aster;
 pub mod configs;
@@ -35,9 +35,7 @@ pub const DEFAULT_PHYLO_OUTPUT_DIR: &str = "out_trees";
 pub const DEFAULT_ML_SPECIES_TREE_OUTPUT_DIR: &str = "ml_species_tree";
 pub const DEFAULT_ML_GENE_TREE_OUTPUT_DIR: &str = "ml_gene_trees";
 pub const DEFAULT_GSC_OUTPUT_DIR: &str = "gsc_trees";
-pub const DEFAULT_MSC_ASTRAL_OUTPUT_DIR: &str = "msc_astral_trees";
-pub const DEFAULT_MSC_ASTRAL_PRO_OUTPUT_DIR: &str = "msc_astral_pro_trees";
-pub const DEFAULT_MSC_WASTRAL_OUTPUT_DIR: &str = "msc_wastral_trees";
+pub const DEFAULT_MSC_OUTPUT_DIR: &str = "msc_astral_trees";
 
 pub struct TreeEstimation<'a> {
     /// Path to raw read config file
@@ -88,7 +86,7 @@ impl<'a> TreeEstimation<'a> {
 
     pub fn infer(&self) {
         let spinner = common::init_spinner();
-        spinner.set_message("Parsing and checking the config file\n");
+        spinner.set_message("Parsing the config file\n");
         let config = self.parse_config().expect("Failed to parse config");
         self.log_input(&config);
         self.check_dependencies(&config)
@@ -141,15 +139,16 @@ impl<'a> TreeEstimation<'a> {
             TreeInferenceMethod::GeneSiteConcordance => {
                 self.output_dir.join(DEFAULT_GSC_OUTPUT_DIR)
             }
-            TreeInferenceMethod::MscSpeciesTree => {
-                self.output_dir.join(DEFAULT_MSC_ASTRAL_OUTPUT_DIR)
-            }
+            TreeInferenceMethod::MscSpeciesTree => self.output_dir.join(DEFAULT_MSC_OUTPUT_DIR),
         }
     }
 
     fn check_path_exists(&self, analysis: &[TreeInferenceMethod]) {
         analysis.iter().for_each(|a| {
-            log::info!("Checking output directory for {}", a.to_string());
+            log::info!(
+                "Checking output directory for {}...\n",
+                a.to_string().cyan()
+            );
             let output_dir = self.generate_output_path(a);
             PathCheck::new(&output_dir).is_dir().prompt_exists(false);
         });
@@ -387,24 +386,7 @@ impl<'a> TreeEstimation<'a> {
     }
 
     fn log_iqtree(&self, params: &IqTreeParams) {
-        let not_found = "Not found".red();
-        match &params.dependency {
-            Some(dep) => {
-                log::info!("{:18}: {}", "App", "IQ-TREE");
-                log::info!("{:18}: {}", "Version", dep.version);
-                log::info!(
-                    "{:18}: {}\n",
-                    "Executable",
-                    dep.executable
-                        .as_ref()
-                        .unwrap_or(&not_found.to_string())
-                        .as_str()
-                );
-            }
-            None => {
-                log::info!("{:18}: {}", "App", "IQ-TREE".cyan());
-            }
-        }
+        self.log_dep(params.dependency.as_ref());
 
         log::info!("{}", "Parameters".cyan());
         log::info!("{:18}: {}", "Subs. model", params.models);
@@ -423,27 +405,48 @@ impl<'a> TreeEstimation<'a> {
 
     fn log_msc_inference(&self, params: &AsterParams, trees: &IQTreeResults) {
         log::info!("{:18}: {}", "App", "ASTER");
-        params.methods.iter().for_each(|(method, dep)| {
+        if params.methods.len() == 1 {
+            let (method, dep) = params.methods.iter().next().expect("No ASTER method found");
             log::info!("{:18}: {}", "Method", method);
-            match dep {
-                Some(d) => {
-                    log::info!("{:18}: {}", "Version", d.version);
-                    log::info!(
-                        "{:18}: {}",
-                        "Executable",
-                        d.executable.as_ref().unwrap_or(&"Not found".to_string())
-                    );
-                }
-                None => {
-                    log::info!("{:18}: {}", "Executable", "Not found".red());
-                }
-            }
-        });
-
+            self.log_dep(dep.as_ref());
+        } else {
+            log::info!("");
+            params
+                .methods
+                .iter()
+                .enumerate()
+                .for_each(|(index, (method, dep))| {
+                    let method = format!("Method {}: {}", index + 1, method);
+                    log::info!("{}", method.cyan());
+                    self.log_dep(dep.as_ref());
+                });
+        }
         log::info!("\n{}", "Input".cyan());
         log::info!("{:18}: {}", "Gene trees", trees.gene_trees.display());
         if let Some(opts) = &params.optional_args {
             log::info!("{:18}: {}", "Optional args", opts);
+        }
+        log::info!("");
+    }
+
+    fn log_dep(&self, dep: Option<&DepMetadata>) {
+        let not_found = "Not found".red();
+        match dep {
+            Some(d) => {
+                log::info!("{:18}: {}", "App name", d.app_name);
+                log::info!("{:18}: {}", "Version", d.version);
+                log::info!(
+                    "{:18}: {}",
+                    "Executable",
+                    d.executable
+                        .as_ref()
+                        .unwrap_or(&"Not found".to_string())
+                        .as_str()
+                );
+            }
+            None => {
+                log::info!("{:18}: {}", "Executable", not_found);
+            }
         }
         log::info!("");
     }
