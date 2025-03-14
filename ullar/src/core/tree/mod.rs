@@ -101,13 +101,13 @@ impl<'a> TreeEstimation<'a> {
             return;
         }
         spinner.finish_with_message("Skipping config data check\n");
+        self.check_path_exists(&config.input.analyses);
         self.run_tree_inference(&config)
             .expect("Failed to run tree inference");
     }
 
     fn run_tree_inference(&self, config: &TreeInferenceConfig) -> Result<(), Box<dyn Error>> {
         let mut iqtree_results = IQTreeResults::new();
-        self.check_path_exists(&config.input.analyses);
         for analysis in &config.input.analyses {
             self.print_header(analysis);
             let output_dir = self.generate_output_path(analysis);
@@ -149,6 +149,7 @@ impl<'a> TreeEstimation<'a> {
 
     fn check_path_exists(&self, analysis: &[TreeInferenceMethod]) {
         analysis.iter().for_each(|a| {
+            log::info!("Checking output directory for {}", a.to_string());
             let output_dir = self.generate_output_path(a);
             PathCheck::new(&output_dir).is_dir().prompt_exists(false);
         });
