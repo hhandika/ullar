@@ -28,7 +28,7 @@ use super::{
     summary::{FinalContigSummary, FinalMappingSummary},
 };
 
-pub const DEFAULT_UNALIGN_SEQUENCE_OUTPUT_DIR: &str = "unaligned_sequences";
+pub const DEFAULT_UNALIGN_SEQUENCE_OUTPUT_DIR: &str = "sequences";
 pub const SUMMARY_FILE_STEM: &str = "mapping_summary";
 pub const SUMMARY_EXT: &str = "csv";
 
