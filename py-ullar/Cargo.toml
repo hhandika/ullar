@@ -16,5 +16,5 @@ name = "py_ullar"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = "0.21.1"
+pyo3 = "0.*.*"
 ullar = { path = "../ullar" }
