@@ -153,9 +153,7 @@ impl<'a> AssemblyArgParser<'a> {
     }
 
     fn init(&self, args: &AssemblyInitArgs) {
-        AssemblyInit::from_arg(args)
-            .init()
-            .expect("Failed to execute new command");
+        AssemblyInit::from_arg(args).init();
     }
 
     fn assemble(&self, args: &AssemblyArgs) {

@@ -15,8 +15,9 @@ use crate::{
         assembly::AssemblyInitArgs,
         common::{CommonInitArgs, GenomicReadsInitArgs},
     },
+    core::assembly::Assembly,
     helper::{
-        common,
+        common::{self, PrettyHeader},
         fastq::{FastqInput, ReadAssignmentStrategy},
         files::FileFinder,
     },
@@ -49,13 +50,18 @@ impl<'a> AssemblyInit<'a> {
         }
     }
 
-    pub fn init(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn init(&mut self) {
         self.log_input();
         let spin = common::init_spinner();
         spin.set_message("Finding files...");
         let format = SupportedFormats::Fastq;
         self.match_sample_name_format();
-        let files = FileFinder::new(self.input_dir, &format).find(self.reads.recursive)?;
+        let files = FileFinder::new(self.input_dir, &format)
+            .find(self.reads.recursive)
+            .expect(
+                "Failed to find files. \
+            Check if the directory exists and you have permission to access it.",
+            );
 
         if files.is_empty() {
             spin.finish_with_message(format!(
@@ -64,7 +70,8 @@ impl<'a> AssemblyInit<'a> {
                 self.input_dir.display()
             ));
             self.log_empty_input();
-            return Ok(());
+            log::error!("Try using the --recursive flag if files are in subdirectories.");
+            return;
         }
 
         let file_count = files.len();
@@ -80,10 +87,32 @@ impl<'a> AssemblyInit<'a> {
             sample_count, file_count
         ));
 
-        let config_path = self.write_config(samples, file_count)?;
-        spin.finish_with_message(format!("{} Finished creating a config file\n", "✔".green()));
-        self.log_output(&config_path, sample_count, file_count);
-        Ok(())
+        let config = self.write_config(samples, file_count);
+        match config {
+            Ok(config_path) => {
+                spin.finish_with_message(format!(
+                    "{} Finished creating a config file\n",
+                    "✔".green()
+                ));
+                self.log_output(&config_path, sample_count, file_count);
+                if self.common.autorun {
+                    let footer = PrettyHeader::new();
+                    footer.get_section_footer();
+                    self.autorun_pipeline(&config_path);
+                }
+            }
+            Err(e) => {
+                spin.finish_with_message(format!("{} Failed to create a config file\n", "✖".red()));
+                log::error!("{}", e);
+            }
+        }
+    }
+
+    fn autorun_pipeline(&self, config_path: &Path) {
+        let header = "Starting assembly pipeline...".to_string();
+        log::info!("{}", header.cyan());
+        let runner = Assembly::from_config_path(config_path, &self.common.output);
+        runner.assemble();
     }
 
     fn log_empty_input(&self) {
