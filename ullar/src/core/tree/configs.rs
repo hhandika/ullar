@@ -37,7 +37,7 @@ pub const GENE_SITE_CONCORDANCE_ANALYSIS: &str = "gene_site_concordance";
 pub const MSC_INFERENCE_ANALYSIS: &str = "msc_inference";
 pub const DATA_PREPARATION_DEP_NAME: &str = "data_preparation";
 
-/// We need to reorder the analyses to ensure
+/// Reorder the analyses to ensure
 /// that species tree and gene tree are inferred first.
 /// The rest can be inferred in any order.
 pub fn reorder_analyses(analyses: &mut Vec<TreeInferenceMethod>) {
@@ -71,7 +71,7 @@ pub struct TreeInferenceConfig {
     pub input: TreeInferenceInput,
     pub data_preparation: DepMetadata,
     // We use an IndexMap instead of BTreeMap
-    // or HashMap to maintain the order of analyses.
+    // or HashMap to maintain the order of the analyses.
     pub analyses: IndexMap<String, TreeInferenceAnalyses>,
     pub alignments: AlignmentFiles,
 }
