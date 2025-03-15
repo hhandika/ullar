@@ -99,7 +99,7 @@ impl<'a> Assembly<'a> {
     /// Assemble cleaned read files using SPAdes
     pub fn assemble(&self) {
         let spinner = common::init_spinner();
-        spinner.set_message("Parsing config file");
+        spinner.set_message("Parsing config file\n");
         let config = self.parse_config().expect("Failed to parse config");
         let assembler = config.dependencies.get(ASSEMBLER_DEPENDENCY);
         let updated_dep = SpadesMetadata::new().update(assembler);
