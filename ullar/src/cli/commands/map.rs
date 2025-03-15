@@ -78,7 +78,7 @@ pub struct MapInitArgs {
     pub re_sample: String,
     #[arg(
         long,
-        default_value = "file",
+        default_value = "directory",
         help = "Sample name sources",
         value_parser = builder::PossibleValuesParser::new(["file", "directory", "regex"])
     )]
