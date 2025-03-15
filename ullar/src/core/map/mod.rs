@@ -54,6 +54,15 @@ impl<'a> ContigMapping<'a> {
         }
     }
 
+    pub fn from_config_path(config_path: &'a Path) -> Self {
+        Self {
+            config_path,
+            output_dir: Path::new(DEFAULT_CONTIG_MAPPING_OUTPUT_DIR),
+            runner: RunnerOptions::default(),
+            task: Task::ContigMapping,
+        }
+    }
+
     pub fn map(&self) {
         let spinner = common::init_spinner();
         spinner.set_message("Mapping contigs to reference sequence");

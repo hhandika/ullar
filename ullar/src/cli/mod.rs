@@ -18,7 +18,7 @@ use crate::{
     core::{
         alignment::{init::AlignmentInit, SequenceAlignment},
         assembly::{init::AssemblyInit, Assembly},
-        clean::{init::ReadCleaningInit, ReadCleaner},
+        clean::{init::ReadCleaningInit, ReadCleaning},
         map::{init::InitMappingConfig, ContigMapping},
         tree::{init::TreeInferenceInit, TreeEstimation},
         utils::{checksum::Sha256Executor, scan::ReadScanner},
@@ -124,7 +124,7 @@ impl<'a> CleanArgParser<'a> {
         match self.subcommand {
             ReadCleaningSubcommand::Init(init_args) => self.init(init_args),
             ReadCleaningSubcommand::Clean(clean_args) => {
-                let cleaner = ReadCleaner::from_arg(clean_args);
+                let cleaner = ReadCleaning::from_arg(clean_args);
                 cleaner.clean();
             }
         }
@@ -132,7 +132,7 @@ impl<'a> CleanArgParser<'a> {
 
     fn init(&self, args: &ReadCleaningInitArgs) {
         let mut init = ReadCleaningInit::from_arg(args);
-        init.init().expect("Failed to execute new command");
+        init.init();
     }
 }
 

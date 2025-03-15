@@ -63,10 +63,10 @@ impl<'a> SequenceAlignment<'a> {
         }
     }
 
-    pub fn from_config_path(config_path: &'a Path, output_dir: &'a Path) -> Self {
+    pub fn from_config_path(config_path: &'a Path) -> Self {
         Self {
             config_path,
-            output_dir,
+            output_dir: Path::new(DEFAULT_ALIGNMENT_OUTPUT_DIR),
             runner: RunnerOptions::default(),
             task: Task::SequenceAlignment,
         }
