@@ -7,22 +7,19 @@ use std::{
 };
 
 use colored::Colorize;
-use indicatif::ProgressBar;
 
 use crate::{
-    cli::commands::map::MapInitArgs,
+    cli::commands::{common::CommonInitArgs, map::MapInitArgs},
+    core::map::ContigMapping,
     helper::{
         common,
         configs::{CONFIG_EXTENSION_TOML, DEFAULT_CONFIG_DIR},
         files::PathCheck,
-        regex::{CONTIG_SAMPLE_REGEX, UCE_REGEX},
     },
     types::map::MappingQueryFormat,
 };
 
-use super::configs::{
-    ContigInput, ContigMappingConfig, SampleNameSource, DEFAULT_REF_MAPPING_CONFIG,
-};
+use super::configs::{ContigInput, ContigMappingConfig, SampleNameSource};
 
 pub struct InitMappingConfig<'a> {
     /// Query directory containing query sequences
@@ -41,23 +38,7 @@ pub struct InitMappingConfig<'a> {
     pub refname_regex: &'a str,
     /// Sample name regex
     pub sample_name_regex: &'a str,
-    pub override_args: Option<&'a str>,
-}
-
-impl Default for InitMappingConfig<'_> {
-    fn default() -> Self {
-        Self {
-            query_dir: None,
-            query_paths: None,
-            query_format: MappingQueryFormat::Contig,
-            name_source: "file",
-            reference_path: Path::new(""),
-            config_name: DEFAULT_REF_MAPPING_CONFIG,
-            refname_regex: UCE_REGEX,
-            sample_name_regex: CONTIG_SAMPLE_REGEX,
-            override_args: None,
-        }
-    }
+    pub common: &'a CommonInitArgs,
 }
 
 impl<'a> InitMappingConfig<'a> {
@@ -71,7 +52,7 @@ impl<'a> InitMappingConfig<'a> {
             config_name: &args.config_name,
             refname_regex: &args.re_reference,
             sample_name_regex: &args.re_sample,
-            override_args: args.common.override_args.as_deref(),
+            common: &args.common,
         }
     }
 
@@ -82,18 +63,42 @@ impl<'a> InitMappingConfig<'a> {
             .with_extension(CONFIG_EXTENSION_TOML);
         PathCheck::new(&config_path).prompt_exists(false);
         let spinner = common::init_spinner();
-        spinner.set_message("Initializing mapping configuration");
-        self.write_config(&spinner);
+        spinner.set_message("Writing mapping config");
+        let config_path = self.write_config();
+        match config_path {
+            Ok(path) => {
+                spinner
+                    .finish_with_message(format!("{} Finished writing config file\n", "✔".green()));
+                self.log_output(&path);
+
+                self.autorun_pipeline(&path);
+            }
+            Err(e) => {
+                spinner.finish_with_message(format!(
+                    "{} Failed to write config file: {}\n",
+                    "✖".red(),
+                    e
+                ));
+            }
+        }
     }
 
-    fn write_config(&self, spinner: &ProgressBar) {
+    fn autorun_pipeline(&self, config_path: &Path) {
+        let header = "Starting mapping pipeline...".to_string();
+        log::info!("{}", header.cyan());
+        log::info!("");
+
+        let runner = ContigMapping::from_config_path(config_path);
+        runner.map();
+    }
+
+    fn write_config(&self) -> Result<PathBuf, Box<dyn Error>> {
         match self.query_format {
             MappingQueryFormat::Contig => {
-                spinner.set_message("Writing mapping config");
-                let (path, config) = self.write_contig_config().expect("Failed writing config");
-                spinner.finish_with_message(format!("{} Finished writing config\n", "✔".green()));
+                let (path, config) = self.write_contig_config()?;
                 self.log_output(&path);
                 self.log_contig_output(&config);
+                Ok(path)
             }
             MappingQueryFormat::Fastq => unimplemented!(),
         }
@@ -112,8 +117,11 @@ impl<'a> InitMappingConfig<'a> {
                 "No sequence found in the input directory. Please, check input is FASTA".into(),
             );
         }
-        let output_path =
-            config.to_toml(self.config_name, self.reference_path, self.override_args)?;
+        let output_path = config.to_toml(
+            self.config_name,
+            self.reference_path,
+            self.common.override_args.as_deref(),
+        )?;
         Ok((output_path, config))
     }
 

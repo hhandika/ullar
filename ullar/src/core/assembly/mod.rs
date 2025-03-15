@@ -85,10 +85,10 @@ impl<'a> Assembly<'a> {
         }
     }
 
-    pub fn from_config_path(config_path: &Path, output_dir: &'a Path) -> Self {
+    pub fn from_config_path(config_path: &Path) -> Self {
         Self {
             config_path: config_path.to_owned(),
-            output_dir,
+            output_dir: Path::new(DEFAULT_ASSEMBLY_OUTPUT_DIR),
             rename_contigs: false,
             keep_intermediates: false,
             runner: RunnerOptions::default(),

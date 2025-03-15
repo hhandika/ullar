@@ -111,7 +111,7 @@ impl<'a> AssemblyInit<'a> {
     fn autorun_pipeline(&self, config_path: &Path) {
         let header = "Starting assembly pipeline...".to_string();
         log::info!("{}", header.cyan());
-        let runner = Assembly::from_config_path(config_path, &self.common.output);
+        let runner = Assembly::from_config_path(config_path);
         runner.assemble();
     }
 

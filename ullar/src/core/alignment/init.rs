@@ -8,7 +8,7 @@ use segul::helper::types::InputFmt;
 
 use crate::cli::commands::alignment::AlignmentInitArgs;
 use crate::cli::commands::common::CommonInitArgs;
-use crate::core::alignment::{SequenceAlignment, DEFAULT_ALIGNMENT_OUTPUT_DIR};
+use crate::core::alignment::SequenceAlignment;
 use crate::helper::common::{self, PrettyHeader};
 
 use super::configs::AlignmentConfig;
@@ -63,8 +63,7 @@ impl<'a> AlignmentInit<'a> {
         let header = "Starting sequence alignment pipeline...".to_string();
         log::info!("{}", header.cyan());
         log::info!("");
-        let output_dir = Path::new(DEFAULT_ALIGNMENT_OUTPUT_DIR);
-        let runner = SequenceAlignment::from_config_path(config_path, output_dir);
+        let runner = SequenceAlignment::from_config_path(config_path);
         runner.align();
     }
 
