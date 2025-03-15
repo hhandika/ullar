@@ -80,7 +80,7 @@ impl<'a> ReadCleaning<'a> {
     /// Clean raw read files using Fastp
     pub fn clean(&self) {
         let spinner = common::init_spinner();
-        spinner.set_message("Parsing and checking the config file");
+        spinner.set_message("Parsing and checking the config file\n");
         let config = self
             .parse_config()
             .expect("Failed to parse config. Try to create a new config.");
