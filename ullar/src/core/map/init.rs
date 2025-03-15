@@ -12,7 +12,7 @@ use crate::{
     cli::commands::{common::CommonInitArgs, map::MapInitArgs},
     core::map::ContigMapping,
     helper::{
-        common,
+        common::{self, PrettyHeader},
         configs::{CONFIG_EXTENSION_TOML, DEFAULT_CONFIG_DIR},
         files::PathCheck,
     },
@@ -66,12 +66,16 @@ impl<'a> InitMappingConfig<'a> {
         spinner.set_message("Writing mapping config");
         let config_path = self.write_config();
         match config_path {
-            Ok(path) => {
+            Ok((path, config)) => {
                 spinner
                     .finish_with_message(format!("{} Finished writing config file\n", "✔".green()));
                 self.log_output(&path);
-
-                self.autorun_pipeline(&path);
+                self.log_contig_output(&config);
+                if self.common.autorun {
+                    let footer = PrettyHeader::new();
+                    footer.get_section_footer();
+                    self.autorun_pipeline(&path);
+                }
             }
             Err(e) => {
                 spinner.finish_with_message(format!(
@@ -92,13 +96,11 @@ impl<'a> InitMappingConfig<'a> {
         runner.map();
     }
 
-    fn write_config(&self) -> Result<PathBuf, Box<dyn Error>> {
+    fn write_config(&self) -> Result<(PathBuf, ContigMappingConfig), Box<dyn Error>> {
         match self.query_format {
             MappingQueryFormat::Contig => {
                 let (path, config) = self.write_contig_config()?;
-                self.log_output(&path);
-                self.log_contig_output(&config);
-                Ok(path)
+                Ok((path, config))
             }
             MappingQueryFormat::Fastq => unimplemented!(),
         }
