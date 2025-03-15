@@ -51,6 +51,7 @@ impl<'a> SequenceAlignment<'a> {
             task: Task::SequenceAlignment,
         }
     }
+
     /// Initialize a new Alignment instance
     /// from the command line arguments
     pub fn from_arg(args: &'a AlignmentArgs) -> Self {
@@ -58,6 +59,15 @@ impl<'a> SequenceAlignment<'a> {
             config_path: &args.config,
             output_dir: &args.output,
             runner: RunnerOptions::from_arg(&args.common),
+            task: Task::SequenceAlignment,
+        }
+    }
+
+    pub fn from_config_path(config_path: &'a Path, output_dir: &'a Path) -> Self {
+        Self {
+            config_path,
+            output_dir,
+            runner: RunnerOptions::default(),
             task: Task::SequenceAlignment,
         }
     }
@@ -71,7 +81,7 @@ impl<'a> SequenceAlignment<'a> {
     /// 4. Check configuration
     /// 6. If dry-run, print the summary and exit
     /// 7. Align the sequences
-    pub fn align(&mut self) {
+    pub fn align(&self) {
         let spinner = common::init_spinner();
         spinner.set_message("Parsing config file");
         let config = self.parse_config().expect("Failed to parse config");
@@ -92,7 +102,7 @@ impl<'a> SequenceAlignment<'a> {
         Ok(config)
     }
 
-    fn par_align(&mut self, sequences: &[FileMetadata], mafft: &DepMetadata) -> MafftReport {
+    fn par_align(&self, sequences: &[FileMetadata], mafft: &DepMetadata) -> MafftReport {
         let progress_bar = common::init_progress_bar(sequences.len() as u64);
         log::info!("{}", "Aligning sequences".cyan());
         progress_bar.set_message("Alignments");
