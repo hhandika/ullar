@@ -67,7 +67,9 @@ impl<'a> MafftRunner<'a> {
             .as_ref()
             .unwrap_or(&MAFFT_EXE.to_string())
             .to_string();
+
         let mut cmd = Command::new(&executable);
+
         match &self.dep_metadata.override_args {
             Some(params) => parse_override_args!(cmd, params),
             None => parse_override_args!(cmd, DEFAULT_MAFFT_PARAMS),
@@ -86,7 +88,6 @@ impl<'a> MafftRunner<'a> {
         }
     }
 
-    // #[cfg(target_family = "unix")]
     fn write_output(&self, output_path: &PathBuf, output: &[u8]) -> Result<(), Box<dyn Error>> {
         if !output.is_empty() {
             fs::write(output_path, output)?;
@@ -104,19 +105,9 @@ impl<'a> MafftRunner<'a> {
         Ok(output_path)
     }
 
-    #[cfg(target_family = "unix")]
     fn get_input_path(&self) -> PathBuf {
         let input_path = self.input_file.parent_dir.join(&self.input_file.file_name);
         input_path.canonicalize().expect("Failed to get input path")
-    }
-
-    #[cfg(target_os = "windows")]
-    fn get_input_path(&self) -> String {
-        let input_path = self.input_file.parent_dir.join(&self.input_file.file_name);
-        input_path
-            .to_str()
-            .expect("Failed to get input path")
-            .to_string()
     }
 
     fn check_success(&self, output: &Output) -> Result<(), Box<dyn Error>> {

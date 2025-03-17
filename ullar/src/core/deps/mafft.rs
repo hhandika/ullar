@@ -7,8 +7,13 @@ use std::process::Command;
 use super::{check_dependency_match, dependency_not_found, DepMetadata};
 
 /// Default MAFFT executable for Unix systems
+#[cfg(target_family = "unix")]
 pub const MAFFT_EXE: &str = "mafft";
 const MAFFT_NAME: &str = "MAFFT";
+
+/// Default MAFFT for Windows systems
+#[cfg(target_family = "windows")]
+pub const MAFFT_EXE: &str = "mafft.bat";
 
 #[derive(Debug, Default)]
 pub struct MafftMetadata<'a> {
@@ -62,7 +67,8 @@ impl<'a> MafftMetadata<'a> {
     /// Get the version of fastp
     #[cfg(target_family = "windows")]
     fn get_mafft(&self) -> Option<String> {
-        let output = Command::new("wsl.exe").arg(MAFFT_EXE).arg("-h").output();
+        // let output = Command::new("wsl.exe").arg(MAFFT_EXE).arg("-h").output();
+        let output = Command::new(MAFFT_EXE).arg("-h").output();
         match output {
             Err(_) => None,
             Ok(output) => {
