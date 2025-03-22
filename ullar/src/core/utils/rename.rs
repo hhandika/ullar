@@ -87,7 +87,7 @@ impl<'a> FileDirRename<'a> {
         let mut old_name_index = 0;
         let mut new_name_index = 1;
         headers.iter().enumerate().for_each(|(i, header)| {
-            if header == "old_name" {
+            if header == "original_name" {
                 old_name_index = i;
             } else if header == "new_name" {
                 new_name_index = i;
