@@ -10,7 +10,7 @@ use segul::helper::{
 
 use crate::types::map::LastzOutputFormat;
 
-use super::lastz::LastzOutput;
+use super::lastz::LastzGeneralOutput;
 
 type ContigMapping = BTreeMap<String, BestContig>;
 
@@ -62,13 +62,13 @@ impl MappingData {
         }
     }
 
-    pub fn summarize(&mut self, lastz_output: &[LastzOutput], target_path: &Path) {
+    pub fn summarize(&mut self, lastz_output: &[LastzGeneralOutput], target_path: &Path) {
         self.data = self.find_best_contigs(lastz_output);
         let (seq, _) = SeqParser::new(target_path, &DataType::Dna).parse(&InputFmt::Auto);
         self.ref_count = seq.len();
     }
 
-    fn find_best_contigs(&self, lastz_output: &[LastzOutput]) -> ContigMapping {
+    fn find_best_contigs(&self, lastz_output: &[LastzGeneralOutput]) -> ContigMapping {
         let mut matches_refs: HashMap<String, usize> = HashMap::new();
         let mut best_contigs: ContigMapping = BTreeMap::new();
         lastz_output.iter().for_each(|output| {
@@ -97,7 +97,7 @@ impl MappingData {
     fn update_matching_refs(
         &self,
         matches_refs: &mut HashMap<String, usize>,
-        output: &LastzOutput,
+        output: &LastzGeneralOutput,
         contig_name: &str,
     ) -> bool {
         let contig_name = contig_name.to_string();
@@ -117,7 +117,7 @@ impl MappingData {
     fn update_matching_contigs(
         &self,
         best_contigs: &mut ContigMapping,
-        output: &LastzOutput,
+        output: &LastzGeneralOutput,
         ref_name: &str,
         matches_refs: bool,
     ) {
@@ -176,7 +176,7 @@ impl BestContig {
         }
     }
 
-    pub fn from_lastz_output(output: &LastzOutput) -> Self {
+    pub fn from_lastz_output(output: &LastzGeneralOutput) -> Self {
         Self {
             contig_name: String::from(&output.name2),
             ref_name: String::from(&output.name1),
@@ -201,7 +201,7 @@ impl BestContig {
         self.duplicate_contigs += 1;
     }
 
-    fn update(&mut self, output: &LastzOutput) {
+    fn update(&mut self, output: &LastzGeneralOutput) {
         self.contig_name = String::from(&output.name2);
         self.ref_name = String::from(&output.name1);
         self.strand = output.strand2;
@@ -230,7 +230,7 @@ mod tests {
 
     #[test]
     fn test_contig_matching() {
-        let lastz_output = LastzOutput {
+        let lastz_output = LastzGeneralOutput {
             name1: String::from("uce-1_p1"),
             name2: String::from("contig1"),
             strand1: '+',
@@ -247,7 +247,7 @@ mod tests {
             id_pct: 100.0,
             cov_pct: 100.0,
         };
-        let lastz_output2 = LastzOutput {
+        let lastz_output2 = LastzGeneralOutput {
             name1: String::from("uce-2_p1"),
             name2: String::from("contig2"),
             strand1: '+',
@@ -264,7 +264,7 @@ mod tests {
             id_pct: 100.0,
             cov_pct: 100.0,
         };
-        let lastz_output3 = LastzOutput {
+        let lastz_output3 = LastzGeneralOutput {
             name1: String::from("uce-2_p1"),
             name2: String::from("contig3"),
             strand1: '+',
@@ -281,7 +281,7 @@ mod tests {
             id_pct: 8.0,
             cov_pct: 8.0,
         };
-        let lastz_output4 = LastzOutput {
+        let lastz_output4 = LastzGeneralOutput {
             name1: String::from("uce-1_p1"),
             name2: String::from("contig3"),
             strand1: '+',
