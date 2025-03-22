@@ -33,6 +33,7 @@ pub const DEFAULT_OUTPUT_EXT: &str = "csv";
 
 const LASTZ_RESULT_DIR: &str = "lastz_results";
 const LASTZ_RESULT_SUFFIX: &str = "lastz";
+const LASTZ_MAF_EXT: &str = "maf";
 
 pub enum RefNameRegex {
     Default,
@@ -275,7 +276,7 @@ impl<'a> Lastz<'a> {
             )
             .into());
         }
-        let output_path = self.create_output_path(sample_name)?;
+        let output_path = self.create_output_maf(sample_name)?;
         fs::write(&output_path, &output.stdout).with_context(|| {
             format!(
                 "Failed to write Lastz output to file: {}",
@@ -328,6 +329,13 @@ impl<'a> Lastz<'a> {
         let output_path = output_dir
             .join(&output_filename)
             .with_extension(DEFAULT_OUTPUT_EXT);
+        Ok(output_path)
+    }
+
+    fn create_output_maf(&self, sample_name: &str) -> Result<PathBuf, Box<dyn Error>> {
+        let output_dir = self.output_dir.join(LASTZ_RESULT_DIR);
+        self.create_directory(&output_dir)?;
+        let output_path = output_dir.join(sample_name).with_extension(LASTZ_MAF_EXT);
         Ok(output_path)
     }
 
