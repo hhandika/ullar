@@ -1,4 +1,4 @@
-use std::{fmt::Display, str::FromStr};
+use std::{default, fmt::Display, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 
@@ -78,6 +78,12 @@ pub enum LastzOutputFormat {
     None,
 }
 
+impl default::Default for LastzOutputFormat {
+    fn default() -> Self {
+        LastzOutputFormat::General(String::new())
+    }
+}
+
 impl Display for LastzOutputFormat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -91,6 +97,24 @@ impl Display for LastzOutputFormat {
             LastzOutputFormat::Maf => write!(f, "maf"),
             LastzOutputFormat::Sam => write!(f, "sam"),
             LastzOutputFormat::None => write!(f, "none"),
+        }
+    }
+}
+
+impl FromStr for LastzOutputFormat {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "general" => Ok(LastzOutputFormat::General(String::new())),
+            "maf" => Ok(LastzOutputFormat::Maf),
+            "sam" => Ok(LastzOutputFormat::Sam),
+            "none" => Ok(LastzOutputFormat::None),
+            _ if s.starts_with("general:") => {
+                let fields = s.trim_start_matches("general:");
+                Ok(LastzOutputFormat::General(fields.to_string()))
+            }
+            _ => Err(format!("Unknown lastz output format: {}", s)),
         }
     }
 }

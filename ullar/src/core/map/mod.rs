@@ -11,7 +11,11 @@ use writer::MappedContigWriter;
 use crate::{
     cli::commands::map::MapContigArgs,
     helper::{common, files::PathCheck},
-    types::{map::Aligner, runner::RunnerOptions, Task},
+    types::{
+        map::{Aligner, LastzOutputFormat},
+        runner::RunnerOptions,
+        Task,
+    },
 };
 
 use super::deps::{lastz::LastzMetadata, DepMetadata};
@@ -75,9 +79,7 @@ impl<'a> ContigMapping<'a> {
             .is_dir()
             .with_force_overwrite(self.runner.overwrite)
             .prompt_exists(self.runner.dry_run);
-        let results = self.run_lastz(&config, &updated_dep);
-        let summary = self.generate_mapped_contig(&results, &config);
-        self.log_output(&results, &summary);
+        self.run_lastz(&config, &updated_dep);
     }
 
     fn parse_config(&self) -> Result<ContigMappingConfig, Box<dyn Error>> {
@@ -85,9 +87,26 @@ impl<'a> ContigMapping<'a> {
         Ok(config)
     }
 
-    fn run_lastz(&self, config: &ContigMappingConfig, dep: &DepMetadata) -> Vec<MappingData> {
+    fn run_lastz(&self, config: &ContigMappingConfig, dep: &DepMetadata) {
         let lastz = LastzMapping::new(&config.sequence_reference, self.output_dir, dep);
-        lastz.run(&config.contigs).expect("Failed to run Lastz")
+        match config.output_format {
+            LastzOutputFormat::General(_) => {
+                let results = lastz
+                    .run_general_output(&config.contigs, &config.output_format)
+                    .expect("Failed to run Lastz");
+                let summary = self.generate_mapped_contig(&results, &config);
+                self.log_output(&results, &summary);
+            }
+            LastzOutputFormat::Maf => {
+                let results = lastz
+                    .run_maf_output(&config.contigs)
+                    .expect("Failed to run Lastz");
+                log::info!("{}", "Output".cyan());
+                log::info!("{:18}: {}", "Output dir", self.output_dir.display());
+                log::info!("{:18}: {}", "Total processed", results.len());
+            }
+            _ => unimplemented!("Only general output format is supported for Lastz"),
+        }
     }
 
     fn generate_mapped_contig(

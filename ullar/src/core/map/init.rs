@@ -34,6 +34,9 @@ pub struct InitMappingConfig<'a> {
     pub name_source: &'a str,
     /// Config file name
     pub config_name: &'a str,
+    /// Lastz output format
+    /// (default: "general")
+    pub output_format: &'a str,
     /// Reference regex names
     pub refname_regex: &'a str,
     /// Sample name regex
@@ -50,6 +53,7 @@ impl<'a> InitMappingConfig<'a> {
             reference_path: &args.reference,
             name_source: &args.name_source,
             config_name: &args.config_name,
+            output_format: &args.output_format,
             refname_regex: &args.re_reference,
             sample_name_regex: &args.re_sample,
             common: &args.common,
@@ -109,7 +113,11 @@ impl<'a> InitMappingConfig<'a> {
     fn write_contig_config(&self) -> Result<(PathBuf, ContigMappingConfig), Box<dyn Error>> {
         let name_source = self.get_sample_name_source();
         let input = ContigInput::new(name_source);
-        let mut config = ContigMappingConfig::init(input, self.refname_regex);
+        let output_format = self
+            .output_format
+            .parse()
+            .expect("Invalid lastz output format");
+        let mut config = ContigMappingConfig::init(input, self.refname_regex, output_format);
         match self.query_dir {
             Some(dir) => config.from_contig_dir(dir),
             None => config.from_contig_paths(&self.get_contig_paths()),
