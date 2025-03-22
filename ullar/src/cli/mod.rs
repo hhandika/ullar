@@ -14,14 +14,14 @@ use segul::helper::utils;
 use std::{path::PathBuf, time::Instant};
 
 use crate::{
-    core::deps::DependencyCheck,
     core::{
         alignment::{init::AlignmentInit, SequenceAlignment},
         assembly::{init::AssemblyInit, Assembly},
         clean::{init::ReadCleaningInit, ReadCleaning},
+        deps::DependencyCheck,
         map::{init::InitMappingConfig, ContigMapping},
         tree::{init::TreeInferenceInit, TreeEstimation},
-        utils::{checksum::Sha256Executor, scan::ReadScanner},
+        utils::{checksum::Sha256Executor, rename::FileDirRename, scan::ReadScanner},
     },
     helper::{self, common::PrettyHeader},
 };
@@ -91,6 +91,10 @@ impl Cli {
 
     fn parse_utils(&self, util_args: &UtilSubCommand) {
         match util_args {
+            UtilSubCommand::Rename(rename_args) => {
+                let parser = FileDirRename::from_arg(rename_args);
+                parser.rename().expect("Failed to execute rename command");
+            }
             UtilSubCommand::Checksum(sha256_args) => {
                 let parser = Sha256Executor::from_arg(sha256_args);
                 parser.execute().expect("Failed to execute sha256 command");
