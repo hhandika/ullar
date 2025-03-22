@@ -83,6 +83,15 @@ pub struct MapInitArgs {
         value_parser = builder::PossibleValuesParser::new(["file", "directory", "regex"])
     )]
     pub name_source: String,
+    /// Lastz output format
+    /// Supports "general", "maf", "sam" and "none"
+    #[arg(
+        long,
+        default_value = "general",
+        help = "Lastz output format",
+        value_parser = builder::PossibleValuesParser::new(["general", "maf", "sam", "none"])
+    )]
+    pub output_format: String,
     /// Config file name
     #[arg(
         long,

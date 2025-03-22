@@ -17,7 +17,10 @@ use crate::{
         configs::generate_config_output_path,
         files::{FileFinder, FileMetadata},
     },
-    types::{map::Aligner, SupportedFormats},
+    types::{
+        map::{Aligner, LastzOutputFormat},
+        SupportedFormats,
+    },
 };
 
 pub const DEFAULT_REF_MAPPING_CONFIG: &str = "contig_mapping";
@@ -61,6 +64,7 @@ pub struct ContigMappingConfig {
     #[serde(flatten)]
     pub app: UllarConfig,
     pub input: ContigInput,
+    pub output_format: LastzOutputFormat,
     pub dependencies: BTreeMap<String, DepMetadata>,
     pub sequence_reference: ReferenceFile,
     pub contigs: Vec<ContigFiles>,
@@ -72,15 +76,21 @@ impl ContigMappingConfig {
             app: UllarConfig::init(),
             input: ContigInput::default(),
             dependencies: BTreeMap::new(),
+            output_format: LastzOutputFormat::default(),
             contigs: Vec::new(),
             sequence_reference: ReferenceFile::new(reference_regex),
         }
     }
 
-    pub fn init(input: ContigInput, reference_regex: &str) -> Self {
+    pub fn init(
+        input: ContigInput,
+        reference_regex: &str,
+        output_format: LastzOutputFormat,
+    ) -> Self {
         Self {
             app: UllarConfig::default(),
             dependencies: BTreeMap::new(),
+            output_format,
             input,
             sequence_reference: ReferenceFile::new(reference_regex),
             contigs: Vec::new(),
