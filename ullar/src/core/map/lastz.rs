@@ -206,7 +206,7 @@ impl<'a> Lastz<'a> {
         }
     }
 
-    fn execute_lastz(&self) -> Result<Vec<LastzOutput>, Box<dyn Error>> {
+    fn execute_lastz(&self) -> Result<Vec<LastzGeneralOutput>, Box<dyn Error>> {
         let executable = self.dependency.get_executable(LASTZ_EXE);
         let mut cmd = Command::new(executable);
         cmd.arg(self.target.get_path());
@@ -266,14 +266,14 @@ impl<'a> Lastz<'a> {
         Ok(())
     }
 
-    fn parse_output(&self, output: &Output) -> Result<Vec<LastzOutput>, Box<dyn Error>> {
-        let parsed_output = LastzOutput::new().parse(&output.stdout)?;
+    fn parse_output(&self, output: &Output) -> Result<Vec<LastzGeneralOutput>, Box<dyn Error>> {
+        let parsed_output = LastzGeneralOutput::new().parse(&output.stdout)?;
         Ok(parsed_output)
     }
 
     fn write_output(
         &self,
-        parse_output: &[LastzOutput],
+        parse_output: &[LastzGeneralOutput],
         sample_name: &str,
     ) -> Result<PathBuf, Box<dyn Error>> {
         let output_path = self.create_output_path(sample_name)?;
@@ -286,7 +286,7 @@ impl<'a> Lastz<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct LastzOutput {
+pub struct LastzGeneralOutput {
     /// Score of the alignment block.
     /// the higher the score, the better the alignment
     pub score: usize,
@@ -330,13 +330,13 @@ pub struct LastzOutput {
     pub cov_pct: f64,
 }
 
-impl Default for LastzOutput {
+impl Default for LastzGeneralOutput {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl LastzOutput {
+impl LastzGeneralOutput {
     pub fn new() -> Self {
         Self {
             score: 0,
@@ -367,7 +367,7 @@ impl LastzOutput {
             .delimiter(b'\t')
             .from_reader(data.as_slice());
         for result in reader.deserialize() {
-            let record: LastzOutput = result?;
+            let record: LastzGeneralOutput = result?;
             results.push(record);
         }
         Ok(results)
