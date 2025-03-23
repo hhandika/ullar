@@ -1,10 +1,20 @@
 //! Map contig to reference sequence
-use std::{error::Error, path::Path};
+use std::{
+    error::Error,
+    fs::File,
+    io::BufReader,
+    path::{Path, PathBuf},
+};
 
 use colored::Colorize;
 use configs::{ContigMappingConfig, LASTZ_ALIGNER};
 use lastz::{LastzMapping, DEFAULT_LASTZ_PARAMS};
 use reports::MappingData;
+use segul::{
+    helper::types::{Header, OutputFmt, SeqMatrix},
+    parser::maf::{MafParagraph, MafReader},
+    writer::sequences::SeqWriter,
+};
 use summary::FinalMappingSummary;
 use writer::MappedContigWriter;
 
@@ -101,12 +111,62 @@ impl<'a> ContigMapping<'a> {
                 let results = lastz
                     .run_maf_output(&config.contigs)
                     .expect("Failed to run Lastz");
+                let matrix = self.parse_maf(&results);
+                self.write_matrix(
+                    &matrix,
+                    &self.output_dir.join("sequences").with_extension("fas"),
+                );
                 log::info!("{}", "Output".cyan());
                 log::info!("{:18}: {}", "Output dir", self.output_dir.display());
                 log::info!("{:18}: {}", "Total processed", results.len());
             }
             _ => unimplemented!("Only general output format is supported for Lastz"),
         }
+    }
+
+    fn parse_maf(&self, maf_paths: &[PathBuf]) -> SeqMatrix {
+        let mut matrix = SeqMatrix::new();
+        maf_paths.iter().for_each(|path| {
+            let sample_name = path
+                .file_stem()
+                .expect("Failed to get file stem")
+                .to_string_lossy()
+                .to_string();
+            let mut current_score: f64 = 0.0;
+            let mut sequence = String::new();
+            let file = File::open(path).expect("Unable to open file");
+            let buff = BufReader::new(file);
+            let maf = MafReader::new(buff);
+            maf.into_iter().for_each(|record| match record {
+                MafParagraph::Alignment(aln) => {
+                    let score = aln.score.unwrap_or(0.0);
+
+                    if score > current_score {
+                        aln.sequences.iter().skip(0).for_each(|sample| {
+                            let seq = String::from_utf8_lossy(&sample.text).to_string();
+                            sequence = seq;
+                        });
+                        current_score = score;
+                    }
+                }
+                _ => (),
+            });
+            if !sequence.is_empty() {
+                matrix.insert(sample_name, sequence);
+            }
+        });
+        println!("Parsed matrix: {}", matrix.len());
+        matrix
+    }
+
+    fn write_matrix(&self, matrix: &SeqMatrix, output: &Path) {
+        let mut header = Header::new();
+        header.from_seq_matrix(matrix, true);
+        let mut writer = SeqWriter::new(output, matrix, &header);
+        let output_fmt = OutputFmt::FastaInt; // Change as needed
+        writer
+            .write_sequence(&output_fmt)
+            .expect("Failed writing output files");
     }
 
     fn generate_mapped_contig(
