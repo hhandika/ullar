@@ -89,7 +89,7 @@ pub struct MapInitArgs {
         long,
         default_value = "general",
         help = "Lastz output format",
-        value_parser = builder::PossibleValuesParser::new(["general", "maf", "sam", "none"])
+        value_parser = builder::PossibleValuesParser::new(["general", "maf"])
     )]
     pub output_format: String,
     /// Config file name
