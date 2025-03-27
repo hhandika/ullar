@@ -239,12 +239,11 @@ impl<'a> LocusMappingWriter<'a> {
                         );
                         sequence.push_str(&parse_sequence);
                     });
-                    if let Entry::Vacant(e) = mapped_score.entry(id) {
+                    if let Entry::Vacant(e) = mapped_score.entry(id.to_string()) {
                         e.insert(aln.score.unwrap_or(0.0));
                         self.insert_ref_matrix(&mut ref_matrix, sequence, &ref_name, sample_name);
                     } else {
-                        let current_score =
-                            mapped_score.get(&ref_name).expect("Failed to get score");
+                        let current_score = mapped_score.get(&id).unwrap_or(&0.0);
                         if aln.score.unwrap_or(0.0) > *current_score {
                             mapped_score.insert(ref_name.to_string(), aln.score.unwrap_or(0.0));
                             self.insert_ref_matrix(
