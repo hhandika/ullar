@@ -1,8 +1,9 @@
 /// Write results
 use core::str;
 use std::{
-    collections::HashMap,
-    fs,
+    collections::{hash_map::Entry, HashMap},
+    fs::{self, File},
+    io::BufReader,
     path::{Path, PathBuf},
     sync::mpsc,
 };
@@ -15,8 +16,9 @@ use segul::{
     helper::{
         finder::IDs,
         sequence::SeqParser,
-        types::{self, DataType, Header, SeqMatrix},
+        types::{self, DataType, Header, OutputFmt, SeqMatrix},
     },
+    parser::maf::{MafAlignment, MafParagraph, MafReader},
     writer::sequences::SeqWriter,
 };
 
@@ -36,45 +38,76 @@ pub type MappedMatrix = HashMap<String, SeqMatrix>;
 
 const SUMMARY_MSG: &str = "Contigs/Loci";
 
-pub struct MappedContigWriter<'a> {
-    pub mapping_data: &'a [MappingData],
+trait MappingWriter {
+    fn get_sequence(&self, seq: &str, strand: char) -> String {
+        match strand {
+            '+' => seq.to_string(),
+            '-' => str::from_utf8(&dna::revcomp(seq.as_bytes()))
+                .expect("Failed to convert sequence to string")
+                .to_string(),
+            _ => seq.to_string(),
+        }
+    }
+
+    fn write_sequences(&self, final_matrix: &MappedMatrix, output_dir: &Path) {
+        let progress_bar = common::init_progress_bar(final_matrix.len() as u64);
+        progress_bar.set_message(SUMMARY_MSG);
+        let output_dir = output_dir.join(DEFAULT_UNALIGN_SEQUENCE_OUTPUT_DIR);
+        fs::create_dir_all(&output_dir).expect("Failed to create output directory");
+        let output_fmt = OutputFmt::FastaInt;
+        final_matrix.par_iter().for_each(|(refname, contigs)| {
+            let file_name = format!("{}.fas", refname);
+            let output_path = output_dir.join(file_name);
+            let mut header = Header::default();
+            header.from_seq_matrix(&contigs, false);
+            let mut writer = SeqWriter::new(&output_path, contigs, &header);
+            writer
+                .write_sequence(&output_fmt)
+                .expect("Failed to write sequences");
+        });
+        progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), SUMMARY_MSG));
+    }
+}
+
+pub struct ProbeMappingWriter<'a> {
     pub output_dir: &'a Path,
     pub reference_data: &'a ReferenceFile,
 }
 
-impl<'a> MappedContigWriter<'a> {
-    pub fn new(
-        mapping_data: &'a [MappingData],
-        output_dir: &'a Path,
-        reference_data: &'a ReferenceFile,
-    ) -> Self {
+impl<'a> MappingWriter for ProbeMappingWriter<'a> {}
+
+impl<'a> ProbeMappingWriter<'a> {
+    pub fn new(output_dir: &'a Path, reference_data: &'a ReferenceFile) -> Self {
         Self {
-            mapping_data,
             output_dir,
             reference_data,
         }
     }
 
-    pub fn generate(&self) -> FinalMappingSummary {
-        log::info!("Filtering paralogs...");
-        let final_matrix = self.map_contigs();
+    /// Writer for general lastz output.
+    /// Matches contigs to probes.
+    /// Pulls entire sequences that match the reference sequence.
+    pub fn write_general(&self, mapping_data: &[MappingData]) -> FinalMappingSummary {
+        log::info!("Mapping and filtering duplicate matches...");
+        let final_matrix = self.map_contig_to_probe(mapping_data);
         log::info!("Writing contigs to file...");
-        self.write_sequences(&final_matrix);
+        self.write_sequences(&final_matrix, self.output_dir);
         log::info!("Writing summary to file...");
-        let total_samples = self.mapping_data.len();
+        let total_samples = mapping_data.len();
         let mut summary_writer = SummaryWriter::new(self.output_dir, &final_matrix, total_samples);
         summary_writer.write(self.reference_data)
     }
 
-    fn map_contigs(&self) -> HashMap<String, SeqMatrix> {
-        // All contigs mapped to reference sequence. Key is the reference sequence name
-        // and value is a map of sample name and contig sequence.
+    // All contigs mapped to reference sequence. Key is the reference sequence name
+    // and value is a map of sample name and contig sequence.
+    // This allow us to keep track of the contig name and the sample name.
+    fn map_contig_to_probe(&self, mapping_data: &[MappingData]) -> HashMap<String, SeqMatrix> {
+        let progress_bar = common::init_progress_bar(mapping_data.len() as u64);
         let mut final_matrix: MappedMatrix = HashMap::new();
-        let progress_bar = common::init_progress_bar(self.mapping_data.len() as u64);
-        let (tx, rx) = mpsc::channel();
-        let msg = "Samples";
+        let msg = "samples";
         progress_bar.set_message(msg);
-        self.mapping_data.par_iter().for_each_with(tx, |tx, data| {
+        let (tx, rx) = mpsc::channel();
+        mapping_data.par_iter().for_each_with(tx, |tx, data| {
             let mut matrix: MappedMatrix = HashMap::new();
             let (mut seq, _) =
                 SeqParser::new(&data.contig_path, &DataType::Dna).parse(&types::InputFmt::Fasta);
@@ -116,37 +149,111 @@ impl<'a> MappedContigWriter<'a> {
             }
         });
     }
+}
 
-    fn get_sequence(&self, seq: &str, strand: char) -> String {
-        match strand {
-            '+' => seq.to_string(),
-            '-' => str::from_utf8(&dna::revcomp(seq.as_bytes()))
-                .expect("Failed to convert sequence to string")
-                .to_string(),
-            _ => seq.to_string(),
+pub struct LocusMappingWriter<'a> {
+    pub output_dir: &'a Path,
+    pub reference: &'a ReferenceFile,
+    pub maf_files: &'a [PathBuf],
+}
+
+impl<'a> MappingWriter for LocusMappingWriter<'a> {}
+
+impl<'a> LocusMappingWriter<'a> {
+    pub fn new(
+        output_dir: &'a Path,
+        maf_files: &'a [PathBuf],
+        reference: &'a ReferenceFile,
+    ) -> Self {
+        Self {
+            output_dir,
+            maf_files,
+            reference,
         }
     }
 
-    fn write_sequences(&self, final_matrix: &MappedMatrix) {
-        let progress_bar = common::init_progress_bar(final_matrix.len() as u64);
-        progress_bar.set_message(SUMMARY_MSG);
-        final_matrix.par_iter().for_each(|(refname, contigs)| {
-            let output_dir = self.output_dir.join(DEFAULT_UNALIGN_SEQUENCE_OUTPUT_DIR);
-            let file_name = format!("{}.fasta", refname);
-            let output_path = output_dir.join(file_name);
-            let header = self.get_header(contigs.clone());
-            let mut writer = SeqWriter::new(&output_path, contigs, &header);
-            writer
-                .write_sequence(&types::OutputFmt::Fasta)
-                .expect("Failed to write sequences");
+    pub fn write(&self) {
+        let progress_bar = common::init_progress_bar(self.maf_files.len() as u64);
+        progress_bar.set_message("samples");
+        let mut final_matrix = MappedMatrix::new();
+        let (tx, rx) = mpsc::channel();
+        self.maf_files.par_iter().for_each_with(tx, |tx, path| {
+            let sample_name = path
+                .file_stem()
+                .expect("Failed to get file stem")
+                .to_string_lossy()
+                .to_string();
+            let matrix = self.parse_maf(path);
+            tx.send((sample_name, matrix)).expect("Failed to send data");
+            progress_bar.inc(1);
         });
-        progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), SUMMARY_MSG));
+        rx.iter().for_each(|(sample_name, matrix)| {
+            if final_matrix.contains_key(&sample_name) {
+                let seq_matrix = final_matrix
+                    .get_mut(&sample_name)
+                    .expect("Failed to get matrix");
+                seq_matrix.extend(matrix.to_owned());
+            } else {
+                final_matrix.insert(sample_name, matrix);
+            }
+        });
+        progress_bar.finish_with_message(format!("{} samples\n", "✔".green()));
+        let output_dir = self.output_dir.join(DEFAULT_UNALIGN_SEQUENCE_OUTPUT_DIR);
+        fs::create_dir_all(&output_dir).expect("Failed to create output directory");
+        let output_path = output_dir.join("locus_mapping.fas");
+        self.write_sequences(&final_matrix, &output_path);
     }
 
-    fn get_header(&self, matrix: SeqMatrix) -> Header {
-        let mut header = Header::default();
-        header.from_seq_matrix(&matrix, false);
-        header
+    fn parse_maf(&self, maf_path: &Path) -> SeqMatrix {
+        let mut sample_matrix = SeqMatrix::new();
+        let mut mapped_score: HashMap<String, f64> = HashMap::new();
+        let file = File::open(maf_path).expect("Unable to open file");
+        let buff = BufReader::new(file);
+        let maf = MafReader::new(buff);
+        // We tract index 0 as the reference sequence
+        maf.into_iter().for_each(|record| {
+            let mut sequence = String::new();
+            match record {
+                MafParagraph::Alignment(aln) => {
+                    if aln.sequences.len() == 0 {
+                        return;
+                    }
+                    let ref_name = self.get_reference_name(&aln);
+                    aln.sequences.iter().skip(0).for_each(|sample| {
+                        let parse_sequence = self.get_sequence(
+                            str::from_utf8(&sample.text)
+                                .expect("Failed to convert sequence to string"),
+                            sample.strand.to_char(),
+                        );
+                        sequence.push_str(&parse_sequence);
+                    });
+                    if let Entry::Vacant(e) = mapped_score.entry(ref_name.to_string()) {
+                        e.insert(aln.score.unwrap_or(0.0));
+                        sample_matrix.insert(ref_name, sequence);
+                    } else {
+                        let current_score =
+                            mapped_score.get(&ref_name).expect("Failed to get score");
+                        if aln.score.unwrap_or(0.0) > *current_score {
+                            mapped_score.insert(ref_name.to_string(), aln.score.unwrap_or(0.0));
+                            sample_matrix.insert(ref_name, sequence);
+                        }
+                    }
+                }
+                _ => (),
+            }
+        });
+
+        sample_matrix
+    }
+
+    fn get_reference_name(&self, alignment: &MafAlignment) -> String {
+        let reference_name = alignment.sequences[0].source.to_string();
+        let re = regex::Regex::new(&self.reference.name_regex).expect("Failed to create regex");
+        let capture = re.captures(&reference_name);
+        match capture {
+            Some(capture) => capture[0].to_string(),
+            None => reference_name,
+        }
     }
 }
 

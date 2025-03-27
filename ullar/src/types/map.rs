@@ -119,6 +119,38 @@ impl FromStr for LastzOutputFormat {
     }
 }
 
+/// Mapping reference type.
+/// Either probes or loci.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub enum MappingReferenceType {
+    /// Probes reference type
+    #[default]
+    Probes,
+    /// Loci reference type
+    Loci,
+}
+
+impl Display for MappingReferenceType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MappingReferenceType::Probes => write!(f, "probes"),
+            MappingReferenceType::Loci => write!(f, "loci"),
+        }
+    }
+}
+
+impl FromStr for MappingReferenceType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "probes" => Ok(MappingReferenceType::Probes),
+            "loci" => Ok(MappingReferenceType::Loci),
+            _ => Err(format!("Unknown lastz reference type: {}", s)),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum LastzNameParse {
     Full,

@@ -86,12 +86,18 @@ pub struct MapInitArgs {
     /// Lastz output format
     /// Supports "general", "maf", "sam" and "none"
     #[arg(
+        short = 't',
         long,
-        default_value = "general",
-        help = "Lastz output format",
-        value_parser = builder::PossibleValuesParser::new(["general", "maf"])
+        default_value = "probe",
+        help = "Input reference type",
+        value_parser = builder::PossibleValuesParser::new(["probes", "loci"])
     )]
-    pub output_format: String,
+    pub reference_type: String,
+    #[arg(
+        long,
+        help = "Input reference file contains a single reference",
+    )]
+    pub single_ref: bool,
     /// Config file name
     #[arg(
         long,
