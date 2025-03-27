@@ -7,6 +7,7 @@ use colored::Colorize;
 
 use crate::cli::commands::clean::ReadCleaningInitArgs;
 use crate::cli::commands::common::{CommonInitArgs, GenomicReadsInitArgs};
+use crate::core::clean::ReadCleaning;
 use crate::helper::common;
 use crate::helper::fastq::{FastqInput, ReadAssignmentStrategy};
 use crate::helper::files::FileFinder;
@@ -36,13 +37,18 @@ impl<'a> ReadCleaningInit<'a> {
         }
     }
 
-    pub fn init(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn init(&mut self) {
         self.log_input();
         let spin = common::init_spinner();
         spin.set_message("Finding files...");
         let format = SupportedFormats::Fastq;
         self.match_sample_name_format();
-        let files = FileFinder::new(self.input_dir, &format).find(self.reads.recursive)?;
+        let files = FileFinder::new(self.input_dir, &format)
+            .find(self.reads.recursive)
+            .expect(
+                "Failed to find files. \
+            Check if the directory exists and you have permission to access it.",
+            );
         let file_count = files.len();
         if files.is_empty() {
             spin.finish_with_message(format!(
@@ -51,7 +57,7 @@ impl<'a> ReadCleaningInit<'a> {
                 "✖".red(),
                 self.input_dir.display()
             ));
-            return Ok(());
+            log::error!("Try using the --recursive flag if files are in subdirectories.");
         }
         spin.set_message(format!(
             "Found {} files. Assigning reads and generating hash for matching files...",
@@ -63,10 +69,38 @@ impl<'a> ReadCleaningInit<'a> {
             "Found {} samples of {} files. Writing config file...",
             record_count, file_count
         ));
-        let output_path = self.write_config(records, files.len())?;
-        spin.finish_with_message(format!("{} Finished creating a config file\n", "✔".green()));
-        self.log_output(&output_path, record_count, file_count);
-        Ok(())
+        let config = self.write_config(records, files.len());
+        match config {
+            Ok(path) => {
+                spin.finish_with_message(format!(
+                    "{} Finished creating a config file\n",
+                    "✔".green()
+                ));
+                self.log_output(&path, record_count, file_count);
+                if self.common.autorun {
+                    let footer = common::PrettyHeader::new();
+                    footer.get_section_footer();
+                    self.autorun_pipeline(&path);
+                }
+            }
+            Err(e) => {
+                spin.finish_with_message(format!(
+                    "{} Failed to write config file: {}",
+                    "✖".red(),
+                    e
+                ));
+                log::error!("Failed to write config file: {}", e);
+                return;
+            }
+        };
+    }
+
+    fn autorun_pipeline(&self, config_path: &Path) {
+        let header = "Starting read cleaning pipeline...".to_string();
+        log::info!("{}", header.cyan());
+        log::info!("");
+        let runner = ReadCleaning::from_config_path(config_path);
+        runner.clean();
     }
 
     fn match_sample_name_format(&mut self) {

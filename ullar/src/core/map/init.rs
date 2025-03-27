@@ -7,22 +7,19 @@ use std::{
 };
 
 use colored::Colorize;
-use indicatif::ProgressBar;
 
 use crate::{
-    cli::commands::map::MapInitArgs,
+    cli::commands::{common::CommonInitArgs, map::MapInitArgs},
+    core::map::ContigMapping,
     helper::{
-        common,
+        common::{self, PrettyHeader},
         configs::{CONFIG_EXTENSION_TOML, DEFAULT_CONFIG_DIR},
         files::PathCheck,
-        regex::{CONTIG_SAMPLE_REGEX, UCE_REGEX},
     },
     types::map::MappingQueryFormat,
 };
 
-use super::configs::{
-    ContigInput, ContigMappingConfig, SampleNameSource, DEFAULT_REF_MAPPING_CONFIG,
-};
+use super::configs::{ContigInput, ContigMappingConfig, SampleNameSource};
 
 pub struct InitMappingConfig<'a> {
     /// Query directory containing query sequences
@@ -37,27 +34,14 @@ pub struct InitMappingConfig<'a> {
     pub name_source: &'a str,
     /// Config file name
     pub config_name: &'a str,
+    /// Lastz output format
+    /// (default: "general")
+    pub output_format: &'a str,
     /// Reference regex names
     pub refname_regex: &'a str,
     /// Sample name regex
     pub sample_name_regex: &'a str,
-    pub override_args: Option<&'a str>,
-}
-
-impl Default for InitMappingConfig<'_> {
-    fn default() -> Self {
-        Self {
-            query_dir: None,
-            query_paths: None,
-            query_format: MappingQueryFormat::Contig,
-            name_source: "file",
-            reference_path: Path::new(""),
-            config_name: DEFAULT_REF_MAPPING_CONFIG,
-            refname_regex: UCE_REGEX,
-            sample_name_regex: CONTIG_SAMPLE_REGEX,
-            override_args: None,
-        }
-    }
+    pub common: &'a CommonInitArgs,
 }
 
 impl<'a> InitMappingConfig<'a> {
@@ -69,9 +53,10 @@ impl<'a> InitMappingConfig<'a> {
             reference_path: &args.reference,
             name_source: &args.name_source,
             config_name: &args.config_name,
+            output_format: &args.output_format,
             refname_regex: &args.re_reference,
             sample_name_regex: &args.re_sample,
-            override_args: args.common.override_args.as_deref(),
+            common: &args.common,
         }
     }
 
@@ -82,18 +67,44 @@ impl<'a> InitMappingConfig<'a> {
             .with_extension(CONFIG_EXTENSION_TOML);
         PathCheck::new(&config_path).prompt_exists(false);
         let spinner = common::init_spinner();
-        spinner.set_message("Initializing mapping configuration");
-        self.write_config(&spinner);
-    }
-
-    fn write_config(&self, spinner: &ProgressBar) {
-        match self.query_format {
-            MappingQueryFormat::Contig => {
-                spinner.set_message("Writing mapping config");
-                let (path, config) = self.write_contig_config().expect("Failed writing config");
-                spinner.finish_with_message(format!("{} Finished writing config\n", "✔".green()));
+        spinner.set_message("Writing mapping config");
+        let config_path = self.write_config();
+        match config_path {
+            Ok((path, config)) => {
+                spinner
+                    .finish_with_message(format!("{} Finished writing config file\n", "✔".green()));
                 self.log_output(&path);
                 self.log_contig_output(&config);
+                if self.common.autorun {
+                    let footer = PrettyHeader::new();
+                    footer.get_section_footer();
+                    self.autorun_pipeline(&path);
+                }
+            }
+            Err(e) => {
+                spinner.finish_with_message(format!(
+                    "{} Failed to write config file: {}\n",
+                    "✖".red(),
+                    e
+                ));
+            }
+        }
+    }
+
+    fn autorun_pipeline(&self, config_path: &Path) {
+        let header = "Starting mapping pipeline...".to_string();
+        log::info!("{}", header.cyan());
+        log::info!("");
+
+        let runner = ContigMapping::from_config_path(config_path);
+        runner.map();
+    }
+
+    fn write_config(&self) -> Result<(PathBuf, ContigMappingConfig), Box<dyn Error>> {
+        match self.query_format {
+            MappingQueryFormat::Contig => {
+                let (path, config) = self.write_contig_config()?;
+                Ok((path, config))
             }
             MappingQueryFormat::Fastq => unimplemented!(),
         }
@@ -102,7 +113,11 @@ impl<'a> InitMappingConfig<'a> {
     fn write_contig_config(&self) -> Result<(PathBuf, ContigMappingConfig), Box<dyn Error>> {
         let name_source = self.get_sample_name_source();
         let input = ContigInput::new(name_source);
-        let mut config = ContigMappingConfig::init(input, self.refname_regex);
+        let output_format = self
+            .output_format
+            .parse()
+            .expect("Invalid lastz output format");
+        let mut config = ContigMappingConfig::init(input, self.refname_regex, output_format);
         match self.query_dir {
             Some(dir) => config.from_contig_dir(dir),
             None => config.from_contig_paths(&self.get_contig_paths()),
@@ -112,8 +127,11 @@ impl<'a> InitMappingConfig<'a> {
                 "No sequence found in the input directory. Please, check input is FASTA".into(),
             );
         }
-        let output_path =
-            config.to_toml(self.config_name, self.reference_path, self.override_args)?;
+        let output_path = config.to_toml(
+            self.config_name,
+            self.reference_path,
+            self.common.override_args.as_deref(),
+        )?;
         Ok((output_path, config))
     }
 

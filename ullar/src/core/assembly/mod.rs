@@ -35,9 +35,6 @@ pub const DEFAULT_ASSEMBLY_OUTPUT_DIR: &str = "out_denovo_assembly";
 pub struct Assembly<'a> {
     /// Path to the assembly config file
     pub config_path: PathBuf,
-    /// Should the SHA256 checksum be checked
-    /// before assembling the files
-    pub ignore_checksum: bool,
     /// Output directory to store the assemblies
     pub output_dir: &'a Path,
     /// Remove SPAdes intermediate files
@@ -55,14 +52,12 @@ impl<'a> Assembly<'a> {
     /// with the given parameters
     pub fn new<P: AsRef<Path>>(
         config_path: P,
-        ignore_checksum: bool,
         output_dir: &'a Path,
         keep_intermediates: bool,
         rename_contigs: bool,
     ) -> Self {
         Self {
             config_path: config_path.as_ref().to_path_buf(),
-            ignore_checksum,
             output_dir,
             keep_intermediates,
             rename_contigs,
@@ -70,6 +65,7 @@ impl<'a> Assembly<'a> {
             task: Task::Assembly,
         }
     }
+
     /// Initialize a new Assembly instance
     /// from the command line arguments
     pub fn from_arg(args: &'a AssemblyArgs) -> Self {
@@ -81,7 +77,6 @@ impl<'a> Assembly<'a> {
         };
         Self {
             config_path,
-            ignore_checksum: args.common.ignore_checksum,
             output_dir: &args.output,
             keep_intermediates: args.keep_intermediates,
             rename_contigs: args.rename_contigs,
@@ -90,10 +85,21 @@ impl<'a> Assembly<'a> {
         }
     }
 
+    pub fn from_config_path(config_path: &Path) -> Self {
+        Self {
+            config_path: config_path.to_owned(),
+            output_dir: Path::new(DEFAULT_ASSEMBLY_OUTPUT_DIR),
+            rename_contigs: false,
+            keep_intermediates: false,
+            runner: RunnerOptions::default(),
+            task: Task::Assembly,
+        }
+    }
+
     /// Assemble cleaned read files using SPAdes
     pub fn assemble(&self) {
         let spinner = common::init_spinner();
-        spinner.set_message("Parsing config file");
+        spinner.set_message("Parsing config file\n");
         let config = self.parse_config().expect("Failed to parse config");
         let assembler = config.dependencies.get(ASSEMBLER_DEPENDENCY);
         let updated_dep = SpadesMetadata::new().update(assembler);
@@ -107,7 +113,7 @@ impl<'a> Assembly<'a> {
             spinner.finish_with_message("Skipping config data check\n");
         } else {
             spinner.set_message("Checking config data for errors");
-            check.check_fastq(&config.samples, self.ignore_checksum);
+            check.check_fastq(&config.samples, self.runner.ignore_checksum);
             spinner.finish_with_message(format!("{} Finished checking config data\n", "✔".green()));
         }
 

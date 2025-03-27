@@ -16,6 +16,8 @@ pub(crate) enum UtilSubCommand {
     #[cfg(target_family = "unix")]
     #[command(name = "symlink", about = "Create symlink on POSIX system")]
     Symlink(SymlinkArgs),
+    #[command(name = "rename", about = "Rename files or directories")]
+    Rename(RenameArgs),
 }
 
 #[derive(Subcommand)]
@@ -104,4 +106,17 @@ pub struct SymlinkArgs {
         ])
     )]
     pub format: String,
+}
+
+#[derive(Args)]
+pub struct RenameArgs {
+    /// Path to the directory to rename
+    #[arg(short, long, help = "Input directory to rename")]
+    pub dir: PathBuf,
+    /// Path to the name sources
+    #[arg(short, long, help = "Path to the name sources")]
+    pub name_sources: PathBuf,
+    /// Flag to indicate if the input is a directory
+    #[arg(long, default_value_t = false, help = "Flag to indicate if the input is a directory")]
+    pub is_dir: bool,
 }

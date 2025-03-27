@@ -28,7 +28,7 @@ use crate::types::Task;
 pub const DEFAULT_RAW_READS_DIR: &str = "raw_reads";
 pub const DEFAULT_CLEAN_READ_OUTPUT_DIR: &str = "out_read_cleaning";
 
-pub struct ReadCleaner<'a> {
+pub struct ReadCleaning<'a> {
     /// Path to the raw read config file
     pub config_path: PathBuf,
     /// Output directory to store the cleaned reads
@@ -38,7 +38,7 @@ pub struct ReadCleaner<'a> {
     task: Task,
 }
 
-impl<'a> ReadCleaner<'a> {
+impl<'a> ReadCleaning<'a> {
     /// Initialize a new ReadCleaner instance
     /// with the given parameters
     pub fn new<P: AsRef<Path>>(config_path: P, output_dir: &'a Path) -> Self {
@@ -68,10 +68,19 @@ impl<'a> ReadCleaner<'a> {
         }
     }
 
+    pub fn from_config_path(config_path: &'a Path) -> Self {
+        Self {
+            config_path: config_path.to_path_buf(),
+            output_dir: Path::new(DEFAULT_CLEAN_READ_OUTPUT_DIR),
+            runner: RunnerOptions::default(),
+            task: Task::CleanReads,
+        }
+    }
+
     /// Clean raw read files using Fastp
     pub fn clean(&self) {
         let spinner = common::init_spinner();
-        spinner.set_message("Parsing and checking the config file");
+        spinner.set_message("Parsing and checking the config file\n");
         let config = self
             .parse_config()
             .expect("Failed to parse config. Try to create a new config.");

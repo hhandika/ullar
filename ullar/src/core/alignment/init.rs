@@ -7,25 +7,25 @@ use comfy_table::Table;
 use segul::helper::types::InputFmt;
 
 use crate::cli::commands::alignment::AlignmentInitArgs;
-use crate::helper::common;
+use crate::cli::commands::common::CommonInitArgs;
+use crate::core::alignment::SequenceAlignment;
+use crate::helper::common::{self, PrettyHeader};
 
 use super::configs::AlignmentConfig;
 
 pub struct AlignmentInit<'a> {
     pub input_dir: &'a Path,
-    pub output_dir: &'a Path,
     pub input_fmt: InputFmt,
-    pub override_args: Option<&'a str>,
+    pub common: &'a CommonInitArgs,
 }
 
 impl<'a> AlignmentInit<'a> {
     pub fn new(args: &'a AlignmentInitArgs) -> Self {
         Self {
             input_dir: &args.dir,
-            output_dir: &args.common.output,
             // Mafft only supports FASTA format
             input_fmt: InputFmt::Fasta,
-            override_args: args.common.override_args.as_deref(),
+            common: &args.common,
         }
     }
 
@@ -38,9 +38,33 @@ impl<'a> AlignmentInit<'a> {
         self.log_input();
         let spin = common::init_spinner();
         spin.set_message("Initializing alignment configuration");
-        let (path, config) = self.write_config().expect("Failed to write config");
-        spin.finish_with_message(format!("{} Finished writing output config\n", "✔".green()));
-        self.log_final_output(&path, &config);
+        let config = self.write_config();
+        match config {
+            Ok((path, config)) => {
+                spin.finish_with_message(format!(
+                    "{} Finished writing output config\n",
+                    "✔".green()
+                ));
+                self.log_final_output(&path, &config);
+                if self.common.autorun {
+                    let footer = PrettyHeader::new();
+                    footer.get_section_footer();
+                    self.autorun_pipeline(&path);
+                }
+            }
+            Err(e) => {
+                spin.finish_with_message(format!("{} Failed to write output config\n", "✘".red()));
+                log::error!("{}", e);
+            }
+        }
+    }
+
+    fn autorun_pipeline(&self, config_path: &Path) {
+        let header = "Starting sequence alignment pipeline...".to_string();
+        log::info!("{}", header.cyan());
+        log::info!("");
+        let runner = SequenceAlignment::from_config_path(config_path);
+        runner.align();
     }
 
     fn write_config(&self) -> Result<(PathBuf, AlignmentConfig), Box<dyn Error>> {
@@ -51,7 +75,7 @@ impl<'a> AlignmentInit<'a> {
                 "No sequence found in the input directory. Please, check input is FASTA".into(),
             );
         }
-        let output_path = config.to_toml(self.override_args)?;
+        let output_path = config.to_toml(self.common.override_args.as_deref())?;
         Ok((output_path, config))
     }
 
@@ -63,7 +87,11 @@ impl<'a> AlignmentInit<'a> {
 
     fn log_final_output(&self, config_path: &Path, config: &AlignmentConfig) {
         log::info!("{}", "Output".cyan());
-        log::info!("{:18}: {}", "Config directory", self.output_dir.display());
+        log::info!(
+            "{:18}: {}",
+            "Config directory",
+            self.common.output.display()
+        );
         log::info!("{:18}: {}", "Config file", config_path.display());
         log::info!("{:18}: {}", "Sample counts", config.input.sample_counts);
         log::info!("{:18}: {}", "File found", config.input.total_files);

@@ -33,6 +33,7 @@ pub const DEFAULT_OUTPUT_EXT: &str = "csv";
 
 const LASTZ_RESULT_DIR: &str = "lastz_results";
 const LASTZ_RESULT_SUFFIX: &str = "lastz";
+const LASTZ_MAF_EXT: &str = "maf";
 
 pub enum RefNameRegex {
     Default,
@@ -46,10 +47,9 @@ pub struct LastzMapping<'a> {
     /// Reference sequence to align against
     pub reference_data: &'a ReferenceFile,
     pub output_dir: &'a Path,
-    /// Is reference contains multiple sequences
-    pub multiple_targets: bool,
     /// Override arguments for Lastz
     pub dependency: &'a DepMetadata,
+    pub multiple_targets: bool,
 }
 
 impl<'a> LastzMapping<'a> {
@@ -66,6 +66,11 @@ impl<'a> LastzMapping<'a> {
         }
     }
 
+    pub fn set_single_target(mut self) -> Self {
+        self.multiple_targets = false;
+        self
+    }
+
     /// Map contig to reference sequence using Lastz.
     /// We use target as the reference sequence
     ///     and query as the contig sequence.
@@ -75,14 +80,18 @@ impl<'a> LastzMapping<'a> {
     ///   multiple reference sequences or vice versa.
     /// It is just the way genomic sequences behave.
     /// We don't want those duplicates. We will only keep the best match.
-    pub fn run(&self, contigs: &[ContigFiles]) -> Result<Vec<MappingData>, Box<dyn Error>> {
+    pub fn run_general_output(
+        &self,
+        contigs: &[ContigFiles],
+        output_format: &LastzOutputFormat,
+    ) -> Result<Vec<MappingData>, Box<dyn Error>> {
         log::info!("Mapping contigs to reference sequence");
         let progress_bar = common::init_progress_bar(contigs.len() as u64);
         let msg = "Samples";
         progress_bar.set_message(msg);
         let (tx, rx) = mpsc::channel();
         contigs.par_iter().for_each_with(tx, |tx, contig| {
-            let data = self.run_lastz(contig, &contig.sample_name);
+            let data = self.run_lastz_general(contig, &contig.sample_name, output_format);
             match data {
                 Ok(data) => {
                     tx.send(data).expect("Failed to send data");
@@ -99,23 +108,67 @@ impl<'a> LastzMapping<'a> {
         Ok(data)
     }
 
-    fn run_lastz(
+    /// Map contig to reference sequence using Lastz.
+    /// Export to MAF format for downstream analysis.
+    pub fn run_maf_output(&self, contigs: &[ContigFiles]) -> Result<Vec<PathBuf>, Box<dyn Error>> {
+        log::info!("Mapping contig to reference sequence");
+        let progress_bar = common::init_progress_bar(contigs.len() as u64);
+        let msg = "Sample";
+        progress_bar.set_message(msg);
+        let (tx, rx) = mpsc::channel();
+        contigs.par_iter().for_each_with(tx, |tx, contig| {
+            let maf_path = self.run_lastz_maf(contig, &contig.sample_name);
+            match maf_path {
+                Ok(path) => {
+                    tx.send(path).expect("Failed to send data");
+                }
+                Err(e) => {
+                    let msg = format!("Failed to map contig {}: {}", contig.sample_name.red(), e);
+                    log::error!("{}", msg);
+                }
+            }
+            progress_bar.inc(1);
+        });
+        let maf_path = rx.iter().collect::<Vec<PathBuf>>();
+        progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), msg));
+        Ok(maf_path)
+    }
+
+    fn run_lastz_general(
         &self,
         contig: &ContigFiles,
         sample_name: &str,
+        output_format: &LastzOutputFormat,
     ) -> Result<MappingData, Box<dyn Error>> {
         let target = self.get_target();
         let query = self.get_query(contig);
-        let format = LastzOutputFormat::General(String::new());
         let runner = Lastz::new(
             &target,
             &query,
             self.output_dir,
-            &format,
+            output_format,
             self.dependency,
             &self.reference_data.name_regex,
         );
-        runner.run(sample_name)
+        runner.run_general(sample_name)
+    }
+
+    fn run_lastz_maf(
+        &self,
+        contig: &ContigFiles,
+        sample_name: &str,
+    ) -> Result<PathBuf, Box<dyn Error>> {
+        let target = self.get_target();
+        let query = self.get_query(contig);
+        let runner = Lastz::new(
+            &target,
+            &query,
+            self.output_dir,
+            &LastzOutputFormat::Maf,
+            self.dependency,
+            &self.reference_data.name_regex,
+        );
+        runner.run_maf(sample_name)
     }
 
     fn get_target(&self) -> LastzTarget {
@@ -187,9 +240,17 @@ impl<'a> Lastz<'a> {
     /// Execute the Lastz alignment
     /// Return the lastz output
     /// Else return an error
-    pub fn run(&self, sample_name: &str) -> Result<MappingData, Box<dyn Error>> {
-        self.execute_lastz().expect("Unknown error");
-        let parsed_output = self.execute_lastz();
+    pub fn run_general(&self, sample_name: &str) -> Result<MappingData, Box<dyn Error>> {
+        let output = self.execute_lastz();
+        let parsed_output = self.parse_output(&output);
+        if !self.check_success(&output).is_ok() {
+            return Err(format!(
+                "Lastz execution failed: {}",
+                String::from_utf8_lossy(&output.stderr)
+            )
+            .into());
+        }
+
         match parsed_output {
             Ok(data) => {
                 let output_path = self.write_output(&data, sample_name)?;
@@ -206,11 +267,32 @@ impl<'a> Lastz<'a> {
         }
     }
 
-    fn execute_lastz(&self) -> Result<Vec<LastzOutput>, Box<dyn Error>> {
+    pub fn run_maf(&self, sample_name: &str) -> Result<PathBuf, Box<dyn Error>> {
+        let output = self.execute_lastz();
+        if !self.check_success(&output).is_ok() {
+            return Err(format!(
+                "Lastz execution failed: {}",
+                String::from_utf8_lossy(&output.stderr)
+            )
+            .into());
+        }
+        let output_path = self.create_output_maf(sample_name)?;
+        fs::write(&output_path, &output.stdout).with_context(|| {
+            format!(
+                "Failed to write Lastz output to file: {}",
+                output_path.display()
+            )
+        })?;
+        Ok(output_path)
+    }
+
+    fn execute_lastz(&self) -> Output {
         let executable = self.dependency.get_executable(LASTZ_EXE);
         let mut cmd = Command::new(executable);
-        cmd.arg(self.target.get_path());
-        cmd.arg(self.query.get_path());
+        let target = self.target.get_path();
+        let query = self.query.get_path();
+        cmd.arg(target);
+        cmd.arg(query);
         match &self.dependency.override_args {
             Some(params) => parse_override_args!(cmd, params),
             None => parse_override_args!(cmd, DEFAULT_LASTZ_PARAMS),
@@ -218,20 +300,16 @@ impl<'a> Lastz<'a> {
         if self.output_format != &LastzOutputFormat::None {
             cmd.arg(format!("--format={}", self.get_format()));
         }
-        let output = cmd.output().with_context(|| {
-            format!(
-                "Failed to execute Lastz. Do {} to see lastz executable exists.",
-                "ullar deps check".yellow()
-            )
-        })?;
+        let error = format!(
+            "Failed to execute Lastz. Do {} to see lastz executable exists.",
+            "ullar deps check".yellow()
+        );
 
-        match self.check_success(&output) {
-            Ok(_) => {
-                let parsed_output = self.parse_output(&output)?;
-                Ok(parsed_output)
-            }
-            Err(e) => Err(e),
-        }
+        let output = cmd
+            .output()
+            .with_context(|| error)
+            .expect("Failed to execute Lastz");
+        output
     }
 
     fn get_format(&self) -> String {
@@ -256,6 +334,13 @@ impl<'a> Lastz<'a> {
         Ok(output_path)
     }
 
+    fn create_output_maf(&self, sample_name: &str) -> Result<PathBuf, Box<dyn Error>> {
+        let output_dir = self.output_dir.join(LASTZ_RESULT_DIR);
+        self.create_directory(&output_dir)?;
+        let output_path = output_dir.join(sample_name).with_extension(LASTZ_MAF_EXT);
+        Ok(output_path)
+    }
+
     fn create_directory(&self, dir: &Path) -> Result<(), Box<dyn Error>> {
         fs::create_dir_all(dir).with_context(|| {
             format!(
@@ -266,14 +351,14 @@ impl<'a> Lastz<'a> {
         Ok(())
     }
 
-    fn parse_output(&self, output: &Output) -> Result<Vec<LastzOutput>, Box<dyn Error>> {
-        let parsed_output = LastzOutput::new().parse(&output.stdout)?;
+    fn parse_output(&self, output: &Output) -> Result<Vec<LastzGeneralOutput>, Box<dyn Error>> {
+        let parsed_output = LastzGeneralOutput::new().parse(&output.stdout)?;
         Ok(parsed_output)
     }
 
     fn write_output(
         &self,
-        parse_output: &[LastzOutput],
+        parse_output: &[LastzGeneralOutput],
         sample_name: &str,
     ) -> Result<PathBuf, Box<dyn Error>> {
         let output_path = self.create_output_path(sample_name)?;
@@ -286,7 +371,7 @@ impl<'a> Lastz<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct LastzOutput {
+pub struct LastzGeneralOutput {
     /// Score of the alignment block.
     /// the higher the score, the better the alignment
     pub score: usize,
@@ -330,13 +415,13 @@ pub struct LastzOutput {
     pub cov_pct: f64,
 }
 
-impl Default for LastzOutput {
+impl Default for LastzGeneralOutput {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl LastzOutput {
+impl LastzGeneralOutput {
     pub fn new() -> Self {
         Self {
             score: 0,
@@ -367,7 +452,7 @@ impl LastzOutput {
             .delimiter(b'\t')
             .from_reader(data.as_slice());
         for result in reader.deserialize() {
-            let record: LastzOutput = result?;
+            let record: LastzGeneralOutput = result?;
             results.push(record);
         }
         Ok(results)
