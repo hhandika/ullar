@@ -18,7 +18,7 @@ use crate::{
         files::{FileFinder, FileMetadata},
     },
     types::{
-        map::{Aligner, LastzOutputFormat},
+        map::{Aligner, MappingReferenceType},
         SupportedFormats,
     },
 };
@@ -64,35 +64,33 @@ pub struct ContigMappingConfig {
     #[serde(flatten)]
     pub app: UllarConfig,
     pub input: ContigInput,
-    pub output_format: LastzOutputFormat,
     pub dependencies: BTreeMap<String, DepMetadata>,
     pub sequence_reference: ReferenceFile,
     pub contigs: Vec<ContigFiles>,
 }
 
 impl ContigMappingConfig {
-    pub fn new(reference_regex: &str) -> Self {
+    pub fn new(reference_regex: &str, reference_type: MappingReferenceType) -> Self {
         Self {
             app: UllarConfig::init(),
             input: ContigInput::default(),
             dependencies: BTreeMap::new(),
-            output_format: LastzOutputFormat::default(),
             contigs: Vec::new(),
-            sequence_reference: ReferenceFile::new(reference_regex),
+            sequence_reference: ReferenceFile::new(reference_regex, reference_type, true),
         }
     }
 
     pub fn init(
         input: ContigInput,
         reference_regex: &str,
-        output_format: LastzOutputFormat,
+        reference_type: MappingReferenceType,
+        single_ref: bool,
     ) -> Self {
         Self {
             app: UllarConfig::default(),
             dependencies: BTreeMap::new(),
-            output_format,
             input,
-            sequence_reference: ReferenceFile::new(reference_regex),
+            sequence_reference: ReferenceFile::new(reference_regex, reference_type, single_ref),
             contigs: Vec::new(),
         }
     }
@@ -295,13 +293,18 @@ pub struct ReferenceFile {
     pub name_regex: String,
     #[serde(flatten)]
     pub metadata: FileMetadata,
+    #[serde(alias = "type")]
+    pub reference_type: MappingReferenceType,
+    pub single_ref: bool,
 }
 
 impl ReferenceFile {
-    pub fn new(name_regex: &str) -> Self {
+    pub fn new(name_regex: &str, reference_type: MappingReferenceType, single_ref: bool) -> Self {
         Self {
             name_regex: name_regex.to_string(),
             metadata: FileMetadata::new(),
+            reference_type,
+            single_ref,
         }
     }
 

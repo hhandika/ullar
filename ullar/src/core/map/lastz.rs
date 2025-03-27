@@ -49,7 +49,6 @@ pub struct LastzMapping<'a> {
     pub output_dir: &'a Path,
     /// Override arguments for Lastz
     pub dependency: &'a DepMetadata,
-    pub multiple_targets: bool,
 }
 
 impl<'a> LastzMapping<'a> {
@@ -62,13 +61,7 @@ impl<'a> LastzMapping<'a> {
             reference_data,
             output_dir,
             dependency,
-            multiple_targets: true,
         }
-    }
-
-    pub fn set_single_target(mut self) -> Self {
-        self.multiple_targets = false;
-        self
     }
 
     /// Map contig to reference sequence using Lastz.
@@ -80,7 +73,7 @@ impl<'a> LastzMapping<'a> {
     ///   multiple reference sequences or vice versa.
     /// It is just the way genomic sequences behave.
     /// We don't want those duplicates. We will only keep the best match.
-    pub fn run_general_output(
+    pub fn map_to_probes(
         &self,
         contigs: &[ContigFiles],
         output_format: &LastzOutputFormat,
@@ -110,7 +103,10 @@ impl<'a> LastzMapping<'a> {
 
     /// Map contig to reference sequence using Lastz.
     /// Export to MAF format for downstream analysis.
-    pub fn run_maf_output(&self, contigs: &[ContigFiles]) -> Result<Vec<PathBuf>, Box<dyn Error>> {
+    pub fn map_to_reference(
+        &self,
+        contigs: &[ContigFiles],
+    ) -> Result<Vec<PathBuf>, Box<dyn Error>> {
         log::info!("Mapping contig to reference sequence");
         let progress_bar = common::init_progress_bar(contigs.len() as u64);
         let msg = "Sample";
@@ -150,7 +146,7 @@ impl<'a> LastzMapping<'a> {
             self.dependency,
             &self.reference_data.name_regex,
         );
-        runner.run_general(sample_name)
+        runner.map_general_output(sample_name)
     }
 
     fn run_lastz_maf(
@@ -168,7 +164,7 @@ impl<'a> LastzMapping<'a> {
             self.dependency,
             &self.reference_data.name_regex,
         );
-        runner.run_maf(sample_name)
+        runner.map_maf_output(sample_name)
     }
 
     fn get_target(&self) -> LastzTarget {
@@ -177,7 +173,11 @@ impl<'a> LastzMapping<'a> {
             .metadata
             .parent_dir
             .join(&self.reference_data.metadata.file_name);
-        let target = LastzTarget::new(ref_path, self.multiple_targets, LastzNameParse::None);
+        let target = LastzTarget::new(
+            ref_path,
+            self.reference_data.single_ref,
+            LastzNameParse::None,
+        );
         target.get_path();
         target
     }
@@ -237,10 +237,13 @@ impl<'a> Lastz<'a> {
         }
     }
 
-    /// Execute the Lastz alignment
-    /// Return the lastz output
-    /// Else return an error
-    pub fn run_general(&self, sample_name: &str) -> Result<MappingData, Box<dyn Error>> {
+    /// General output is used for mapping probe sequences.
+    /// This approach focuses on identifying which parts of the contig
+    /// align with the reference sequence, without requiring the sequences themselves.
+    /// It is particularly useful when mapping contigs to probes as references,
+    /// where probes are typically short sequences. The goal is to extract
+    /// the entire contig sequence that aligns with the probe later in the pipeline.
+    pub fn map_general_output(&self, sample_name: &str) -> Result<MappingData, Box<dyn Error>> {
         let output = self.execute_lastz();
         let parsed_output = self.parse_output(&output);
         if !self.check_success(&output).is_ok() {
@@ -267,7 +270,11 @@ impl<'a> Lastz<'a> {
         }
     }
 
-    pub fn run_maf(&self, sample_name: &str) -> Result<PathBuf, Box<dyn Error>> {
+    /// Map contig to reference sequence using Lastz.
+    /// This function extracts the contig sequence that matches the reference sequence.
+    /// Useful when you need the matching part. Outputs to Multi Alignment Format (MAF).
+    /// It returns paths to the maf output files.
+    pub fn map_maf_output(&self, sample_name: &str) -> Result<PathBuf, Box<dyn Error>> {
         let output = self.execute_lastz();
         if !self.check_success(&output).is_ok() {
             return Err(format!(
@@ -472,7 +479,7 @@ pub struct LastzTarget {
     pub target_path: PathBuf,
     /// If true, the target contains multiple sequences.
     /// Default to true.
-    pub multiple_targets: bool,
+    pub single_target: bool,
     /// Parameter to parse the target sequence name.
     pub nameparse: LastzNameParse,
 }
@@ -481,17 +488,17 @@ impl Default for LastzTarget {
     fn default() -> Self {
         Self {
             target_path: PathBuf::new(),
-            multiple_targets: true,
+            single_target: false,
             nameparse: LastzNameParse::None,
         }
     }
 }
 
 impl LastzTarget {
-    pub fn new(target_path: PathBuf, multiple_targets: bool, nameparse: LastzNameParse) -> Self {
+    pub fn new(target_path: PathBuf, single_target: bool, nameparse: LastzNameParse) -> Self {
         Self {
             target_path,
-            multiple_targets,
+            single_target,
             nameparse,
         }
     }
@@ -500,22 +507,22 @@ impl LastzTarget {
         match &self.nameparse {
             LastzNameParse::None => {
                 let target_path = self.target_path.to_string_lossy();
-                if self.multiple_targets {
-                    format!("{}[multiple]", target_path)
-                } else {
+                if self.single_target {
                     target_path.to_string()
+                } else {
+                    format!("{}[multiple]", target_path)
                 }
             }
             _ => {
                 let nameparse = self.nameparse.to_string();
-                if self.multiple_targets {
+                if self.single_target {
+                    format!("{}[nameparse={}]", self.target_path.display(), nameparse)
+                } else {
                     format!(
                         "{}[multiple,nameparse={}]",
                         self.target_path.display(),
                         nameparse
                     )
-                } else {
-                    format!("{}[nameparse={}]", self.target_path.display(), nameparse)
                 }
             }
         }
