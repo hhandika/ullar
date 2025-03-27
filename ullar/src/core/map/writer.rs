@@ -36,7 +36,7 @@ pub const SUMMARY_EXT: &str = "csv";
 
 pub type MappedMatrix = HashMap<String, SeqMatrix>;
 
-const SUMMARY_MSG: &str = "Contigs/Loci";
+const SUMMARY_MSG: &str = "loci";
 
 trait MappingWriter {
     fn get_sequence(&self, seq: &str, strand: char) -> String {
@@ -172,7 +172,18 @@ impl<'a> LocusMappingWriter<'a> {
         }
     }
 
-    pub fn write(&self) {
+    pub fn write(&self) -> FinalMappingSummary {
+        log::info!("Mapping and filtering duplicate matches...");
+        let final_matrix = self.parse_samples();
+        log::info!("Writing contigs to file...");
+        self.write_sequences(&final_matrix, self.output_dir);
+        let total_samples = self.maf_files.len();
+        let mut summary_writer = SummaryWriter::new(self.output_dir, &final_matrix, total_samples);
+        let summary = summary_writer.write(self.reference);
+        summary
+    }
+
+    fn parse_samples(&self) -> MappedMatrix {
         let progress_bar = common::init_progress_bar(self.maf_files.len() as u64);
         progress_bar.set_message("samples");
         let mut final_matrix = MappedMatrix::new();
@@ -198,10 +209,7 @@ impl<'a> LocusMappingWriter<'a> {
             }
         });
         progress_bar.finish_with_message(format!("{} samples\n", "✔".green()));
-        let output_dir = self.output_dir.join(DEFAULT_UNALIGN_SEQUENCE_OUTPUT_DIR);
-        fs::create_dir_all(&output_dir).expect("Failed to create output directory");
-        let output_path = output_dir.join("locus_mapping.fas");
-        self.write_sequences(&final_matrix, &output_path);
+        final_matrix
     }
 
     fn parse_maf(&self, maf_path: &Path) -> SeqMatrix {

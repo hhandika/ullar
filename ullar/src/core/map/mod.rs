@@ -100,26 +100,28 @@ impl<'a> ContigMapping<'a> {
                 let results = lastz
                     .map_to_probes(&config.contigs, &lastz_output_fmt)
                     .expect("Failed to run Lastz");
-                let summary = self.generate_mapped_contig(&results, &config);
-                self.log_output(&results, &summary);
+                let summary = self.write_probes_matched(&results, &config);
+                self.log_output(results.len(), &summary);
             }
             MappingReferenceType::Loci => {
                 let results = lastz
                     .map_to_reference(&config.contigs)
                     .expect("Failed to run Lastz");
-                self.write_fasta(&results, &config.sequence_reference);
-                log::info!("{}", "Output".cyan());
-                log::info!("{:18}: {}", "Output dir", self.output_dir.display());
-                log::info!("{:18}: {}", "Total processed", results.len());
+                let summary = self.write_loci_matched(&results, &config.sequence_reference);
+                self.log_output(results.len(), &summary);
             }
         }
     }
 
-    fn write_fasta(&self, maf_files: &[PathBuf], reference: &ReferenceFile) {
-        LocusMappingWriter::new(self.output_dir, maf_files, reference).write();
+    fn write_loci_matched(
+        &self,
+        maf_files: &[PathBuf],
+        reference: &ReferenceFile,
+    ) -> FinalMappingSummary {
+        LocusMappingWriter::new(self.output_dir, maf_files, reference).write()
     }
 
-    fn generate_mapped_contig(
+    fn write_probes_matched(
         &self,
         data: &[MappingData],
         config: &ContigMappingConfig,
@@ -147,10 +149,10 @@ impl<'a> ContigMapping<'a> {
         }
     }
 
-    fn log_output(&self, report: &[MappingData], summary: &FinalMappingSummary) {
+    fn log_output(&self, processed: usize, summary: &FinalMappingSummary) {
         log::info!("{}", "Output".cyan());
         log::info!("{:18}: {}", "Output dir", self.output_dir.display());
-        log::info!("{:18}: {}", "Total processed", report.len());
+        log::info!("{:18}: {}", "Total processed", processed);
         log::info!("{:18}: {}", "Reference counts", summary.total_references);
         log::info!("{:18}: {}", "Sample matches", summary.total_matches);
         log::info!(
