@@ -281,11 +281,15 @@ impl<'a> LocusMappingWriter<'a> {
 
     fn get_reference_name(&self, alignment: &MafAlignment) -> String {
         let reference_name = alignment.sequences[0].source.to_string();
-        let re = regex::Regex::new(&self.reference.name_regex).expect("Failed to create regex");
-        let capture = re.captures(&reference_name);
+        self.capture_reference_name(&self.reference.name_regex, &reference_name)
+    }
+
+    fn capture_reference_name(&self, regex: &str, id: &str) -> String {
+        let re = regex::Regex::new(regex).expect("Failed to create regex");
+        let capture = re.captures(id);
         match capture {
             Some(capture) => capture[0].to_string(),
-            None => reference_name,
+            None => id.to_string(),
         }
     }
 }
@@ -377,5 +381,21 @@ impl<'a> SummaryWriter<'a> {
         self.output_dir
             .join(SUMMARY_FILE_STEM)
             .with_extension(SUMMARY_EXT)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_mapping_writer() {
+        let output_dir = PathBuf::from("test_output");
+        let reference_data = ReferenceFile::default();
+        let mapping_writer = LocusMappingWriter::new(&output_dir, &[], &reference_data);
+        let regex = "mtDNA.*";
+        let sample_name = "Suncus_murinus_NC_024604_mtDNA-COX1";
+        let id = mapping_writer.capture_reference_name(regex, sample_name);
+        assert_eq!(id, "mtDNA-COX1");
     }
 }
