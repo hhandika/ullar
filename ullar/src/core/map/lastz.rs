@@ -109,7 +109,7 @@ impl<'a> LastzMapping<'a> {
     ) -> Result<Vec<PathBuf>, Box<dyn Error>> {
         log::info!("Mapping contig to reference sequence");
         let progress_bar = common::init_progress_bar(contigs.len() as u64);
-        let msg = "Sample";
+        let msg = "samples";
         progress_bar.set_message(msg);
         let (tx, rx) = mpsc::channel();
         contigs.par_iter().for_each_with(tx, |tx, contig| {

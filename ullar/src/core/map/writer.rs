@@ -36,8 +36,6 @@ pub const SUMMARY_EXT: &str = "csv";
 
 pub type MappedMatrix = HashMap<String, SeqMatrix>;
 
-const SUMMARY_MSG: &str = "loci";
-
 trait MappingWriter {
     fn get_sequence(&self, seq: &str, strand: char) -> String {
         match strand {
@@ -51,7 +49,7 @@ trait MappingWriter {
 
     fn write_sequences(&self, final_matrix: &MappedMatrix, output_dir: &Path) {
         let progress_bar = common::init_progress_bar(final_matrix.len() as u64);
-        progress_bar.set_message(SUMMARY_MSG);
+        progress_bar.set_message("matched loci");
         let output_dir = output_dir.join(DEFAULT_UNALIGN_SEQUENCE_OUTPUT_DIR);
         fs::create_dir_all(&output_dir).expect("Failed to create output directory");
         let output_fmt = OutputFmt::FastaInt;
@@ -66,7 +64,7 @@ trait MappingWriter {
                 .expect("Failed to write sequences");
             progress_bar.inc(1);
         });
-        progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), SUMMARY_MSG));
+        progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), "matched loci"));
     }
 }
 
@@ -178,6 +176,7 @@ impl<'a> LocusMappingWriter<'a> {
         let final_matrix = self.parse_samples();
         log::info!("Writing contigs to file...");
         self.write_sequences(&final_matrix, self.output_dir);
+        log::info!("Writing summary to file...");
         let total_samples = self.maf_files.len();
         let mut summary_writer = SummaryWriter::new(self.output_dir, &final_matrix, total_samples);
         let summary = summary_writer.write(self.reference);
@@ -321,7 +320,8 @@ impl<'a> SummaryWriter<'a> {
         let mut summary = FinalMappingSummary::new(self.reference_counts);
         summary.summarize(self.mapped_matrix);
         let progress_bar = common::init_progress_bar(self.reference_counts as u64);
-        progress_bar.set_message(SUMMARY_MSG);
+        let msg = "ref counts";
+        progress_bar.set_message(msg);
         let output_dir = self.create_output_path();
         let mut writer = csv::Writer::from_path(&output_dir).expect("Failed to create csv writer");
         ref_names.iter().for_each(|name| {
@@ -331,7 +331,7 @@ impl<'a> SummaryWriter<'a> {
                 .expect("Failed to write summary to file");
             progress_bar.inc(1);
         });
-        progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), SUMMARY_MSG));
+        progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), msg));
         summary
     }
 
