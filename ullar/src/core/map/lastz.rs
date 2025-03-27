@@ -62,7 +62,7 @@ impl<'a> LastzMapping<'a> {
             reference_data,
             output_dir,
             dependency,
-            multiple_targets: false,
+            multiple_targets: true,
         }
     }
 
@@ -289,8 +289,10 @@ impl<'a> Lastz<'a> {
     fn execute_lastz(&self) -> Output {
         let executable = self.dependency.get_executable(LASTZ_EXE);
         let mut cmd = Command::new(executable);
-        cmd.arg(self.target.get_path());
-        cmd.arg(self.query.get_path());
+        let target = self.target.get_path();
+        let query = self.query.get_path();
+        cmd.arg(target);
+        cmd.arg(query);
         match &self.dependency.override_args {
             Some(params) => parse_override_args!(cmd, params),
             None => parse_override_args!(cmd, DEFAULT_LASTZ_PARAMS),
