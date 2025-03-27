@@ -64,6 +64,7 @@ trait MappingWriter {
             writer
                 .write_sequence(&output_fmt)
                 .expect("Failed to write sequences");
+            progress_bar.inc(1);
         });
         progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), SUMMARY_MSG));
     }
