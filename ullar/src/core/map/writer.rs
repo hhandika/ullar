@@ -189,35 +189,37 @@ impl<'a> LocusMappingWriter<'a> {
         let mut final_matrix = MappedMatrix::new();
         let (tx, rx) = mpsc::channel();
         self.maf_files.par_iter().for_each_with(tx, |tx, path| {
-            let sample_name = path
-                .file_stem()
-                .expect("Failed to get file stem")
-                .to_string_lossy()
-                .to_string();
             let matrix = self.parse_maf(path);
-            tx.send((sample_name, matrix)).expect("Failed to send data");
+            tx.send(matrix).expect("Failed to send data");
             progress_bar.inc(1);
         });
-        rx.iter().for_each(|(sample_name, matrix)| {
-            if final_matrix.contains_key(&sample_name) {
-                let seq_matrix = final_matrix
-                    .get_mut(&sample_name)
-                    .expect("Failed to get matrix");
-                seq_matrix.extend(matrix.to_owned());
-            } else {
-                final_matrix.insert(sample_name, matrix);
-            }
+        rx.iter().for_each(|matrix| {
+            matrix.iter().for_each(|(refname, contigs)| {
+                if final_matrix.contains_key(refname) {
+                    let seq_matrix = final_matrix
+                        .get_mut(refname)
+                        .expect("Failed to get final matrix");
+                    seq_matrix.extend(contigs.to_owned());
+                } else {
+                    final_matrix.insert(refname.to_string(), contigs.to_owned());
+                }
+            });
         });
         progress_bar.finish_with_message(format!("{} samples\n", "✔".green()));
         final_matrix
     }
 
-    fn parse_maf(&self, maf_path: &Path) -> SeqMatrix {
-        let mut sample_matrix = SeqMatrix::new();
+    fn parse_maf(&self, maf_path: &Path) -> MappedMatrix {
+        let mut ref_matrix = MappedMatrix::new();
         let mut mapped_score: HashMap<String, f64> = HashMap::new();
         let file = File::open(maf_path).expect("Unable to open file");
         let buff = BufReader::new(file);
         let maf = MafReader::new(buff);
+        let sample_name = maf_path
+            .file_stem()
+            .expect("Failed to get file name")
+            .to_str()
+            .expect("Failed to convert file name to string");
         // We tract index 0 as the reference sequence
         maf.into_iter().for_each(|record| {
             let mut sequence = String::new();
@@ -226,7 +228,9 @@ impl<'a> LocusMappingWriter<'a> {
                     if aln.sequences.len() == 0 {
                         return;
                     }
+
                     let ref_name = self.get_reference_name(&aln);
+                    let id = format!("{}-{}", ref_name, sample_name);
                     aln.sequences.iter().skip(0).for_each(|sample| {
                         let parse_sequence = self.get_sequence(
                             str::from_utf8(&sample.text)
@@ -235,15 +239,20 @@ impl<'a> LocusMappingWriter<'a> {
                         );
                         sequence.push_str(&parse_sequence);
                     });
-                    if let Entry::Vacant(e) = mapped_score.entry(ref_name.to_string()) {
+                    if let Entry::Vacant(e) = mapped_score.entry(id) {
                         e.insert(aln.score.unwrap_or(0.0));
-                        sample_matrix.insert(ref_name, sequence);
+                        self.insert_ref_matrix(&mut ref_matrix, sequence, &ref_name, sample_name);
                     } else {
                         let current_score =
                             mapped_score.get(&ref_name).expect("Failed to get score");
                         if aln.score.unwrap_or(0.0) > *current_score {
                             mapped_score.insert(ref_name.to_string(), aln.score.unwrap_or(0.0));
-                            sample_matrix.insert(ref_name, sequence);
+                            self.insert_ref_matrix(
+                                &mut ref_matrix,
+                                sequence,
+                                &ref_name,
+                                sample_name,
+                            );
                         }
                     }
                 }
@@ -251,7 +260,24 @@ impl<'a> LocusMappingWriter<'a> {
             }
         });
 
-        sample_matrix
+        ref_matrix
+    }
+
+    fn insert_ref_matrix(
+        &self,
+        ref_matrix: &mut MappedMatrix,
+        sequence: String,
+        refname: &str,
+        sample_name: &str,
+    ) {
+        if ref_matrix.contains_key(refname) {
+            let seq_matrix = ref_matrix.get_mut(refname).expect("Failed to get matrix");
+            seq_matrix.insert(sample_name.to_string(), sequence);
+        } else {
+            let mut matrix = IndexMap::new();
+            matrix.insert(sample_name.to_string(), sequence);
+            ref_matrix.insert(refname.to_string(), matrix);
+        }
     }
 
     fn get_reference_name(&self, alignment: &MafAlignment) -> String {
