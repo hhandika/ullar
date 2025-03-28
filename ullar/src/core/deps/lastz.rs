@@ -52,7 +52,6 @@ impl<'a> LastzMetadata<'a> {
                 if dep.override_args.is_some() {
                     update.override_args = dep.override_args.clone();
                 }
-
                 update
             }
             None => {
@@ -64,6 +63,8 @@ impl<'a> LastzMetadata<'a> {
 
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {
         let version = re_capture_version(version_data);
-        Some(DepMetadata::new(LASTZ_NAME, &version, Some(LASTZ_EXE)))
+        let metadata = DepMetadata::new(LASTZ_NAME, &version, Some(LASTZ_EXE))
+            .override_args(self.override_args);
+        Some(metadata)
     }
 }

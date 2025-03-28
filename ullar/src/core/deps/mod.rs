@@ -106,6 +106,11 @@ impl DepMetadata {
         }
     }
 
+    pub fn override_args(mut self, override_args: Option<&str>) -> Self {
+        self.override_args = override_args.map(|s| s.to_string());
+        self
+    }
+
     pub fn with_methods(mut self, methods: Vec<String>) -> Self {
         self.methods = Some(methods);
         self
