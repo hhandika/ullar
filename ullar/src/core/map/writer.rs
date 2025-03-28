@@ -389,6 +389,10 @@ impl<'a> SummaryWriter<'a> {
 
 #[cfg(test)]
 mod tests {
+    use tempdir::TempDir;
+
+    use crate::types::map::MappingReferenceType;
+
     use super::*;
 
     #[test]
@@ -400,5 +404,28 @@ mod tests {
         let sample_name = "Suncus_murinus_NC_024604_mtDNA-COX1";
         let id = mapping_writer.capture_reference_name(regex, sample_name);
         assert_eq!(id, "mtDNA-COX1");
+    }
+
+    #[test]
+    fn test_mapping_maf() {
+        let maf_path = vec![PathBuf::from("tests/data/maf/mitogenomes.maf")];
+        let refs = PathBuf::from("tests/data/maf/Rattus_rattus_mitogenome_nc012374.fas");
+        let tempdir = TempDir::new("mapping_test").unwrap();
+        let mut ref_file = ReferenceFile::new("mtDNA.*", MappingReferenceType::Loci, false);
+        ref_file.get(&refs);
+        // let ref_file = ReferenceFile::default();
+        let writer = LocusMappingWriter::new(&tempdir.path(), &maf_path, &ref_file);
+        writer.write();
+        let output_path = tempdir.path().join("mapping_summary.csv");
+        assert!(output_path.exists(), "Output file does not exist");
+        let sequence_cytb = "mtDNA-CYTB";
+        let cytb_output = tempdir
+            .path()
+            .join(DEFAULT_UNALIGN_SEQUENCE_OUTPUT_DIR)
+            .join(format!("{}.fas", sequence_cytb));
+        assert!(cytb_output.exists(), "Output file does not exist");
+        let matrix = SeqParser::new(&cytb_output, &DataType::Dna).parse(&types::InputFmt::Fasta);
+        let seq = matrix.0.get("mitogenomes").unwrap();
+        assert_eq!(seq.len(), 1143, "Sequence length is not correct");
     }
 }
