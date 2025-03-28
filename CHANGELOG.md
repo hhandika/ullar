@@ -1,5 +1,10 @@
 # Release Notes
 
+## v0.4.1
+
+- Fix tree inference pipeline failed to capture `-T AUTO` option in `iqtree2`.
+- Fix whitespace issues in the optional args when overriding the IQ-TREE arguments.
+
 ## v0.4.0
 
 - Add tree inference support.
