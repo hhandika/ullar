@@ -87,11 +87,11 @@ impl<'a> ProbeMappingWriter<'a> {
     /// Matches contigs to probes.
     /// Pulls entire sequences that match the reference sequence.
     pub fn write_general(&self, mapping_data: &[MappingData]) -> FinalMappingSummary {
-        log::info!("Mapping and filtering duplicate matches...");
+        log::info!("{}\n", "Mapping and filtering duplicate matches...".cyan());
         let final_matrix = self.map_contig_to_probe(mapping_data);
-        log::info!("Writing contigs to file...");
+        log::info!("{}\n", "Writing contigs to file...".cyan());
         self.write_sequences(&final_matrix, self.output_dir);
-        log::info!("Writing summary to file...");
+        log::info!("{}\n", "Writing summary to file...".cyan());
         let total_samples = mapping_data.len();
         let mut summary_writer = SummaryWriter::new(self.output_dir, &final_matrix, total_samples);
         summary_writer.write(self.reference_data)
@@ -172,11 +172,11 @@ impl<'a> LocusMappingWriter<'a> {
     }
 
     pub fn write(&self) -> FinalMappingSummary {
-        log::info!("Mapping and filtering duplicate matches...");
+        log::info!("{}\n", "Parsing and filtering duplicate matches...".cyan());
         let final_matrix = self.parse_samples();
-        log::info!("Writing contigs to file...");
+        log::info!("{}\n", "Writing contigs to file...".cyan());
         self.write_sequences(&final_matrix, self.output_dir);
-        log::info!("Writing summary to file...");
+        log::info!("{}\n", "Writing summary to file...".cyan());
         let total_samples = self.maf_files.len();
         let mut summary_writer = SummaryWriter::new(self.output_dir, &final_matrix, total_samples);
         let summary = summary_writer.write(self.reference);
@@ -229,8 +229,8 @@ impl<'a> LocusMappingWriter<'a> {
                         return;
                     }
 
-                    let ref_name = self.get_reference_name(&aln);
-                    let id = format!("{}-{}", ref_name, sample_name);
+                    let parsed_refname = self.get_reference_name(&aln);
+                    let id = format!("{}-{}", parsed_refname, sample_name);
                     aln.sequences.iter().skip(0).for_each(|sample| {
                         let parse_sequence = self.get_sequence(
                             str::from_utf8(&sample.text)
@@ -241,15 +241,21 @@ impl<'a> LocusMappingWriter<'a> {
                     });
                     if let Entry::Vacant(e) = mapped_score.entry(id.to_string()) {
                         e.insert(aln.score.unwrap_or(0.0));
-                        self.insert_ref_matrix(&mut ref_matrix, sequence, &ref_name, sample_name);
+                        self.insert_ref_matrix(
+                            &mut ref_matrix,
+                            sequence,
+                            &parsed_refname,
+                            sample_name,
+                        );
                     } else {
                         let current_score = mapped_score.get(&id).unwrap_or(&0.0);
                         if aln.score.unwrap_or(0.0) > *current_score {
-                            mapped_score.insert(ref_name.to_string(), aln.score.unwrap_or(0.0));
+                            mapped_score
+                                .insert(parsed_refname.to_string(), aln.score.unwrap_or(0.0));
                             self.insert_ref_matrix(
                                 &mut ref_matrix,
                                 sequence,
-                                &ref_name,
+                                &parsed_refname,
                                 sample_name,
                             );
                         }
@@ -271,6 +277,7 @@ impl<'a> LocusMappingWriter<'a> {
     ) {
         if ref_matrix.contains_key(refname) {
             let seq_matrix = ref_matrix.get_mut(refname).expect("Failed to get matrix");
+
             seq_matrix.insert(sample_name.to_string(), sequence);
         } else {
             let mut matrix = IndexMap::new();
@@ -323,9 +330,9 @@ impl<'a> SummaryWriter<'a> {
         self.reference_counts = ref_names.len();
         let mut summary = FinalMappingSummary::new(self.reference_counts);
         summary.summarize(self.mapped_matrix);
-        let progress_bar = common::init_progress_bar(self.reference_counts as u64);
+        let spinner = common::init_spinner();
         let msg = "ref counts";
-        progress_bar.set_message(msg);
+        spinner.set_message(msg);
         let output_dir = self.create_output_path();
         let mut writer = csv::Writer::from_path(&output_dir).expect("Failed to create csv writer");
         ref_names.iter().for_each(|name| {
@@ -333,9 +340,8 @@ impl<'a> SummaryWriter<'a> {
             writer
                 .serialize(summary)
                 .expect("Failed to write summary to file");
-            progress_bar.inc(1);
         });
-        progress_bar.finish_with_message(format!("{} {}\n", "✔".green(), msg));
+        spinner.finish_with_message(format!("{} {}\n", "✔".green(), msg));
         summary
     }
 
