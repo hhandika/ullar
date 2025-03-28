@@ -120,7 +120,6 @@ impl ContigMappingConfig {
         override_args: Option<&str>,
     ) -> Result<PathBuf, Box<dyn Error>> {
         self.get_dependency(override_args);
-        println!("Dependencies: {:?}", self.dependencies);
         self.sequence_reference.get(ref_path);
         let output_path = generate_config_output_path(file_name);
         let toml = toml::to_string_pretty(&self)?;
