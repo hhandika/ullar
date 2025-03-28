@@ -7,10 +7,11 @@ use std::{
 };
 
 use crate::{
-    core::deps::DepMetadata, helper::common, parse_override_args, types::trees::MscInferenceMethod,
+    core::deps::{aster::AsterParams, DepMetadata},
+    helper::common,
+    parse_override_args,
+    types::trees::MscInferenceMethod,
 };
-
-use super::configs::AsterParams;
 
 const ASTRAL_FNAME: &str = "astral";
 const ASTRAL_PRO_FNAME: &str = "astral_pro";

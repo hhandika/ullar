@@ -19,15 +19,13 @@ use segul::{
 
 use crate::{
     core::deps::{
-        iqtree::{IQTREE2_EXE, IQTREE_EXE},
+        iqtree::{IqTreeParams, IQTREE2_EXE, IQTREE_EXE},
         DepMetadata,
     },
     helper::common,
     parse_override_args,
     types::{alignments::AlignmentFiles, trees::IQTreePartitions},
 };
-
-use super::configs::IqTreeParams;
 
 const GENE_TREE_FILENAME: &str = "genes";
 const MULTI_TREE_EXTENSION: &str = "trees";

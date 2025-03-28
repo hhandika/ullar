@@ -1,9 +1,10 @@
 use std::process::Command;
 
 use colored::Colorize;
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
-use crate::{types::trees::MscInferenceMethod, version};
+use crate::{cli::commands::tree::AsterSettingArgs, types::trees::MscInferenceMethod, version};
 
 use super::{check_dependency_match, dependency_not_found, re_capture_version, DepMetadata};
 
@@ -105,5 +106,43 @@ impl AsterMetadata {
                 update
             }
         }
+    }
+}
+
+// Include all ASTER software suites.
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct AsterParams {
+    pub methods: IndexMap<MscInferenceMethod, Option<DepMetadata>>,
+    pub optional_args: Option<String>,
+}
+
+impl AsterParams {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn from_args(args: &AsterSettingArgs) -> Self {
+        let methods = match &args.specify_msc_methods {
+            Some(methods) => methods
+                .iter()
+                .map(|m| m.parse::<MscInferenceMethod>().expect("Invalid method"))
+                .collect(),
+            None => vec![MscInferenceMethod::default()],
+        };
+        let mut method_deps = IndexMap::new();
+        methods.iter().for_each(|m| {
+            let aster = AsterMetadata::new();
+            let dep = aster.get_matching(m);
+            method_deps.insert(m.clone(), dep);
+        });
+        Self {
+            methods: method_deps,
+            optional_args: args.optional_args_msc.clone(),
+        }
+    }
+
+    pub fn with_optional_args(mut self, args: Option<&str>) -> Self {
+        self.optional_args = args.map(|a| a.to_string());
+        self
     }
 }
