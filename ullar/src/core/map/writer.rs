@@ -87,11 +87,11 @@ impl<'a> ProbeMappingWriter<'a> {
     /// Matches contigs to probes.
     /// Pulls entire sequences that match the reference sequence.
     pub fn write_general(&self, mapping_data: &[MappingData]) -> FinalMappingSummary {
-        log::info!("{}\n", "Mapping and filtering duplicate matches...".cyan());
+        log::info!("{}", "Mapping and filtering duplicate matches...");
         let final_matrix = self.map_contig_to_probe(mapping_data);
-        log::info!("{}\n", "Writing contigs to file...".cyan());
+        log::info!("{}", "Writing contigs to file...");
         self.write_sequences(&final_matrix, self.output_dir);
-        log::info!("{}\n", "Writing summary to file...".cyan());
+        log::info!("{}", "Writing summary to file...");
         let total_samples = mapping_data.len();
         let mut summary_writer = SummaryWriter::new(self.output_dir, &final_matrix, total_samples);
         summary_writer.write(self.reference_data)
@@ -172,11 +172,11 @@ impl<'a> LocusMappingWriter<'a> {
     }
 
     pub fn write(&self) -> FinalMappingSummary {
-        log::info!("{}\n", "Parsing and filtering duplicate matches...".cyan());
+        log::info!("{}", "Parsing and filtering duplicate matches...");
         let final_matrix = self.parse_samples();
-        log::info!("{}\n", "Writing contigs to file...".cyan());
+        log::info!("{}", "Writing contigs to file...");
         self.write_sequences(&final_matrix, self.output_dir);
-        log::info!("{}\n", "Writing summary to file...".cyan());
+        log::info!("{}", "Writing summary to file...");
         let total_samples = self.maf_files.len();
         let mut summary_writer = SummaryWriter::new(self.output_dir, &final_matrix, total_samples);
         let summary = summary_writer.write(self.reference);
@@ -331,7 +331,7 @@ impl<'a> SummaryWriter<'a> {
         let mut summary = FinalMappingSummary::new(self.reference_counts);
         summary.summarize(self.mapped_matrix);
         let spinner = common::init_spinner();
-        let msg = "ref counts";
+        let msg = "Writing summary to file...";
         spinner.set_message(msg);
         let output_dir = self.create_output_path();
         let mut writer = csv::Writer::from_path(&output_dir).expect("Failed to create csv writer");
@@ -341,7 +341,7 @@ impl<'a> SummaryWriter<'a> {
                 .serialize(summary)
                 .expect("Failed to write summary to file");
         });
-        spinner.finish_with_message(format!("{} {}\n", "✔".green(), msg));
+        spinner.finish_with_message(format!("{} Finished writing summary\n", "✔".green()));
         summary
     }
 
