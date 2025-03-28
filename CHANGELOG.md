@@ -1,13 +1,12 @@
 # Release Notes
 
-## Upcoming
-
-- Config file is now a TOML file instead of YAML.
-
 ## v0.4.0
 
 - Add tree inference support.
 - Make config filename more consistent.
+- Config file is now a TOML file instead of YAML.
+- Add `--autorun` option to run the pipeline from init step.
+- Cleaner interface for the pipeline.
 
 ## v0.3.1
 
