@@ -78,22 +78,18 @@ Check ULLAR installation:
 ullar --version
 ```
 
-#### Generate a config file
+#### Cleaning raw reads
+
+A quick way to clean reads:
 
 ```bash
-ullar new -d /raw_read_dir
+ullar clean init -d /raw_read_dir --autorun
 ```
 
-To check the config file:
+By default ullar use descriptive name format to match the sample. It is equal to running ullar using this argument:
 
 ```bash
-cat configs/clean_read.yaml
-```
-
-For more descriptive names, you can use the `--sample-name descriptive` argument:
-
-```bash
-ullar new /raw_read_dir --sample-name descriptive
+ullar clean init -d /raw_read_dir --sample-name descriptive
 ```
 
 Example of descriptive names:
@@ -110,7 +106,7 @@ Example of descriptive names:
 If your file naming is simple, you can use the `--sample-name simple` argument:
 
 ```bash
-ullar new /raw_read_dir --sample-name simple
+ullar clean init -d /raw_read_dir --sample-name simple
 ```
 
 Example of simple names:
@@ -123,13 +119,7 @@ Example of simple names:
 You can also supply your own regular expression to extract the sample name:
 
 ```bash
-ullar new /raw_read_dir --re-sample='([a-zA-Z0-9]+)_R1.fastq.gz'
-```
-
-#### Cleaning raw reads
-
-```bash
-ullar clean init -c configs/read_cleaning.yaml
+ullar clean init -d /raw_read_dir --re-sample='([a-zA-Z0-9]+)_R1.fastq.gz'
 ```
 
 To run the cleaning process:
@@ -138,10 +128,16 @@ To run the cleaning process:
 ullar clean run -c configs/read_cleaning.yaml
 ```
 
-It will first check the config file and the hash values match the raw reads. For a fresh run, you can skip the hash check:
+If you prefer to check the config file before running the cleaning process, you can init ullar without the `--autorun` argument:
 
 ```bash
-ullar clean -c configs/read_cleaning.yaml --skip-config-check
+ullar clean init -d /raw_read_dir
+```
+
+To run the cleaning process, you can use the `--skip-config-check` argument to skip the config check:
+
+```bash
+ullar clean run -c configs/read_cleaning.yaml
 ```
 
 #### De Novo Assembly
@@ -149,21 +145,106 @@ ullar clean -c configs/read_cleaning.yaml --skip-config-check
 ULLAR uses SPAdes for de novo assembly. To run the assembly:
 
 ```bash
-ullar assemble -c configs/denovo_assembly.yaml
+ullar assemble init -d /cleaned_read_dir --autorun
+```
+
+If you prefer to check the config file before running the assembly process, you can init ullar without the `--autorun` argument:
+
+```bash
+ullar assemble init -d /cleaned_read_dir
+```
+
+To run the assembly process, you can use the `--skip-config-check` argument to skip the config check:
+
+```bash
+ullar assemble run -c configs/de_novo_assembly.yaml
 ```
 
 #### Reference Mapping
 
-ULLAR uses LASTZ for reference mapping. To run the reference mapping:
+ULLAR uses LASTZ for reference mapping. To run the mapping:
 
 ```bash
-ullar map run -c configs/reference_mapping.yaml
+ullar map init -d /path/to/cleaned_read_dir --reference /path/to/reference.fasta --reference-type probes --autorun
 ```
+
+If your reference is a locus, you can use the `--reference-type loci` argument:
+
+```bash
+ullar map init -d /path/to/cleaned_read_dir --reference /path/to/reference.fasta --reference-type loci --autorun 
+```
+
+For the `probes` type, ULLAR will pull an entire contig that matches the probe. The output will in lastz `general` format and sequence files in FASTA format.
+
+For the `loci` type, ULLAR will only pull the part of the contig that matches the reference. The output will be in Multi Alignment Format (MAF) and FASTA format.
 
 #### Sequence Alignment
 
 ULLAR uses MAFFT for sequence alignment. To run the sequence alignment:
 
 ```bash
+ullar align init -d /path/to/unaligned_sequences_dir --autorun
+```
+
+If you prefer to check the config file before running the alignment process, you can init ullar without the `--autorun` argument:
+
+```bash
+ullar align init -d /path/to/unaligned_sequences_dir
+```
+
+To run the alignment process, you can use the `--skip-config-check` argument to skip the config check:
+
+```bash
 ullar align run -c configs/sequence_alignment.yaml
+```
+
+#### Phylogenetic Analysis
+
+ULLAR uses IQ-TREE for phylogenetic analysis. To run the phylogenetic analysis:
+
+```bash
+ullar tree init -d /path/to/aligned_sequences_dir --autorun
+```
+
+If you prefer to check the config file before running the phylogenetic analysis process, you can init ullar without the `--autorun` argument:
+
+```bash
+ullar tree init -d /path/to/aligned_sequences_dir
+```
+
+To run the phylogenetic analysis process, you can use the `--skip-config-check` argument to skip the config check:
+
+```bash
+ullar tree run -c configs/phylogenetic_analysis.yaml
+```
+
+To specify the tree inference method, you can use the `--specify-analyses` argument:
+
+Options are:
+
+- `ml-species` for maximum likelihood species tree inference
+- `ml-genes` for maximum likelihood gene tree inference
+- `gscf` for gene site concordance factor
+- `msc` for multi-species coalescent tree inference
+
+For example:
+
+```bash
+ullar tree init -d /path/to/aligned_sequences_dir --specify-analyses ml-species ml-genes --autorun
+```
+
+You can also specify the multi-species coalescent tree inference method using `--specify-msc-methods` argument:
+
+Options are:
+
+- `astral` for ASTRAL 4 methods.
+- `astral-pro` for ASTRAL Pro methods.
+- `wastral` for Weighted ASTRAL methods.
+
+MSC methods requires `--specify-analyses ml-genes msc` argument.
+
+For example:
+
+```bash
+ullar tree init -d /path/to/aligned_sequences_dir --specify-analyses ml-genes msc --specify-msc-methods astral-pro --autorun
 ```
