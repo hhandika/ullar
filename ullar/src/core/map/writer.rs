@@ -221,24 +221,21 @@ impl<'a> LocusMappingWriter<'a> {
             .to_str()
             .expect("Failed to convert file name to string");
         // We tract index 0 as the reference sequence
-        maf.into_iter().for_each(|record| {
-            let mut sequence = String::new();
-            match record {
-                MafParagraph::Alignment(aln) => {
-                    if aln.sequences.len() == 0 {
-                        return;
-                    }
+        maf.into_iter().for_each(|record| match record {
+            MafParagraph::Alignment(aln) => {
+                if aln.sequences.len() == 0 {
+                    return;
+                }
 
-                    let parsed_refname = self.get_reference_name(&aln);
-                    let id = format!("{}-{}", parsed_refname, sample_name);
-                    aln.sequences.iter().skip(0).for_each(|sample| {
-                        let parse_sequence = self.get_sequence(
-                            str::from_utf8(&sample.text)
-                                .expect("Failed to convert sequence to string"),
-                            sample.strand.to_char(),
-                        );
-                        sequence.push_str(&parse_sequence);
-                    });
+                let parsed_refname = self.get_reference_name(&aln);
+                let id = format!("{}-{}", parsed_refname, sample_name);
+                aln.sequences.iter().skip(0).for_each(|sample| {
+                    let mut sequence = String::new();
+                    let parse_sequence = self.get_sequence(
+                        str::from_utf8(&sample.text).expect("Failed to convert sequence to string"),
+                        sample.strand.to_char(),
+                    );
+                    sequence.push_str(&parse_sequence);
                     if let Entry::Vacant(e) = mapped_score.entry(id.to_string()) {
                         e.insert(aln.score.unwrap_or(0.0));
                         self.insert_ref_matrix(
@@ -260,9 +257,9 @@ impl<'a> LocusMappingWriter<'a> {
                             );
                         }
                     }
-                }
-                _ => (),
+                });
             }
+            _ => (),
         });
 
         ref_matrix
