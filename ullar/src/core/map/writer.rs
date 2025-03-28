@@ -229,7 +229,7 @@ impl<'a> LocusMappingWriter<'a> {
 
                 let parsed_refname = self.get_reference_name(&aln);
                 let id = format!("{}-{}", parsed_refname, sample_name);
-                aln.sequences.iter().skip(0).for_each(|sample| {
+                aln.sequences.iter().skip(1).for_each(|sample| {
                     let mut sequence = String::new();
                     let parse_sequence = self.get_sequence(
                         str::from_utf8(&sample.text).expect("Failed to convert sequence to string"),
@@ -427,5 +427,34 @@ mod tests {
         let matrix = SeqParser::new(&cytb_output, &DataType::Dna).parse(&types::InputFmt::Fasta);
         let seq = matrix.0.get("mitogenomes").unwrap();
         assert_eq!(seq.len(), 1143, "Sequence length is not correct");
+        let seq_cytb = "ATGACAAACATTCGAAAATCTCACCCC\
+        CTACTCAAAATTATCAACCACTCCTTCATCGACCTACCTACCC\
+        CATCCAACATCTCATCATGATGAAACTTTGGTTCCCTGCTAGGAG\
+        TGTGCCTCATACTTCAAATCGTCACAGGCCTATTCCTAGCAATACA\
+        CTACACATCCGACACTATAACAGCATTCTCATCAGTCACCCACATCTG\
+        CCGAGACGTAAATTACGGTTGACTGATCCGATACTTACATGCTAATGGAG\
+        CCTCAATATTTTTTATTTGCCTATTTCTCCATGTAGGACGAGGCATATACT\
+        ACGGATCCTACACCTTTCTAGAGACATGAAACATTGGAGTCATCTTATTAT\
+        TTGCAGTTATGGCAACCGCATTTATAGGCTACGTACTCCCATGAGGACAAA\
+        TATCCTTCTGAGGCGCTACAGTAATTACAAACCTACTATCTGCCATCCCCTA\
+        TATCGGCACAACTCTAGTCGAATGAATCTGAGGGGGTTTCTCAGTAGACAAAG\
+        CAACTCTAACACGATTCTTCGCATTCCACTTCATCCTCCCATTCATCATCGCCG\
+        CCCTTGCAATCGTACATCTACTATTCCTTCACGAAACAGGATCAAACAACCCCAC\
+        AGGACTAAACTCAGACGCAGACAAAATCCCCTTTCACCCCTATTACACAACCAAAG\
+        ATCTTCTAGGAGTTTTTATCCTACTCTTATCCCTAATAATCCTAGTACTATTCTTC\
+        CCAGATCTCCTAGGAGACCCAGACAACTACACCCCCGCCAACCCCCTAAACACCCC\
+        ACCCCACATCAAACCAGAATGATATTTCCTTTTTGCTTACGCCATCCTACGCTCTA\
+        TCCCCAATAAACTAGGAGGAGTAGTAGCCCTAGTCCTATCAATTCTAGTTCTAGC\
+        CCTCTTACCATTCTTACACACCTCAAAACAACGCAGCCTGATATTCCGTCCAA\
+        TTACCCAAGTACTATACTGAATCCTCGTGGCCAACCTCTTCATCCTAACCTGA\
+        ATCGGAGGCCAACCAGTAGAACACCCATTCATTATTATCGGCCAACTAGCATCC\
+        ATCAGCTACTTCTCAATTATCCTCATCCTTATACCAATCTCCGGAATTATTGAA\
+        GACAAAATACTAAAATGAAATTAA";
+        let comp = dna::revcomp(seq_cytb.as_bytes());
+        assert_eq!(
+            seq,
+            &String::from_utf8(comp).expect("Failed to convert Vec<u8> to String"),
+            "Sequence is not correct"
+        );
     }
 }
