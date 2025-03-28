@@ -7,9 +7,8 @@ use anyhow::Context;
 use aster::MscAster;
 use colored::Colorize;
 use configs::{
-    AsterParams, IqTreeParams, TreeInferenceConfig, DEFAULT_ML_INFERENCE_CONFIG,
-    GENE_SITE_CONCORDANCE_ANALYSIS, GENE_TREE_ANALYSIS, MSC_INFERENCE_ANALYSIS,
-    SPECIES_TREE_ANALYSIS,
+    TreeInferenceConfig, DEFAULT_ML_INFERENCE_CONFIG, GENE_SITE_CONCORDANCE_ANALYSIS,
+    GENE_TREE_ANALYSIS, MSC_INFERENCE_ANALYSIS, SPECIES_TREE_ANALYSIS,
 };
 use iqtree::{GeneSiteConcordance, IQTreeResults, MlGeneTree, MlSpeciesTree};
 
@@ -23,7 +22,11 @@ use crate::{
     types::{runner::RunnerOptions, trees::TreeInferenceMethod},
 };
 
-use super::deps::{aster::AsterMetadata, iqtree::IqtreeMetadata, DepMetadata};
+use super::deps::{
+    aster::{AsterMetadata, AsterParams},
+    iqtree::{IqTreeParams, IqtreeMetadata},
+    DepMetadata,
+};
 
 pub mod aster;
 pub mod configs;
