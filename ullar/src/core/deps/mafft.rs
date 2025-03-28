@@ -86,7 +86,9 @@ impl<'a> MafftMetadata<'a> {
 
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {
         let version = self.capture_version(version_data);
-        Some(DepMetadata::new(&self.name, &version, Some(MAFFT_EXE)))
+        let metadata = DepMetadata::new(&self.name, &version, Some(MAFFT_EXE))
+            .override_args(self.override_args);
+        Some(metadata)
     }
 
     fn capture_version(&self, version_data: &str) -> String {

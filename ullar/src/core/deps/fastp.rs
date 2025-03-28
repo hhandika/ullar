@@ -61,6 +61,8 @@ impl<'a> FastpMetadata<'a> {
     fn metadata(&self, version_data: &str) -> Option<DepMetadata> {
         let executable = FASTP_EXE.to_string();
         let version = re_capture_version(version_data);
-        Some(DepMetadata::new(&executable, &version, Some(&executable)))
+        let metadata = DepMetadata::new(&executable, &version, Some(&executable))
+            .override_args(self.override_args);
+        Some(metadata)
     }
 }
