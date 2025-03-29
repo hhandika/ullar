@@ -196,12 +196,7 @@ impl<'a> TreeInferenceInit<'a> {
 
     fn find_alignments(&self) -> AlignmentFiles {
         let files = SeqFileFinder::new(self.input_dir).find(&self.input_format);
-        AlignmentFiles::from_sequence_files(
-            &files,
-            &self.input_format,
-            &self.datatype,
-            self.iqtree.partition.as_deref(),
-        )
+        AlignmentFiles::from_sequence_files(&files, &self.input_format, &self.datatype)
     }
 
     fn write_config(
@@ -222,7 +217,7 @@ impl<'a> TreeInferenceInit<'a> {
             );
             return Err(error.into());
         }
-        let output_path = config.to_toml()?;
+        let output_path = config.to_toml(self.iqtree.codon)?;
         Ok((output_path, config))
     }
 

@@ -36,6 +36,7 @@ pub struct MlSpeciesTree<'a> {
     pub alignments: &'a AlignmentFiles,
     pub iqtree_configs: &'a IqTreeParams,
     pub output_dir: &'a Path,
+    pub codon_model: bool,
 }
 
 impl<'a> MlSpeciesTree<'a> {
@@ -44,11 +45,13 @@ impl<'a> MlSpeciesTree<'a> {
         alignments: &'a AlignmentFiles,
         iqtree_configs: &'a IqTreeParams,
         output_dir: &'a Path,
+        codon_model: bool,
     ) -> Self {
         Self {
             alignments,
             iqtree_configs,
             output_dir,
+            codon_model,
         }
     }
 
@@ -96,7 +99,11 @@ impl<'a> MlSpeciesTree<'a> {
         let output_pre = Path::new(prefix);
         let input_fmt = InputFmt::Auto;
         let output_fmt = OutputFmt::Phylip;
-        let partition_fmt = PartitionFmt::Raxml;
+        let partition_fmt = if self.codon_model {
+            PartitionFmt::RaxmlCodon
+        } else {
+            PartitionFmt::Raxml
+        };
         let datatype = DataType::Dna;
         let mut alignment_files = self
             .alignments

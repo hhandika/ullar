@@ -95,8 +95,8 @@ impl TreeInferenceConfig {
         Ok(config)
     }
 
-    pub fn to_toml(&mut self) -> Result<PathBuf, Box<dyn Error>> {
-        self.update_segul_metadata();
+    pub fn to_toml(&mut self, codon_model: bool) -> Result<PathBuf, Box<dyn Error>> {
+        self.update_segul_metadata(codon_model);
         let output_path = generate_config_output_path(DEFAULT_ML_INFERENCE_CONFIG);
         let toml = toml::to_string_pretty(self)?;
         std::fs::write(&output_path, toml)?;
@@ -176,10 +176,15 @@ impl TreeInferenceConfig {
             .insert(MSC_INFERENCE_ANALYSIS.to_string(), params);
     }
 
-    fn update_segul_metadata(&mut self) {
+    fn update_segul_metadata(&mut self, codon_model: bool) {
+        let concatenation = if codon_model {
+            SegulMethods::AlignmentConcatenationByCodon
+        } else {
+            SegulMethods::AlignmentConcatenation
+        };
         let methods = [
             SegulMethods::AlignmentFinding,
-            SegulMethods::AlignmentConcatenation,
+            concatenation,
             SegulMethods::AlignmentSummary,
         ];
         let methods_str: Vec<String> = methods.iter().map(|m| m.as_str().to_string()).collect();
