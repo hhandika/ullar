@@ -25,6 +25,7 @@ use crate::{
 use super::deps::{
     aster::{AsterMetadata, AsterParams},
     iqtree::{IqTreeParams, IqtreeMetadata},
+    segul::SegulMethods,
     DepMetadata,
 };
 
@@ -173,7 +174,9 @@ impl<'a> TreeEstimation<'a> {
                     .as_ref()
                     .with_context(|| "Species tree parameters not found")?;
                 self.log_iqtree(params);
-                let ml_analyses = MlSpeciesTree::new(&config.alignments, &params, &output_dir);
+                let codon_model = self.use_codon_model(config);
+                let ml_analyses =
+                    MlSpeciesTree::new(&config.alignments, &params, &output_dir, codon_model);
                 ml_analyses.infer_species_tree(iqtree_result, prefix)?;
                 self.log_output(&output_dir);
                 log::info!(
@@ -190,6 +193,16 @@ impl<'a> TreeEstimation<'a> {
                 );
                 Err(error.into())
             }
+        }
+    }
+
+    fn use_codon_model(&self, config: &TreeInferenceConfig) -> bool {
+        match &config.data_preparation.methods {
+            Some(methods) => {
+                let codon_model = SegulMethods::AlignmentConcatenationByCodon.to_string();
+                methods.contains(&codon_model)
+            }
+            None => false,
         }
     }
 

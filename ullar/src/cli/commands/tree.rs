@@ -94,9 +94,6 @@ pub struct TreeInferenceArgs {
 
 #[derive(Args)]
 pub struct IqTreeSettingArgs {
-    /// Path to the partition file
-    #[arg(short, long, help = "Path to the partition file")]
-    pub partition: Option<PathBuf>,
     /// Partitioning scheme
     /// equal: Equal rates for all partitions (-q option in IQ-TREE)
     /// proportional: Proportional rates for all partitions (-spp option in IQ-TREE)
@@ -117,6 +114,13 @@ pub struct IqTreeSettingArgs {
         help = "Model of nucleotide substitution for IQ-TREE. Must matches IQ-TREE model format"
     )]
     pub models: String,
+    /// Concatenate alignment by codon position
+    #[arg(
+        short,
+        long,
+        help = "Use codon model partitioning for species tree inference",
+    )]
+    pub codon: bool,
     /// Set different models for gene tree inference
     /// Otherwise, the same model will be used for both
     /// species and gene tree inference.
