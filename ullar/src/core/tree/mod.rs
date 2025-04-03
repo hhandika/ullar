@@ -199,7 +199,7 @@ impl<'a> TreeEstimation<'a> {
     fn use_codon_model(&self, config: &TreeInferenceConfig) -> bool {
         match &config.data_preparation.methods {
             Some(methods) => {
-                let codon_model = SegulMethods::AlignmentConcatenationByCodon.to_string();
+                let codon_model = SegulMethods::AlignmentConcatenationByCodon.as_str();
                 methods.contains(&codon_model)
             }
             None => false,
