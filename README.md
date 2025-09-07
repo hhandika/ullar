@@ -83,6 +83,29 @@ Check ULLAR installation:
 ullar --version
 ```
 
+### Quick Start
+
+```bash
+# Step 1: Clean raw reads
+ullar clean init -d /raw_read_dir --autorun
+
+# Step 2: De novo assembly
+ullar assemble init -d /cleaned_read_dir --autorun
+
+# Step 3: Reference mapping
+ullar map init -d /cleaned_read_dir --reference /path/to/reference.fasta --reference-type probes --autorun
+# or if your reference is a locus
+ullar map init -d /cleaned_read_dir --reference /path/to/reference.fasta --reference-type loci --autorun
+
+# Step 4: Sequence alignment
+ullar align init -d /path/to/unaligned_sequences_dir --autorun
+
+# Step 5: Phylogenetic analysis
+ullar tree init -d /path/to/aligned_sequences_dir --autorun
+```
+
+### Detailed Steps
+
 #### Cleaning raw reads
 
 A quick way to clean reads:
