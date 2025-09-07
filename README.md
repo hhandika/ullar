@@ -11,7 +11,7 @@ Wrangling the 'snakes' of phylogenomic pipelines can be a frustrating endeavor. 
 
 ## Development Status
 
-ULLAR is currently under development. We are working on the pipeline's core components. You should expect command changes in the future release. If you use ULLAR in publication, we recommend stating the exact version of the app. For manual compilation, we recommend to also state the commit hash number. For example, `ULLAR v0.3.0 (commit: f18ac98)`.
+ULLAR is currently under development. We have completed the pipeline's core components. However, you should expect command changes in the future release as we continue to refine the tool. If you use ULLAR in publication, we recommend stating the exact version of the app. For manual compilation, we recommend to also state the commit hash number. For example, `ULLAR v0.3.0 (commit: f18ac98)`.
 
 ## Try ULLAR
 
@@ -84,6 +84,8 @@ ullar --version
 ```
 
 ### Quick Start
+
+For a complete analysis, consider using [SEGUL](https://www.segul.app/) for data cleaning and summary statistics. Eventually, all essential features from SEGUL will be integrated into ULLAR, eliminating the need to install SEGUL separately.
 
 ```bash
 # Step 1: Clean raw reads
