@@ -4,6 +4,10 @@
 
 ULLAR, named after _ular_, which means snakes in the Indonesian language, stands for an Ultrafast, scaLable, Accessible, and Reproducible pipeline for phylogenomics. Our goal with ULLAR is to develop a lightweight and scalable pipeline that requires a minimal learning curve. In addition to Linux and MacOS, the typical supported operating systems for bioinformatics, whenever possible, ULLAR will run natively on Windows.
 
+## Motivation
+
+Building a pipeline with general-purpose workflow managers such as Snakemake or Nextflow introduces an additional layer of abstraction to an already complex process. This added complexity can make pipelines more difficult to debug, modify, and maintain. To overcome these limitations, we need a pipeline developed from the ground up using a programming language designed for speed, safety, and concurrency, without requiring extra runtime dependencies. ULLAR is carefully optimized to run efficiently, even on limited computational resources and with minimal technical support. Our primary goal is to enable researchers working on non-model organisms to perform a complete phylogenomic analysis with a single command, while still offering the flexibility to modify and customize individual steps as needed.
+
 ## Development Status
 
 ULLAR is currently under development. We are working on the pipeline's core components. You should expect command changes in the future release. If you use ULLAR in publication, we recommend stating the exact version of the app. For manual compilation, we recommend to also state the commit hash number. For example, `ULLAR v0.3.0 (commit: f18ac98)`.
@@ -171,7 +175,7 @@ ullar map init -d /path/to/cleaned_read_dir --reference /path/to/reference.fasta
 If your reference is a locus, you can use the `--reference-type loci` argument:
 
 ```bash
-ullar map init -d /path/to/cleaned_read_dir --reference /path/to/reference.fasta --reference-type loci --autorun 
+ullar map init -d /path/to/cleaned_read_dir --reference /path/to/reference.fasta --reference-type loci --autorun
 ```
 
 For the `probes` type, ULLAR will pull an entire contig that matches the probe. The output will in lastz `general` format and sequence files in FASTA format.
