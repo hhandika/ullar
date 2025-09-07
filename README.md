@@ -7,7 +7,7 @@ ULLAR, named after _ular_, which means snakes in the Indonesian language, stands
 
 ## Motivation
 
-Wrangling the 'snakes' of phylogenomic pipelines can be a frustrating endeavor. 🐍 Pipelines built on a general-purpose workflow manager like Snakemake or Nextflow, while powerful, often introduce operational overhead. They add extra layers—a new Domain-Specific Language (DSL), multiple runtimes, and complex container or Conda stacks—that make small to mid-scale analyses difficult to learn, debug, and maintain. ULLAR is our solution: a pipeline crafted from the ground up as a single, efficient binary that eliminates these layers for a simpler, more powerful user experience. We specifically designed ULLAR for phylogenomic analyses of non-model organisms and targeted for users with limited computational resources and technical support.
+Wrangling the 'snakes' of phylogenomic pipelines can be a frustrating endeavor. 🐍 Pipelines built on a general-purpose workflow manager like [Snakemake](https://snakemake.readthedocs.io/en/stable/) or [Nextflow](https://www.nextflow.io/), while powerful, often introduce operational overhead. They add extra layers—a new Domain-Specific Language (DSL), multiple runtimes, and complex container or Conda stacks—that make small to mid-scale analyses difficult to learn, debug, and maintain. ULLAR is our solution: a pipeline crafted from the ground up as a single, efficient binary that eliminates these layers for a simpler, more powerful user experience. We specifically designed ULLAR for phylogenomic analyses of non-model organisms and targeted for users with limited computational resources and technical support.
 
 ## Development Status
 
