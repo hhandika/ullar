@@ -1,12 +1,13 @@
 # ULLAR <img src="https://raw.githubusercontent.com/hhandika/ullar/main/assets/icons/ullar-dark.png" alt="ullar logo" align="right" width="150"/>
 
 ![ci](https://github.com/hhandika/ullar/workflows/tests/badge.svg)
+[![LoC](https://tokei.rs/b1/github/hhandika/ullar?category=code)](https://github.com/XAMPPRocky/tokei)
 
 ULLAR, named after _ular_, which means snakes in the Indonesian language, stands for an Ultrafast, scaLable, Accessible, and Reproducible pipeline for phylogenomics. Our goal with ULLAR is to develop a lightweight and scalable pipeline that requires a minimal learning curve. In addition to Linux and MacOS, the typical supported operating systems for bioinformatics, whenever possible, ULLAR will run natively on Windows.
 
 ## Motivation
 
-Building a pipeline with general-purpose workflow managers such as Snakemake or Nextflow introduces an additional layer of abstraction to an already complex process. This added complexity can make pipelines more difficult to debug, modify, and maintain. To overcome these limitations, we need a pipeline developed from the ground up using a programming language designed for speed, safety, and concurrency, without requiring extra runtime dependencies. ULLAR is carefully optimized to run efficiently, even on limited computational resources and with minimal technical support. Our primary goal is to enable researchers working on non-model organisms to perform a complete phylogenomic analysis with a single command, while still offering the flexibility to modify and customize individual steps as needed.
+Wrangling the 'snakes' of phylogenomic pipelines can be a frustrating endeavor. 🐍 Pipelines built on a general-purpose workflow manager like Snakemake or Nextflow, while powerful, often introduce operational overhead. They add extra layers—a new Domain-Specific Language (DSL), multiple runtimes, and complex container or Conda stacks—that make small to mid-scale analyses difficult to learn, debug, and maintain. ULLAR is our solution: a pipeline crafted from the ground up as a single, efficient binary that eliminates these layers for a simpler, more powerful user experience. We specifically designed ULLAR for phylogenomic analyses of non-model organisms and targeted for users with limited computational resources and technical support.
 
 ## Development Status
 
@@ -199,7 +200,7 @@ ullar align init -d /path/to/unaligned_sequences_dir
 To run the alignment process, you can use the `--skip-config-check` argument to skip the config check:
 
 ```bash
-ullar align run -c configs/sequence_alignment.yaml
+ullar align align -c configs/sequence_alignment.yaml
 ```
 
 #### Phylogenetic Analysis
