@@ -8,7 +8,7 @@ ULLAR stands for an Ultrafast, scaLable, Accessible, and Reproducible pipeline f
 ## Motivation
 
 Wrangling the 'snakes' of phylogenomic pipelines can be a frustrating endeavor. Common issues with currently available genomic pipelines:
-1. Difficult to debug due to additional layers of abstraction and dependencies (e.g., SnakeMake, NextFlow, Python runtime, and dozens of other runtime dependencies).
+1. Inefficient and difficult to debug due to additional layers of abstraction and dependencies (e.g., SnakeMake, NextFlow, Python runtime, and dozens of other runtime dependencies).
 2. Requires users to prepare config files, which can be tedious for those with limited knowledge of Shell scripting and end up doing it manually instead.
 3. Sequence samples from non-model organisms often are not of ideal quality. An extra quality check and manual inspection at each step of the workflow is usually required to ensure optimal, accurate results.
 4. Some HPC Clusters offer users limited privileges. Workflows that automatically submit >1,000 jobs are often not allowed in those systems.
