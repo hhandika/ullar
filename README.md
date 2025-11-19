@@ -3,11 +3,18 @@
 ![ci](https://github.com/hhandika/ullar/workflows/tests/badge.svg)
 [![LoC](https://tokei.rs/b1/github/hhandika/ullar?category=code)](https://github.com/XAMPPRocky/tokei)
 
-ULLAR, named after _ular_, which means snakes in the Indonesian language, stands for an Ultrafast, scaLable, Accessible, and Reproducible pipeline for phylogenomics. Our goal with ULLAR is to develop a lightweight and scalable pipeline that requires a minimal learning curve. In addition to Linux and MacOS, the typical supported operating systems for bioinformatics, whenever possible, ULLAR will run natively on Windows.
+ULLAR, named after _ular_, which means snakes in the Indonesian language, stands for an Ultrafast, scaLable, Accessible, and Reproducible pipeline for phylogenomics. Our goal with ULLAR is to develop a lightweight and scalable pipeline that requires a minimal learning curve. In addition to Linux and macOS, the typical supported operating systems for bioinformatics, ULLAR will, whenever possible, run natively on Windows.
 
 ## Motivation
 
-Wrangling the 'snakes' of phylogenomic pipelines can be a frustrating endeavor. 🐍 Pipelines built on a general-purpose workflow manager like [Snakemake](https://snakemake.readthedocs.io/en/stable/) or [Nextflow](https://www.nextflow.io/), while powerful, often introduce operational overhead. They add extra layers—a new Domain-Specific Language (DSL), multiple runtimes, and complex container or Conda stacks—that make small to mid-scale analyses difficult to learn, debug, and maintain. ULLAR is our solution: a pipeline crafted from the ground up as a single, efficient binary that eliminates these layers for a simpler, more powerful user experience. We specifically designed ULLAR for phylogenomic analyses of non-model organisms and targeted for users with limited computational resources and technical support.
+Wrangling the 'snakes' of phylogenomic pipelines can be a frustrating endeavor. Common issues with currently available genomic pipelines:
+1. Difficult to debug due to additional layers of abstraction (e.g., SnakeMake, NextFlow, Python runtime, and dozens of other runtime dependencies).
+2. Requires users to prepare config files, which can be tedious for those with limited knowledge of Shell scripting and end up doing it manually instead.
+3. Sequence samples from non-model organisms often are not of ideal quality. An extra quality check at each step of the workflow is usually required to ensure optimal, accurate results.
+4. Some HPC Clusters offer users limited privileges. Workflows that automatically submit >1,000 jobs are often not allowed in those systems.
+5. Forced users to install all the dependencies. For instance, a user's computer could end up with SPAdes installations in five different home directories or separate conda environments.
+
+ULLAR is our baby steps and part of our long-term goals to ensure phylogenomics is accessible to as many evolutionary biologists as possible, regardless of their technical skills and support. 
 
 ## Development Status
 
