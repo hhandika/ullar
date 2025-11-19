@@ -209,7 +209,7 @@ If your reference is a locus, you can use the `--reference-type loci` argument:
 ullar map init -d /path/to/cleaned_read_dir --reference /path/to/reference.fasta --reference-type loci --autorun
 ```
 
-For the `probes` type, ULLAR will pull an entire contig that matches the probe. The output will in lastz `general` format and sequence files in FASTA format.
+For the `probes` type, ULLAR will pull an entire contig that matches the probe. The output will be in Lastz `general` format and sequence files in FASTA format.
 
 For the `loci` type, ULLAR will only pull the part of the contig that matches the reference. The output will be in Multi Alignment Format (MAF) and FASTA format.
 
