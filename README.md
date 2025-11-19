@@ -22,8 +22,6 @@ ULLAR is currently under development. We have completed the core components of t
 
 ## Try ULLAR
 
-You can try the pipeline by following the installation guide I've included below. This guideline assumes familiarity with using command-line apps and basic bioinformatics tools.
-
 ### Installation
 
 The ULLAR pipeline itself is a single-executable binary. Currently, you can install it as a binary or from source code. The stable release is also planned to be available on Bioconda. You can download the latest release from the [release page](https://github.com/hhandika/ullar/releases/latest). Available binaries for supported operating systems:
