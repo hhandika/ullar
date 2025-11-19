@@ -18,21 +18,15 @@ We develop ULLAR to solve those problems. ULLAR is our baby step toward our long
 
 ## Development Status
 
-ULLAR is currently under development. We have completed the pipeline's core components. However, you should expect command changes in the future release as we continue to refine the tool. If you use ULLAR in a publication, we recommend stating the exact version of the app. For manual compilation, we recommend to also state the commit hash number. For example, `ULLAR v0.3.0 (commit: f18ac98)`.
+ULLAR is currently under development. We have completed the core components of the pipeline. However, you should expect command changes in the future release as we continue to refine the tool. If you use ULLAR in a publication, we recommend you specify the exact version of the app. For manual compilation, we also recommend that you state the commit hash number. For example, `ULLAR v0.3.0 (commit: f18ac98)`.
 
 ## Try ULLAR
 
-You can try the pipeline by following the installation guide below. This guideline assume familiarity of using command line app and basic bioinformatics tools.
+You can try the pipeline by following the installation guide I've included below. This guideline assumes familiarity with using command-line apps and basic bioinformatics tools.
 
 ### Installation
 
-Currently, ULLAR installation requires Rust. Follow Rust installation guide [here](https://www.rust-lang.org/tools/install). After installing Rust, you can install ULLAR using cargo:
-
-```bash
-cargo install --git https://github.com/hhandika/ullar.git
-```
-
-Another option is to install ULLAR pre-compiled binary. You can download the latest release from the [release page](https://github.com/hhandika/ullar/releases/latest). Available binaries:
+The ULLAR pipeline itself is a single-executable binary. Currently, you can install it as a binary or from source code. The stable release is also planned to be available on Bioconda. You can download the latest release from the [release page](https://github.com/hhandika/ullar/releases/latest). Available binaries for supported operating systems:
 
 | OS      | Download                                                                                                                                                                                                                             |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -40,25 +34,37 @@ Another option is to install ULLAR pre-compiled binary. You can download the lat
 | Windows | [Intel/AMD 64-bit](https://github.com/hhandika/ullar/releases/latest/download/ullar-Windows-x86_64.zip)                                                                                                                              |
 | MacOS   | [Intel](https://github.com/hhandika/ullar/releases/latest/download/ullar-macOS-x86_64.tar.gz) or [M series](https://github.com/hhandika/ullar/releases/latest/download/ullar-macOS-arm64.tar.gz)                                     |
 
-Install ULLAR like installing any single executable binary. For example, in Linux:
+Install ULLAR like you would any other single-executable binary. For example, in Linux:
 
 ```bash
 tar -xvf ullar-Linux-x86_64.tar.gz
 ```
 
-Copy to your bin directory such as `/usr/local/bin`:
+Copy to your bin directory, such as `/usr/local/bin`:
 
 ```bash
 sudo cp ullar /usr/local/bin
 ```
 
-or our home directory that is in the PATH if you don't have root access:
+Or our home directory that is in the PATH if you don't have root access:
 
 ```bash
 cp ullar ~/bin
 ```
 
-SEGUL provide a detailed installation guide on installing Rust based software [here](https://www.segul.app/docs/installation/install_source)
+Check ULLAR installation:
+
+```bash
+ullar --version
+```
+
+You can also install ULLAR from source code using the Rust package manager, `cargo`. Follow the Rust installation guide [here](https://www.rust-lang.org/tools/install). After installing Rust, you can install using the following command in your terminal application:
+
+```bash
+cargo install --git https://github.com/hhandika/ullar.git
+```
+
+If you need more detailed guidelines, SEGUL provides comprehensive instructions for installing Rust-based software [here](https://www.segul.app/docs/installation/install_source).
 
 ### Features & Dependencies
 
@@ -73,7 +79,7 @@ SEGUL provide a detailed installation guide on installing Rust based software [h
 | Data cleaning                       | [SEGUL](https://www.segul.app/)                    |
 | Summary statistics (in development) | [SEGUL](https://www.segul.app/)                    |
 
-> NOTE: Summary statistics and other data cleaning feature is under development, but you can install SEGUL separately.
+> NOTE: Summary statistics and other data cleaning features are under development, but you can install SEGUL separately.
 > Check out SEGUL documentation [here](https://www.segul.app/)
 
 You can check if you have the dependencies installed by running the following commands:
@@ -82,13 +88,7 @@ You can check if you have the dependencies installed by running the following co
 ullar deps check
 ```
 
-If you don't have the dependencies installed, you can install by following the instructions on the links provided above.
-
-Check ULLAR installation:
-
-```bash
-ullar --version
-```
+By default, ULLAR will use available dependencies in your system. For missing dependencies, the current option is to manually install them by following the instructions from the dependency providers. We are working on adding functionality to install dependencies automatically.
 
 ### Quick Start
 
