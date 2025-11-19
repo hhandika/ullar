@@ -56,7 +56,7 @@ Check ULLAR installation:
 ullar --version
 ```
 
-You can also install ULLAR from source code using the Rust package manager, `cargo`. Follow the Rust installation guide [here](https://www.rust-lang.org/tools/install). After installing Rust, you can install using the following command in your terminal application:
+You can also install ULLAR from source code using the Rust package manager, `cargo`. Follow the Rust installation guide [here](https://www.rust-lang.org/tools/install). After installing Rust, you can install it using the following command in your terminal application:
 
 ```bash
 cargo install --git https://github.com/hhandika/ullar.git
@@ -90,7 +90,7 @@ By default, ULLAR will use available dependencies in your system. For missing de
 
 ### Quick Start
 
-For a complete analysis, consider using [SEGUL](https://www.segul.app/) for data cleaning and summary statistics. Eventually, all essential features from SEGUL will be integrated into ULLAR, eliminating the need to install SEGUL separately.
+For a complete analysis, consider using [SEGUL](https://www.segul.app/) for alignment cleaning and summary statistics. Eventually, all essential features from SEGUL will be integrated into ULLAR, eliminating the need to install SEGUL separately.
 
 ```bash
 # Step 1: Clean raw reads
