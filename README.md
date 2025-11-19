@@ -3,7 +3,7 @@
 ![ci](https://github.com/hhandika/ullar/workflows/tests/badge.svg)
 [![LoC](https://tokei.rs/b1/github/hhandika/ullar?category=code)](https://github.com/XAMPPRocky/tokei)
 
-ULLAR, named after _ular_, which means snakes in the Indonesian language, stands for an Ultrafast, scaLable, Accessible, and Reproducible pipeline for phylogenomics. Our goal with ULLAR is to develop a lightweight and scalable pipeline that requires a minimal learning curve. In addition to Linux and macOS, the typical supported operating systems for bioinformatics, ULLAR will, whenever possible, run natively on Windows.
+ULLAR stands for an Ultrafast, scaLable, Accessible, and Reproducible pipeline for phylogenomics. Our goal with ULLAR is to develop a lightweight and scalable pipeline that requires a minimal learning curve and bioinformatic knowledge. In addition to Linux and macOS, the typical supported operating systems for bioinformatics, ULLAR will, whenever possible, run natively on Windows.
 
 ## Motivation
 
