@@ -160,7 +160,7 @@ ullar clean init -d /raw_read_dir --re-sample='([a-zA-Z0-9]+)_R1.fastq.gz'
 To run the cleaning process:
 
 ```bash
-ullar clean run -c configs/read_cleaning.yaml
+ullar clean run -c configs/read_cleaning.toml
 ```
 
 If you prefer to check the config file before running the cleaning process, you can init ullar without the `--autorun` argument:
@@ -276,7 +276,7 @@ Options are:
 - `astral-pro` for ASTRAL Pro methods.
 - `wastral` for Weighted ASTRAL methods.
 
-MSC methods requires `--specify-analyses ml-genes msc` argument.
+MSC methods require `--specify-analyses ml-genes msc` argument.
 
 For example:
 
