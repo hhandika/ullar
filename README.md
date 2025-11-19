@@ -12,7 +12,7 @@ Wrangling the 'snakes' of phylogenomic pipelines can be a frustrating endeavor. 
 2. Requires users to prepare config files, which can be tedious for those with limited knowledge of Shell scripting and end up doing it manually instead.
 3. Sequence samples from non-model organisms often are not of ideal quality. An extra quality check at each step of the workflow is usually required to ensure optimal, accurate results.
 4. Some HPC Clusters offer users limited privileges. Workflows that automatically submit >1,000 jobs are often not allowed in those systems.
-5. Forced users to install all the dependencies. For instance, a user installing and reinstalling a pipeline, or having different pipelines for different genomic analyses, could end up with multiple SPAdes installations on the same computer.
+5. Forced users to install all the dependencies. For instance, a user installing and reinstalling a pipeline, or having different pipelines for different genomic analyses, could end up with multiple SPAdes installed on the same computer.
 
 We develop ULLAR to solve those problems. ULLAR is our baby steps and part of our long-term goals to ensure phylogenomics is accessible to as many evolutionary biologists as possible, regardless of their technical skills and support. 
 
