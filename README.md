@@ -12,13 +12,13 @@ Wrangling the 'snakes' of phylogenomic pipelines can be a frustrating endeavor. 
 2. Requires users to prepare config files, which can be tedious for those with limited knowledge of Shell scripting and end up doing it manually instead.
 3. Sequence samples from non-model organisms often are not of ideal quality. An extra quality check at each step of the workflow is usually required to ensure optimal, accurate results.
 4. Some HPC Clusters offer users limited privileges. Workflows that automatically submit >1,000 jobs are often not allowed in those systems.
-5. Forced users to install all the dependencies. For instance, a user's computer could end up with SPAdes installations in five different home directories or separate conda environments.
+5. Forced users to install all the dependencies. For instance, a user installing and reinstalling a pipeline, or having different pipelines for different genomic analyses, could end up with multiple SPAdes installations on the same computer.
 
-ULLAR is our baby steps and part of our long-term goals to ensure phylogenomics is accessible to as many evolutionary biologists as possible, regardless of their technical skills and support. 
+We develop ULLAR to solve those problems. ULLAR is our baby steps and part of our long-term goals to ensure phylogenomics is accessible to as many evolutionary biologists as possible, regardless of their technical skills and support. 
 
 ## Development Status
 
-ULLAR is currently under development. We have completed the pipeline's core components. However, you should expect command changes in the future release as we continue to refine the tool. If you use ULLAR in publication, we recommend stating the exact version of the app. For manual compilation, we recommend to also state the commit hash number. For example, `ULLAR v0.3.0 (commit: f18ac98)`.
+ULLAR is currently under development. We have completed the pipeline's core components. However, you should expect command changes in the future release as we continue to refine the tool. If you use ULLAR in a publication, we recommend stating the exact version of the app. For manual compilation, we recommend to also state the commit hash number. For example, `ULLAR v0.3.0 (commit: f18ac98)`.
 
 ## Try ULLAR
 
