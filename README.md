@@ -32,7 +32,7 @@ The ULLAR pipeline itself is a single-executable binary. Currently, you can inst
 | Windows | [Intel/AMD 64-bit](https://github.com/hhandika/ullar/releases/latest/download/ullar-Windows-x86_64.zip)                                                                                                                              |
 | MacOS   | [Intel](https://github.com/hhandika/ullar/releases/latest/download/ullar-macOS-x86_64.tar.gz) or [M series](https://github.com/hhandika/ullar/releases/latest/download/ullar-macOS-arm64.tar.gz)                                     |
 
-Install ULLAR like you would any other single-executable binary. For example, in Linux:
+Install ULLAR like you would install any other single-executable binary. For example, in Linux:
 
 ```bash
 tar -xvf ullar-Linux-x86_64.tar.gz
