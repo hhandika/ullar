@@ -172,7 +172,7 @@ ullar clean init -d /raw_read_dir
 To run the cleaning process, you can use the `--skip-config-check` argument to skip the config check:
 
 ```bash
-ullar clean run -c configs/read_cleaning.yaml
+ullar clean run -c configs/read_cleaning.toml
 ```
 
 #### De Novo Assembly
@@ -192,7 +192,7 @@ ullar assemble init -d /cleaned_read_dir
 To run the assembly process, you can use the `--skip-config-check` argument to skip the config check:
 
 ```bash
-ullar assemble run -c configs/de_novo_assembly.yaml
+ullar assemble run -c configs/de_novo_assembly.toml
 ```
 
 #### Reference Mapping
@@ -230,7 +230,7 @@ ullar align init -d /path/to/unaligned_sequences_dir
 To run the alignment process, you can use the `--skip-config-check` argument to skip the config check:
 
 ```bash
-ullar align align -c configs/sequence_alignment.yaml
+ullar align align -c configs/sequence_alignment.toml
 ```
 
 #### Phylogenetic Analysis
@@ -250,7 +250,7 @@ ullar tree init -d /path/to/aligned_sequences_dir
 To run the phylogenetic analysis process, you can use the `--skip-config-check` argument to skip the config check:
 
 ```bash
-ullar tree run -c configs/phylogenetic_analysis.yaml
+ullar tree run -c configs/phylogenetic_analysis.toml
 ```
 
 To specify the tree inference method, you can use the `--specify-analyses` argument:
