@@ -3,22 +3,22 @@
 ![ci](https://github.com/hhandika/ullar/workflows/tests/badge.svg)
 [![LoC](https://tokei.rs/b1/github/hhandika/ullar?category=code)](https://github.com/XAMPPRocky/tokei)
 
-ULLAR is a lightweight, efficient, and scalable pipeline developed to minimize learning curve and required bioinformatic knowledge for phylogenomic and population genetic data analyses. We defined efficiency as efficient in both using computational resources and user time, which could mean also efficient in terms of using financial resources.
+ULLAR is a lightweight, efficient, and scalable pipeline developed to minimize learning curve and required bioinformatic knowledge for phylogenomic and population genetic data analyses. We defined efficiency as efficient in both using computational resources and user time, which could also mean efficient in using financial resources.
 
 In addition to Linux and macOS, the typical supported operating systems for bioinformatics, ULLAR, whenever possible, runs natively on Windows.
 
 ## Name Origin
 
-ULLAR stands for an Ultrafast, scaLable, Accessible, and Reproducible pipeline for phylogenomics. The name "ULLAR" is inspired by the Indonesian word for "snake" (pronounced oo-lar). We wanted to show that, "Hey, our pipeline is efficient, even the name itself only uses five letters!".
+ULLAR stands for an Ultrafast, scaLable, Accessible, and Reproducible pipeline for phylogenomics. The name "ULLAR" is inspired by the Indonesian word for "snake" (pronounced _oo-lar_). We wanted to show that, "Hey, our pipeline is efficient, even the name itself is only in five letters!".
 
 ## Motivation
 
 Common issues with currently available genomic pipelines:
 
-1. Inefficient and difficult to debug due to additional layers of abstraction and runtime dependencies (e.g., SnakeMake, NextFlow, Python runtime, and dozens of other runtime dependencies).
+1. Inefficient and difficult to debug due to additional layers of abstraction and runtime dependencies (e.g., [SnakeMake](https://snakemake.readthedocs.io/en/stable/), [NextFlow](https://www.nextflow.io/), Python runtime, and dozens of other runtime dependencies).
 2. Requires users to prepare config files, which can be tedious for those with limited knowledge of Shell scripting and end up doing it manually instead.
 3. Sequence samples from non-model organisms often are not of ideal quality. An extra quality check and manual inspection at each step of the workflow is usually required to ensure optimal, accurate results. So, we can't just run everything in one go and forget about it. At worst, the pipeline fails halfway through. We then spend hours of digging through massive log files to figure out what went wrong.
-4. Some HPC Clusters offer users limited privileges. It could take three months just to convince the HPC admin to allow a pipeline submitting >1000 SLURM jobs.
+4. Some HPC Clusters offer users limited privileges. It could take three months just to convince the HPC admin to allow a pipeline submitting >1000 [SLURM](https://slurm.schedmd.com/) jobs.
 5. Forced users to install all the dependencies. For instance, a user installing and reinstalling a pipeline, or having different pipelines for different genomic analyses, could end up with multiple SPAdes installed on the same computer. Why can't we just use the same SPAdes installation for all pipelines that require it?
 6. You want to run heavy analyses on your institutional HPC Cluster. However, you want to do light analyses and data checking on your Windows computers at home where you have better GUI support. How can we make that possible?
 
