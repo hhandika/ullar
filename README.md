@@ -13,7 +13,7 @@ ULLAR stands for an Ultrafast, scaLable, Accessible, and Reproducible pipeline f
 
 ## Motivation
 
-The initial motivation to develop ULLAR is to design a pipeline to support teaching phylogenomic in two days workshops. As we work on the pipeline, our goals and motivations expanded. How can we design a simple-to-use pipeline that is also efficient and scalable? We identified several problems with existing pipelines that we want to address:
+The initial motivation to develop ULLAR is to design a pipeline to support teaching phylogenomics in two days workshops. As we work on the pipeline, our goals and motivations expanded. How can we design a simple-to-use pipeline that is also efficient and scalable? We identified several problems with existing pipelines that we want to address:
 
 1. Inefficient and difficult to debug due to additional layers of abstraction and runtime dependencies, such as [SnakeMake](https://snakemake.readthedocs.io/en/stable/), [NextFlow](https://www.nextflow.io/), Python runtime, and dozens of other runtime dependencies.
 2. Requires users to prepare config files, which can be tedious for those with limited knowledge of Shell scripting and end up doing it manually instead.
