@@ -15,8 +15,7 @@ ULLAR stands for an Ultrafast, scaLable, Accessible, and Reproducible pipeline f
 
 The initial motivation to develop ULLAR is to design a pipeline to support teaching phylogenomic in two days workshops. As we work on the pipeline, our goals and motivations expanded. How can we design a simple-to-use pipeline that is also efficient and scalable? We identified several problems with existing pipelines that we want to address:
 
-1. Inefficient and difficult to debug due to additional layers of abstraction and runtime dependencies (e.g., [SnakeMake](https://snakemake.readthedocs.io/en/stable/), [NextFlow](<https://www.nextflow>
-.io/), Python runtime, and dozens of other runtime dependencies).
+1. Inefficient and difficult to debug due to additional layers of abstraction and runtime dependencies, such as [SnakeMake](https://snakemake.readthedocs.io/en/stable/), [NextFlow](https://www.nextflow.io/), Python runtime, and dozens of other runtime dependencies.
 2. Requires users to prepare config files, which can be tedious for those with limited knowledge of Shell scripting and end up doing it manually instead.
 3. Sequence samples from non-model organisms often are not of ideal quality. An extra quality check and manual inspection at each step of the workflow is usually required to ensure optimal, accurate results. So, we can't just run everything in one go and forget about it. At worst, the pipeline fails halfway through. We then spend hours of digging through massive log files to figure out what went wrong.
 4. Some HPC Clusters offer users limited privileges. It could take three months just to convince the HPC admin to allow a pipeline submitting >1000 [SLURM](https://slurm.schedmd.com/) jobs.
