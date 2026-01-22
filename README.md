@@ -17,11 +17,11 @@ The initial motivation to develop ULLAR is to design a pipeline to support teach
 
 1. Inefficient and difficult to debug due to additional layers of abstraction and runtime dependencies, such as [SnakeMake](https://snakemake.readthedocs.io/en/stable/), [NextFlow](https://www.nextflow.io/), Python runtime, and dozens of other runtime dependencies.
 2. Requires users to prepare config files, which can be tedious for those with limited knowledge of Shell scripting and end up doing it manually instead.
-3. Sequence samples from non-model organisms often are not of ideal quality. An extra quality check and manual inspection at each step of the workflow is usually required to ensure optimal, accurate results. So, we can't just run everything in one go and forget about it. At worst, the pipeline fails halfway through. We then spend hours of digging through massive log files to figure out what went wrong.
+3. Sequence samples from non-model organisms often are not of ideal quality. An extra quality check and manual inspection at each step of the workflow is usually required to ensure optimal, accurate results. So, fully automatic pipeline often is not the right solution. How can we design a pipeline that make it easy for users to inspect intermediate results and tweak parameters at each step of the workflow if necessary?
 4. Some HPC Clusters offer users limited privileges. It could take three months just to convince the HPC admin to allow a pipeline submitting >1000 [SLURM](https://slurm.schedmd.com/) jobs.
-5. Forced users to install all the dependencies. For instance, a user installing and reinstalling a pipeline, or having different pipelines for different genomic analyses, could end up with multiple SPAdes installed on the same computer. Why can't we just use the same SPAdes installation for all pipelines that require it? How can we manage all these dependencies efficiently, while ensuring the reproducibility of the analyses?
+5. Forced users to install all the dependencies. For instance, a user having different pipelines for different genomic analyses, could end up with multiple [SPAdes](http://cab.spbu.ru/software/spades/) installed on the same computer. Why can't we just use the same SPAdes installation for all pipelines that require it? How can we manage all these dependencies efficiently, while ensuring the reproducibility of the analyses?
 6. Native Windows support is largely absent from existing genomic pipelines, even though several analysis components run on Windows (e.g., [IQ-TREE](https://iqtree.github.io/) for phylogenetic inference and [SEGUL](https://www.segul.app/) for data cleaning, summarization, and wrangling). How can we provide native support for Windows users for those parts of the workflow?
-7. Concurrent and parallel processing is difficult to get it right. Some pipelines require users to specify the number of threads for each step manually. However, some steps are I/O bound, while others are CPU bound. How can we optimize resource allocation automatically based on the type of analysis and available resources?
+7. Concurrent and parallel processing is difficult to get it right. Some pipelines require users to specify the number of threads for each step manually. However, some steps are I/O bound, while others are CPU bound. How can we optimize resource allocation automatically based on the data, type of analyses, and available resources?
 
 ULLAR is our baby step toward our long-term goals to ensure phylogenomic analyses are efficient and accessible to as many evolutionary biologists as possible, regardless of their technical skills and support.
 
@@ -81,8 +81,8 @@ If you need more detailed guidelines, SEGUL provides comprehensive instructions 
 | De novo assembly                    | [SPAdes](http://cab.spbu.ru/software/spades/)      |
 | Reference mapping                   | [LASTZ](https://github.com/lastz/lastz)            |
 | Sequence alignment                  | [MAFFT](https://mafft.cbrc.jp/alignment/software/) |
-| ML phylogeny (in development)       | [IQ-TREE](http://www.iqtree.org/)                  |
-| MSC phylogeny (in development)      | [ASTER](https://github.com/chaoszhang/ASTER)       |
+| ML phylogeny                        | [IQ-TREE](http://www.iqtree.org/)                  |
+| MSC phylogeny                       | [ASTER](https://github.com/chaoszhang/ASTER)       |
 | Data cleaning                       | [SEGUL](https://www.segul.app/)                    |
 | Summary statistics (in development) | [SEGUL](https://www.segul.app/)                    |
 
