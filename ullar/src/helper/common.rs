@@ -222,11 +222,13 @@ impl SystemInfo {
             "Total Memory",
             Size::from_bytes(self.total_memory).to_string()
         );
-        log::info!(
-            "{:18}: {}",
-            "Available Memory",
-            Size::from_bytes(self.available_memory).to_string()
-        );
+        if self.available_memory > 0 {
+            log::info!(
+                "{:18}: {}",
+                "Available Memory",
+                Size::from_bytes(self.available_memory).to_string()
+            );
+        }
         log::info!("{:18}: {}\n", "Timestamp", self.timestamp);
     }
 

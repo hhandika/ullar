@@ -39,11 +39,17 @@ impl<'a> MinimapMapping<'a> {
     fn get_cpu_threads(&self) -> usize {
         let mut sysinfo = SystemInfo::new();
         sysinfo.get();
-        // Calculate max threads based on available memory
-        // Subtract buffer memory to avoid over-allocation
-        let max_threads_by_memory =
-            (sysinfo.available_memory / MINIMAP_THREAD_MEMORY) - BUFFER_MEMORY;
+
+        let available_memory =
+            if sysinfo.available_memory == 0 && sysinfo.available_memory < MINIMAP_THREAD_MEMORY {
+                sysinfo.total_memory
+            } else {
+                sysinfo.available_memory
+            };
+        let max_threads_by_memory = (available_memory / MINIMAP_THREAD_MEMORY) - BUFFER_MEMORY;
         let sys_threads = sysinfo.threads as u64;
-        std::cmp::min(sys_threads, max_threads_by_memory) as usize
+        let threads = std::cmp::min(sys_threads, max_threads_by_memory) as usize;
+        // We want at least 1 thread to run minimap2 just in case the calculation gives 0
+        std::cmp::max(1, threads)
     }
 }
