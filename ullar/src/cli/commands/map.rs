@@ -83,14 +83,20 @@ pub struct MapInitArgs {
         value_parser = builder::PossibleValuesParser::new(["file", "directory", "regex"])
     )]
     pub name_source: String,
-    /// Lastz output format
-    /// Supports "general", "maf", "sam" and "none"
+    /// Input reference type
+    /// Options: probes, loci, genome
+    /// Default: probe (e.g., UCE probes)
+    /// Options explained:
+    /// probes - reference sequences are probe sequences (e.g., UCE probes)
+    /// loci - reference sequences are locus sequences (e.g., mitogenome loci)
+    /// genome - reference sequence is a whole genome reference sequence
+    /// The genome reference will use minimap2 and requires fastq/fasta reads as input
     #[arg(
         short = 't',
         long,
-        default_value = "probe",
+        default_value = "probes",
         help = "Input reference type",
-        value_parser = builder::PossibleValuesParser::new(["probes", "loci"])
+        value_parser = builder::PossibleValuesParser::new(["probes", "loci", "genome"])
     )]
     pub reference_type: String,
     #[arg(

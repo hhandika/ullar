@@ -168,6 +168,7 @@ pub struct SystemInfo {
     pub cores: usize,
     pub threads: usize,
     pub total_memory: u64,
+    pub available_memory: u64,
     pub timestamp: String,
 }
 
@@ -188,6 +189,7 @@ impl SystemInfo {
             cores: 0,
             threads: 0,
             total_memory: 0,
+            available_memory: 0,
             timestamp: get_timestamp(),
         }
     }
@@ -202,6 +204,7 @@ impl SystemInfo {
         self.get_cores();
         self.get_thread_count();
         self.get_memory();
+        self.get_available_memory();
     }
 
     pub fn get_system_info(&mut self) {
@@ -218,6 +221,11 @@ impl SystemInfo {
             "{:18}: {:0}",
             "Total Memory",
             Size::from_bytes(self.total_memory).to_string()
+        );
+        log::info!(
+            "{:18}: {}",
+            "Available Memory",
+            Size::from_bytes(self.available_memory).to_string()
         );
         log::info!("{:18}: {}\n", "Timestamp", self.timestamp);
     }
@@ -242,5 +250,9 @@ impl SystemInfo {
 
     fn get_memory(&mut self) {
         self.total_memory = self.info.total_memory();
+    }
+
+    fn get_available_memory(&mut self) {
+        self.available_memory = self.info.available_memory();
     }
 }

@@ -12,17 +12,20 @@ use segul::get_segul_metadata;
 use serde::{Deserialize, Serialize};
 use spades::SpadesMetadata;
 
+use crate::core::deps::minimap::get_minimap_version;
+
 pub mod aster;
 pub mod fastp;
 pub mod iqtree;
 pub mod lastz;
 pub mod mafft;
+pub mod minimap;
 pub mod segul;
 pub mod spades;
 
 const STATUS_OK: &str = "✅ OK";
 const STATUS_NOT_FOUND: &str = "❌ NOT FOUND";
-const STATUS_BUILT_IN: &str = "🔧 BUILT-IN";
+const STATUS_EMBEDDED: &str = "📦 EMBEDDED";
 
 pub enum Dependency {
     Fastp,
@@ -138,6 +141,7 @@ pub struct DependencyCheck {
     mafft: Option<DepMetadata>,
     iqtree: Option<DepMetadata>,
     segul: Option<DepMetadata>,
+    minimap: Option<DepMetadata>,
     aster: AsterMetadata,
 }
 
@@ -154,6 +158,7 @@ impl DependencyCheck {
                 aster.get();
                 aster
             },
+            minimap: Some(get_minimap_version()),
             segul: Some(get_segul_metadata()),
         }
     }
@@ -170,6 +175,7 @@ impl DependencyCheck {
                 aster.get();
                 aster
             },
+            minimap: Some(get_minimap_version()),
             segul: Some(get_segul_metadata()),
         }
     }
@@ -178,6 +184,7 @@ impl DependencyCheck {
         let mut table = self.log_status();
         self.log_read_cleaning(&mut table);
         self.log_denovo_assembly(&mut table);
+        self.log_read_mapping(&mut table);
         self.log_contig_mapping(&mut table);
         self.log_sequence_alignment(&mut table);
         self.log_ml_inference(&mut table);
@@ -319,6 +326,18 @@ impl DependencyCheck {
         }
     }
 
+    fn log_read_mapping(&mut self, table: &mut Table) {
+        let feature = "Read mapping";
+        let status = None;
+        match &self.minimap {
+            Some(metadata) => {
+                let cells = self.get_cell(feature, "minimap2", &metadata.version, status);
+                table.add_row(cells);
+            }
+            None => unreachable!("minimap2 should always be available"),
+        }
+    }
+
     fn log_data_wrangling_summarization(&mut self, table: &mut Table) {
         let feature = "Data shaping, cleaning, and summarization";
         let status = None;
@@ -343,7 +362,7 @@ impl DependencyCheck {
 
     fn status_ok(&self, ok: Option<bool>) -> Cell {
         match ok {
-            None => Cell::new(STATUS_BUILT_IN).fg(Color::Blue),
+            None => Cell::new(STATUS_EMBEDDED).fg(Color::Blue),
             Some(true) => Cell::new(STATUS_OK),
             Some(false) => Cell::new(STATUS_NOT_FOUND),
         }

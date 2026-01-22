@@ -30,6 +30,10 @@ pub enum Task {
     /// Read mapping task
     /// Maps contigs to a reference sequence
     /// Current implementation uses minimap2
+    ReadMapping,
+    /// Contig mapping task
+    /// Maps contigs to a reference sequence
+    /// Current implementation uses LASTZ
     ContigMapping,
     /// Locus alignment task
     /// Performs multiple sequence alignment on mapped loci
@@ -55,6 +59,7 @@ impl Display for Task {
         match self {
             Task::CleanReads => write!(f, "Read Cleaning"),
             Task::Assembly => write!(f, "De Novo Assembly"),
+            Task::ReadMapping => write!(f, "Read Mapping"),
             Task::ContigMapping => write!(f, "Contig Mapping"),
             Task::SequenceAlignment => write!(f, "Sequence Alignment"),
             Task::AlignmentQc => write!(f, "Alignment Quality Control"),

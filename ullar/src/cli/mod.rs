@@ -19,7 +19,7 @@ use crate::{
         assembly::{init::AssemblyInit, Assembly},
         clean::{init::ReadCleaningInit, ReadCleaning},
         deps::DependencyCheck,
-        map::{init::InitMappingConfig, ContigMapping},
+        map::{init::InitMappingConfig, ContigMapping, ReadMapping},
         tree::{init::TreeInferenceInit, TreeEstimation},
         utils::{checksum::Sha256Executor, rename::FileDirRename, scan::ReadScanner},
     },
@@ -178,9 +178,7 @@ impl<'a> MapArgParser<'a> {
         match self.subcommand {
             MapSubcommand::Init(args) => InitMappingConfig::from_arg(args).init(),
             MapSubcommand::Contig(args) => ContigMapping::from_arg(args).map(),
-            MapSubcommand::Read(_) => {
-                unimplemented!("Map read command is not yet implemented")
-            }
+            MapSubcommand::Read(args) => ReadMapping::from_arg(args).map(),
         }
     }
 }

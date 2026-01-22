@@ -13,7 +13,7 @@ use summary::FinalMappingSummary;
 use writer::{LocusMappingWriter, ProbeMappingWriter};
 
 use crate::{
-    cli::commands::map::MapContigArgs,
+    cli::commands::map::{MapContigArgs, MapReadArgs},
     helper::{common, files::PathCheck},
     types::{
         map::{Aligner, LastzOutputFormat, MappingReferenceType},
@@ -35,6 +35,48 @@ pub mod writer;
 
 pub const DEFAULT_CONTIG_MAPPING_OUTPUT_DIR: &str = "out_contig_mapping";
 pub const DEFAULT_READ_MAPPING_OUTPUT_DIR: &str = "out_read_mapping";
+
+pub struct ReadMapping<'a> {
+    pub config_path: &'a Path,
+    pub output_dir: &'a Path,
+    pub runner: RunnerOptions,
+    task: Task,
+}
+
+impl<'a> ReadMapping<'a> {
+    pub fn new(config_path: &'a Path, output_dir: &'a Path) -> Self {
+        Self {
+            config_path,
+            output_dir,
+            runner: RunnerOptions::default(),
+            task: Task::ReadMapping,
+        }
+    }
+
+    pub fn from_arg(args: &'a MapReadArgs) -> Self {
+        Self {
+            config_path: &args.config,
+            output_dir: &args.output,
+            runner: RunnerOptions::from_arg(&args.common),
+            task: Task::ReadMapping,
+        }
+    }
+
+    pub fn from_config_path(config_path: &'a Path) -> Self {
+        Self {
+            config_path,
+            output_dir: Path::new(DEFAULT_READ_MAPPING_OUTPUT_DIR),
+            runner: RunnerOptions::default(),
+            task: Task::ReadMapping,
+        }
+    }
+
+    pub fn map(&self) {
+        // Implementation for read mapping goes here
+        // Print task info for now
+        log::info!("Running task: {}", self.task);
+    }
+}
 
 pub struct ContigMapping<'a> {
     pub config_path: &'a Path,
