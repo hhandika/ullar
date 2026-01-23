@@ -28,6 +28,7 @@ pub mod configs;
 pub mod exonerate;
 pub mod init;
 pub mod lastz;
+#[cfg(target_family = "unix")]
 pub mod minimap;
 pub mod reports;
 pub mod summary;
@@ -71,10 +72,18 @@ impl<'a> ReadMapping<'a> {
         }
     }
 
+    #[cfg(target_family = "unix")]
     pub fn map(&self) {
         // Implementation for read mapping goes here
         // Print task info for now
         log::info!("Running task: {}", self.task);
+    }
+
+    #[cfg(not(target_family = "unix"))]
+    pub fn map(&self) {
+        let msg = format!("{} {}", self.task, "is not supported on this OS.");
+        eprintln!("{}\n{}", "Error:".red().bold(), msg.red());
+        return;
     }
 }
 
