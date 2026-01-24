@@ -42,7 +42,7 @@ toml = "0.8.20"
 walkdir = "2.5.0"
 
 [target.'cfg(not(windows))'.dependencies]
-minimap2 = { version = "0.1.30" }
+minimap2 = { version = "0.1.30", features = ["static"] }
 
 
 [lints.rust]
