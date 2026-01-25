@@ -25,7 +25,6 @@ use crate::{
 use super::deps::{lastz::LastzMetadata, DepMetadata};
 
 pub mod configs;
-pub mod exonerate;
 pub mod init;
 pub mod lastz;
 #[cfg(target_family = "unix")]
