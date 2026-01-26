@@ -85,7 +85,7 @@ If you need more detailed guidelines, SEGUL provides comprehensive instructions 
 | ML phylogeny                        | [IQ-TREE](http://www.iqtree.org/)                  |
 | MSC phylogeny                       | [ASTER](https://github.com/chaoszhang/ASTER)       |
 | Data cleaning                       | [SEGUL](https://www.segul.app/)                    |
-| Summary statistics (in development) | [SEGUL](https://www.segul.app/)                    |
+| Summary statistics                  | [SEGUL](https://www.segul.app/)                    |
 
 > NOTE: Summary statistics and other data cleaning features are under development, but you can install SEGUL separately.
 > Check out SEGUL documentation [here](https://www.segul.app/)
