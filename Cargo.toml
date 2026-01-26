@@ -1,3 +1,8 @@
 [workspace]
-members = ["crates/py-ullar", "crates/ullar", "crates/ullar-bwa", "crates/ullar-deps"]
+members = [
+    "crates/py-ullar",
+    "crates/ullar",
+    "crates/ullar-bwa",
+    "crates/ullar-deps",
+]
 resolver = "2"

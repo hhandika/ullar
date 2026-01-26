@@ -1,6 +1,4 @@
 //! Utilities for managing dependencies.
-use core::panic;
-
 use aster::AsterMetadata;
 use colored::Colorize;
 use comfy_table::{Cell, Color, Table};
