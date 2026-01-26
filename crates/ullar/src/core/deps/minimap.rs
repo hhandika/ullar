@@ -1,5 +1,6 @@
 use crate::core::deps::DepMetadata;
 
+#[cfg(not(target_os = "windows"))]
 const MINIMAP_NAME: &str = "minimap2";
 
 /// Retrieves the minimap2 dependency metadata, including its version.

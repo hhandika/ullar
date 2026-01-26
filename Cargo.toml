@@ -4,5 +4,6 @@ members = [
     "crates/ullar",
     "crates/ullar-bwa",
     "crates/ullar-deps",
+    "crates/ullar-gatk",
 ]
 resolver = "2"
