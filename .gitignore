@@ -46,3 +46,8 @@ Cargo.lock
 
 #/target
 .DS_Store
+
+# Python cache files
+__pycache__/
+*.pyc
+.pytest_cache/

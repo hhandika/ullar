@@ -7,11 +7,8 @@ const MINIMAP_NAME: &str = "minimap2";
 /// Rust API minimap2 version: 0.1.30+minimap2.2.30
 /// The first part is the Rust wrapper version,
 /// The second part is the underlying minimap2 version.
+#[cfg(not(target_os = "windows"))]
 pub fn get_minimap_version() -> DepMetadata {
-    if cfg!(target_os = "windows") {
-        return DepMetadata::default();
-    }
-
     let version = env!("MINIMAP2_VERSION");
 
     if version == "unknown" {
@@ -30,4 +27,9 @@ pub fn get_minimap_version() -> DepMetadata {
     }
 
     DepMetadata::new(MINIMAP_NAME, version, None)
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_minimap_version() -> DepMetadata {
+    return DepMetadata::default();
 }
