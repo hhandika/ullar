@@ -1,7 +1,8 @@
 # ULLAR <img src="https://raw.githubusercontent.com/hhandika/ullar/main/assets/icons/ullar-dark.png" alt="ullar logo" align="right" width="150"/>
 
 ![ci](https://github.com/hhandika/ullar/workflows/tests/badge.svg)
-[![LoC](https://tokei.rs/b1/github/hhandika/ullar?category=code)](https://github.com/XAMPPRocky/tokei)
+![GitHub top language](https://img.shields.io/github/languages/top/hhandika/ullar)
+![GitHub last commit](https://img.shields.io/github/last-commit/hhandika/ullar?color=yellow)
 
 ULLAR is a lightweight, efficient, and scalable pipeline developed to minimize learning curve and required bioinformatic knowledge for phylogenomic and population genetic data analyses. We defined efficiency as efficient in both using computational resources and user time, which could also mean efficient in using financial resources.
 
