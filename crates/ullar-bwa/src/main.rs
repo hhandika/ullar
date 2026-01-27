@@ -54,7 +54,7 @@ struct Align {
     read1: String,
     #[arg(long, help = "Path to the query read 2 file")]
     read2: Option<String>,
-    #[arg(short = 'F', long, help = "Output format", default_value = "sam", value_parser = builder::PossibleValuesParser::new(["sam", "bam"]))]
+    #[arg(short = 'F', long, help = "Output format", default_value = "bam", value_parser = builder::PossibleValuesParser::new(["sam", "bam"]))]
     output_format: String,
     #[arg(short, long, help = "Path to the output file")]
     output: String,
