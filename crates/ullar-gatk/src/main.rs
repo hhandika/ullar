@@ -43,15 +43,15 @@ struct Sort {
 }
 
 fn run_sort(args: Sort) {
-    let executable = args.exe.to_owned();
-    let gatk_sort = GatkSort::new(executable)
+    let mut gatk_sort = GatkSort::new(args.exe.as_deref());
+    gatk_sort
         .input_path(args.input)
         .output_path(args.output)
         .sort_order(&args.sort_order)
         .create_index(args.create_index);
 
     if let Some(temp_dir) = args.temp_dir {
-        gatk_sort.temp_dir(temp_dir);
+        gatk_sort.temp_dir(temp_dir.to_string());
     }
     gatk_sort.execute();
 }

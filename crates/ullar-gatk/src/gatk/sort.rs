@@ -18,16 +18,12 @@ pub struct GatkSort {
 }
 
 impl GatkSort {
-    pub fn new(executable: Option<String>) -> Self {
+    pub fn new(exe: Option<&str>) -> Self {
         GatkSort {
             input_path: PathBuf::new(),
             output_path: PathBuf::new(),
             sort_order: None,
-            executable: if let Some(exe) = executable {
-                exe
-            } else {
-                "gatk".to_string()
-            },
+            executable: exe.unwrap_or("gatk").to_string(),
             create_index: false,
             temp_dir: None,
         }
