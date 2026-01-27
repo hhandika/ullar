@@ -1,6 +1,15 @@
 use clap::{Args, Parser, builder};
 use ullar_bwa::bwa::subprocess::{BwaIndex, BwaMem};
 
+fn main() {
+    let cli = Cli::parse();
+
+    match cli {
+        Cli::Index(index_args) => run_index(index_args),
+        Cli::Align(align_args) => run_align(align_args),
+    }
+}
+
 #[derive(Parser)]
 enum Cli {
     #[command(name = "index", about = "Index a reference genome using BWA")]
@@ -19,23 +28,14 @@ struct Index {
 struct Align {
     #[arg(short, long, help = "Path to the reference file")]
     reference: String,
-    #[arg(short, long, help = "Path to the query read 1 file")]
+    #[arg(long, help = "Path to the query read 1 file")]
     read1: String,
-    #[arg(short, long, help = "Path to the query read 2 file")]
+    #[arg(long, help = "Path to the query read 2 file")]
     read2: Option<String>,
     #[arg(short = 'F', long, help = "Output format", default_value = "sam", value_parser = builder::PossibleValuesParser::new(["sam", "bam"]))]
     output_format: String,
     #[arg(short, long, help = "Path to the output file")]
     output: String,
-}
-
-fn main() {
-    let cli = Cli::parse();
-
-    match cli {
-        Cli::Index(index_args) => run_index(index_args),
-        Cli::Align(align_args) => run_align(align_args),
-    }
 }
 
 fn run_index(args: Index) {

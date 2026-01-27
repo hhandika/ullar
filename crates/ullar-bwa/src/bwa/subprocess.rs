@@ -43,7 +43,11 @@ impl BwaMem {
                 .build();
 
             samtools_view.to_bam()?;
-            bwa_child.wait()?;
+            let bwa_output = bwa_child.wait_with_output()?;
+            if !bwa_output.status.success() {
+                let stderr = String::from_utf8_lossy(&bwa_output.stderr);
+                return Err(format!("BWA mem failed: {}", stderr).into());
+            }
         } else {
             self.write_output(&mut bwa)?;
         }
@@ -54,7 +58,8 @@ impl BwaMem {
     fn write_output(&self, output: &mut Command) -> Result<(), Box<dyn std::error::Error>> {
         let output: Output = output.output()?;
         if !output.status.success() {
-            return Err("BWA mem command failed".into());
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("BWA mem command failed: {}", stderr).into());
         }
 
         fs::write(&self.output_path, output.stdout)?;
@@ -158,9 +163,7 @@ impl BwaMemBuilder {
     }
 
     pub fn query_read2<P: AsRef<Path>>(mut self, p: Option<P>) -> Self {
-        if let Some(path) = p {
-            self.query_read2 = Some(path.as_ref().to_path_buf());
-        }
+        self.query_read2 = p.map(|path| path.as_ref().to_path_buf());
         self
     }
 
