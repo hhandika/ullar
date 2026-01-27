@@ -1,3 +1,4 @@
+pub mod errors;
 pub mod index;
 pub mod mem;
 pub mod metadata;

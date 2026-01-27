@@ -1,3 +1,4 @@
+use crate::bwa::errors::validate_bwa_inputs;
 use crate::bwa::types::BwaOutputFormat;
 use crate::samtools::subprocess::SamtoolsView;
 use std::fs;
@@ -20,17 +21,18 @@ impl BwaMem {
     }
 
     pub fn align(&self) -> Result<(), Box<dyn std::error::Error>> {
+        self.validate_inputs()?;
         let mut bwa = Command::new("bwa");
 
         bwa.arg("mem")
+            .arg("-t")
+            .arg(self.get_threads().to_string())
             .arg(&self.reference_path)
             .arg(&self.query_read1);
 
         if let Some(read2) = &self.query_read2 {
             bwa.arg(read2);
         }
-
-        bwa.arg("-t").arg(self.get_threads().to_string());
 
         if self.use_samtools_view {
             let mut bwa_child = bwa.stdout(Stdio::piped()).spawn()?;
@@ -55,6 +57,11 @@ impl BwaMem {
             self.write_output(&mut bwa)?;
         }
 
+        Ok(())
+    }
+
+    fn validate_inputs(&self) -> Result<(), Box<dyn std::error::Error>> {
+        validate_bwa_inputs(&self.reference_path, &self.query_read1, &self.query_read2)?;
         Ok(())
     }
 
