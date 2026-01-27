@@ -9,15 +9,16 @@ pub struct SamtoolsView {
 }
 
 impl SamtoolsView {
-    pub fn new(bwa_stdout: Option<ChildStdout>, output_path: Option<PathBuf>) -> Self {
+    pub fn new(bwa_stdout: Option<ChildStdout>) -> Self {
         SamtoolsView {
             bwa_stdout,
-            output_path,
+            output_path: None,
         }
     }
 
-    pub fn builder() -> SamtoolsViewBuilder {
-        SamtoolsViewBuilder::default()
+    pub fn output_path<P: AsRef<std::path::Path>>(mut self, p: P) -> Self {
+        self.output_path = Some(p.as_ref().to_path_buf());
+        self
     }
 
     pub fn to_bam(&mut self) -> Result<(), Box<dyn std::error::Error>> {
@@ -44,27 +45,5 @@ impl SamtoolsView {
         }
 
         Ok(())
-    }
-}
-
-#[derive(Default)]
-pub struct SamtoolsViewBuilder {
-    bwa_stdout: Option<ChildStdout>,
-    output_path: Option<PathBuf>,
-}
-
-impl SamtoolsViewBuilder {
-    pub fn bwa_stdout(mut self, bwa_stdout: ChildStdout) -> Self {
-        self.bwa_stdout = Some(bwa_stdout);
-        self
-    }
-
-    pub fn output_path<P: Into<PathBuf>>(mut self, output_path: P) -> Self {
-        self.output_path = Some(output_path.into());
-        self
-    }
-
-    pub fn build(self) -> SamtoolsView {
-        SamtoolsView::new(self.bwa_stdout, self.output_path)
     }
 }

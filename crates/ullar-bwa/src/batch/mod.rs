@@ -24,27 +24,36 @@ pub struct BatchBwaAlign {
 }
 
 impl BatchBwaAlign {
-    pub fn new(
-        dir: PathBuf,
-        sample_name_format: SampleNameFormat,
-        reference: PathBuf,
-        recursive: bool,
-        threads: usize,
-        output: PathBuf,
-    ) -> Self {
+    pub fn new<P: AsRef<Path>>(dir: P) -> Self {
         BatchBwaAlign {
-            dir,
-            reference,
-            recursive,
+            dir: dir.as_ref().to_path_buf(),
+            reference: PathBuf::new(),
+            recursive: false,
             output_format: "bam".to_string(),
-            threads: threads,
-            sample_name_format,
-            output,
+            sample_name_format: SampleNameFormat::default(),
+            threads: 4,
+            output: PathBuf::new(),
         }
     }
 
-    pub fn builder() -> BatchBwaAlignBuilder {
-        BatchBwaAlignBuilder::default()
+    pub fn reference<P: AsRef<Path>>(mut self, p: P) -> Self {
+        self.reference = p.as_ref().to_path_buf();
+        self
+    }
+
+    pub fn output<P: AsRef<Path>>(mut self, p: P) -> Self {
+        self.output = p.as_ref().to_path_buf();
+        self
+    }
+
+    pub fn recursive(mut self, yes: bool) -> Self {
+        self.recursive = yes;
+        self
+    }
+
+    pub fn threads(mut self, n: usize) -> Self {
+        self.threads = n;
+        self
     }
 
     pub fn dry_run(&self) {
@@ -73,16 +82,15 @@ impl BatchBwaAlign {
     }
 
     fn run_bwa(&self, read: &FastqReads, output_path: &Path) {
-        let bwa_mem = BwaMem::builder()
+        BwaMem::new()
             .reference_path(&self.reference)
             .query_read1(read.get_read1())
             .query_read2(read.get_read2())
             .output_path(output_path)
             .output_format(&self.output_format)
             .threads(self.threads)
-            .build()
-            .expect("Failed to build BWA MEM command");
-        bwa_mem.align().expect("Failed to run BWA MEM");
+            .align()
+            .expect("Failed to run BWA MEM");
     }
 
     fn find_reads(&self) -> Vec<FastqReads> {
@@ -96,60 +104,5 @@ impl BatchBwaAlign {
     fn get_output_path(&self, sample_name: &str) -> PathBuf {
         self.output
             .join(format!("{}.{}", sample_name, self.output_format))
-    }
-}
-
-#[derive(Default)]
-pub struct BatchBwaAlignBuilder {
-    dir: Option<PathBuf>,
-    reference: Option<PathBuf>,
-    recursive: bool,
-    sample_name_format: SampleNameFormat,
-    threads: usize,
-    output: Option<PathBuf>,
-}
-
-impl BatchBwaAlignBuilder {
-    pub fn dir<P: AsRef<Path>>(mut self, dir: P) -> Self {
-        self.dir = Some(dir.as_ref().to_path_buf());
-        self
-    }
-
-    pub fn sample_name_format(mut self, format: &str) -> Self {
-        self.sample_name_format = format
-            .parse::<SampleNameFormat>()
-            .unwrap_or(SampleNameFormat::Descriptive);
-        self
-    }
-
-    pub fn reference<P: AsRef<Path>>(mut self, reference: P) -> Self {
-        self.reference = Some(reference.as_ref().to_path_buf());
-        self
-    }
-
-    pub fn output<P: AsRef<Path>>(mut self, output: P) -> Self {
-        self.output = Some(output.as_ref().to_path_buf());
-        self
-    }
-
-    pub fn threads(mut self, threads: usize) -> Self {
-        self.threads = threads;
-        self
-    }
-
-    pub fn recursive(mut self, yes: bool) -> Self {
-        self.recursive = yes;
-        self
-    }
-
-    pub fn build(self) -> Result<BatchBwaAlign, &'static str> {
-        Ok(BatchBwaAlign::new(
-            self.dir.ok_or("dir is required")?,
-            self.sample_name_format,
-            self.reference.ok_or("reference is required")?,
-            self.recursive,
-            self.threads,
-            self.output.ok_or("output is required")?,
-        ))
     }
 }

@@ -77,38 +77,31 @@ struct BatchAlign {
 }
 
 fn run_index(args: Index) {
-    let bwa = BwaIndex::build()
-        .reference_path(&args.reference)
-        .index_prefix(args.index_prefix)
-        .algorithm(&args.algorithm)
-        .build()
-        .expect("Failed to build BWA index");
-
-    bwa.index();
+    let mut bwa_index = BwaIndex::new(&args.reference);
+    bwa_index.algorithm(args.algorithm);
+    if let Some(prefix) = args.index_prefix {
+        bwa_index.index_prefix(&prefix);
+    }
+    bwa_index.index();
 }
 
 fn run_align(args: Align) {
-    let bwa_mem = BwaMem::builder()
+    BwaMem::new()
         .reference_path(&args.reference)
         .query_read1(&args.read1)
         .output_format(&args.output_format)
         .query_read2(args.read2)
         .output_path(&args.output)
-        .build()
-        .expect("Failed to build BWA mem");
-
-    bwa_mem.align().expect("Failed to run BWA mem");
+        .align()
+        .expect("Failed to run BWA mem");
 }
 
 fn run_batch_align(args: BatchAlign) {
-    let batch = BatchBwaAlign::builder()
-        .dir(&args.dir)
+    let batch = BatchBwaAlign::new(&args.dir)
         .reference(&args.reference)
         .output(&args.output)
         .recursive(args.recursive)
-        .threads(args.threads)
-        .build()
-        .expect("Failed to build Batch BWA Align");
+        .threads(args.threads);
     if args.dry_run {
         batch.dry_run();
     } else {

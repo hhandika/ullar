@@ -1,6 +1,6 @@
 use crate::bwa::errors::validate_bwa_inputs;
 use crate::bwa::types::BwaOutputFormat;
-use crate::samtools::subprocess::SamtoolsView;
+use crate::samtools::view::SamtoolsView;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
@@ -16,8 +16,53 @@ pub struct BwaMem {
 }
 
 impl BwaMem {
-    pub fn builder() -> BwaMemBuilder {
-        BwaMemBuilder::default()
+    pub fn new() -> Self {
+        BwaMem {
+            reference_path: PathBuf::new(),
+            query_read1: PathBuf::new(),
+            query_read2: None,
+            output_path: PathBuf::new(),
+            output_format: BwaOutputFormat::Bam,
+            use_samtools_view: true,
+            threads: 2,
+        }
+    }
+
+    pub fn reference_path<P: AsRef<Path>>(&mut self, p: P) -> &mut Self {
+        self.reference_path = p.as_ref().to_path_buf();
+        self
+    }
+
+    pub fn query_read1<P: AsRef<Path>>(&mut self, p: P) -> &mut Self {
+        self.query_read1 = p.as_ref().to_path_buf();
+        self
+    }
+
+    pub fn query_read2<P: AsRef<Path>>(&mut self, p: Option<P>) -> &mut Self {
+        if let Some(path) = p {
+            self.query_read2 = Some(path.as_ref().to_path_buf());
+        }
+        self
+    }
+
+    pub fn output_path<P: AsRef<Path>>(&mut self, p: P) -> &mut Self {
+        self.output_path = p.as_ref().to_path_buf();
+        self
+    }
+
+    pub fn output_format(&mut self, format: &str) -> &mut Self {
+        self.output_format = match format.to_lowercase().as_str() {
+            "sam" => BwaOutputFormat::Sam,
+            "bam" => BwaOutputFormat::Bam,
+            _ => BwaOutputFormat::Bam,
+        };
+        self.use_samtools_view = matches!(self.output_format, BwaOutputFormat::Bam);
+        self
+    }
+
+    pub fn threads(&mut self, threads: usize) -> &mut Self {
+        self.threads = threads;
+        self
     }
 
     pub fn align(&self) -> Result<(), Box<dyn std::error::Error>> {
@@ -42,12 +87,9 @@ impl BwaMem {
                 .take()
                 .ok_or("Failed to capture BWA stdout")?;
 
-            let mut samtools_view = SamtoolsView::builder()
-                .bwa_stdout(bwa_stdout)
+            SamtoolsView::new(Some(bwa_stdout))
                 .output_path(&self.output_path)
-                .build();
-
-            samtools_view.to_bam()?;
+                .to_bam()?;
             let bwa_output = bwa_child.wait_with_output()?;
             if !bwa_output.status.success() {
                 let stderr = String::from_utf8_lossy(&bwa_output.stderr);
@@ -83,66 +125,5 @@ impl BwaMem {
         let sys_threads = num_cpus::get();
         let threads = sys_threads / 2;
         if threads > 4 { threads } else { sys_threads }
-    }
-}
-
-#[derive(Default)]
-pub struct BwaMemBuilder {
-    reference_path: Option<PathBuf>,
-    query_read1: Option<PathBuf>,
-    query_read2: Option<PathBuf>,
-    output_path: Option<PathBuf>,
-    output_format: Option<BwaOutputFormat>,
-    threads: usize,
-    use_samtools_view: bool,
-}
-
-impl BwaMemBuilder {
-    pub fn reference_path<P: AsRef<Path>>(mut self, p: P) -> Self {
-        self.reference_path = Some(p.as_ref().to_path_buf());
-        self
-    }
-
-    pub fn query_read1<P: AsRef<Path>>(mut self, p: P) -> Self {
-        self.query_read1 = Some(p.as_ref().to_path_buf());
-        self
-    }
-
-    pub fn query_read2<P: AsRef<Path>>(mut self, p: Option<P>) -> Self {
-        self.query_read2 = p.map(|path| path.as_ref().to_path_buf());
-        self
-    }
-
-    pub fn output_path<P: AsRef<Path>>(mut self, p: P) -> Self {
-        self.output_path = Some(p.as_ref().to_path_buf());
-        self
-    }
-
-    pub fn output_format(mut self, f: &str) -> Self {
-        self.output_format = Some(f.parse::<BwaOutputFormat>().unwrap_or(BwaOutputFormat::Bam));
-        self
-    }
-
-    pub fn threads(mut self, t: usize) -> Self {
-        self.threads = t;
-        self
-    }
-
-    /// Enable piping into samtools view to write BAM.
-    pub fn use_samtools_view(mut self, yes: bool) -> Self {
-        self.use_samtools_view = yes;
-        self
-    }
-
-    pub fn build(self) -> Result<BwaMem, &'static str> {
-        Ok(BwaMem {
-            reference_path: self.reference_path.ok_or("reference_path is required")?,
-            query_read1: self.query_read1.ok_or("query_read1 is required")?,
-            query_read2: self.query_read2,
-            output_path: self.output_path.ok_or("output_path is required")?,
-            output_format: self.output_format.ok_or("output_format is required")?,
-            threads: self.threads,
-            use_samtools_view: self.use_samtools_view,
-        })
     }
 }

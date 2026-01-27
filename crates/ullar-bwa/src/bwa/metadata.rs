@@ -6,14 +6,14 @@ pub const BWSA_NAME: &str = "BWA";
 pub const BWA_EXE: &str = "bwa";
 
 pub struct BwaMetadata {
-    pub excutable: Option<String>,
+    pub executable: Option<String>,
     pub version: Option<String>,
 }
 
 impl BwaMetadata {
     pub fn new() -> Self {
         Self {
-            excutable: None,
+            executable: None,
             version: None,
         }
     }
@@ -21,14 +21,14 @@ impl BwaMetadata {
     pub fn get(&mut self) {
         match self.run_bwa() {
             Some(output) => {
-                self.excutable = Some(BWA_EXE.to_string());
+                self.executable = Some(BWA_EXE.to_string());
                 if let Some(version) = self.parse_version(&output) {
                     self.version = Some(version);
                 }
             }
             None => {
                 self.version = None;
-                self.excutable = None;
+                self.executable = None;
             }
         }
     }

@@ -10,20 +10,27 @@ pub struct BwaIndex {
 }
 
 impl BwaIndex {
-    pub fn new(
-        reference_path: PathBuf,
-        index_prefix: Option<PathBuf>,
-        algorithm: Option<String>,
-    ) -> Self {
+    /// Create a new BwaIndex instance
+    ///
+    /// # Arguments
+    ///
+    /// * `ref_path` - Path to the reference genome file
+    pub fn new<P: AsRef<Path>>(ref_path: P) -> Self {
         BwaIndex {
-            reference_path,
-            index_prefix,
-            algorithm,
+            reference_path: ref_path.as_ref().to_path_buf(),
+            index_prefix: None,
+            algorithm: None,
         }
     }
 
-    pub fn build() -> BwaIndexBuilder {
-        BwaIndexBuilder::default()
+    pub fn index_prefix<P: AsRef<Path>>(&mut self, p: P) -> &mut Self {
+        self.index_prefix = Some(p.as_ref().to_path_buf());
+        self
+    }
+
+    pub fn algorithm<S: AsRef<str>>(&mut self, alg: S) -> &mut Self {
+        self.algorithm = Some(alg.as_ref().to_string());
+        self
     }
 
     pub fn index(&self) {
@@ -43,37 +50,5 @@ impl BwaIndex {
         if !status.success() {
             panic!("BWA index command failed");
         }
-    }
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct BwaIndexBuilder {
-    reference_path: Option<PathBuf>,
-    index_prefix: Option<PathBuf>,
-    algorithm: Option<String>,
-}
-
-impl BwaIndexBuilder {
-    pub fn reference_path<P: AsRef<Path>>(mut self, p: P) -> Self {
-        self.reference_path = Some(p.as_ref().to_path_buf());
-        self
-    }
-
-    pub fn index_prefix<P: AsRef<Path>>(mut self, p: Option<P>) -> Self {
-        self.index_prefix = p.as_ref().map(|path| path.as_ref().to_path_buf());
-        self
-    }
-
-    pub fn algorithm(mut self, alg: &str) -> Self {
-        self.algorithm = Some(alg.to_string());
-        self
-    }
-
-    pub fn build(self) -> Result<BwaIndex, &'static str> {
-        Ok(BwaIndex {
-            reference_path: self.reference_path.ok_or("reference_path is required")?,
-            index_prefix: self.index_prefix,
-            algorithm: self.algorithm,
-        })
     }
 }
