@@ -1,5 +1,8 @@
 use clap::{Args, Parser, builder};
-use ullar_bwa::bwa::subprocess::{BwaIndex, BwaMem};
+use ullar_bwa::{
+    batch::BatchBwaAlign,
+    bwa::subprocess::{BwaIndex, BwaMem},
+};
 
 fn main() {
     let cli = Cli::parse();
@@ -7,6 +10,7 @@ fn main() {
     match cli {
         Cli::Index(index_args) => run_index(index_args),
         Cli::Align(align_args) => run_align(align_args),
+        Cli::BatchAlign(batch_args) => run_batch_align(batch_args),
     }
 }
 
@@ -16,12 +20,30 @@ enum Cli {
     Index(Index),
     #[command(name = "align", about = "Align reads to a reference genome using BWA")]
     Align(Align),
+    #[command(
+        name = "batch-align",
+        about = "Perform batch BWA alignment on a directory of reads"
+    )]
+    BatchAlign(BatchAlign),
 }
 
 #[derive(Args)]
 struct Index {
     #[arg(short, long, help = "Path to the reference file")]
     reference: String,
+    #[arg(
+        short,
+        long,
+        help = "Prefix for the index files. If not provided, defaults to the reference file name"
+    )]
+    index_prefix: Option<String>,
+    #[arg(
+        short,
+        long,
+        help = "Algorithm to use for indexing",
+        default_value = "is"
+    )]
+    algorithm: String,
 }
 
 #[derive(Args)]
@@ -38,11 +60,29 @@ struct Align {
     output: String,
 }
 
+#[derive(Args)]
+struct BatchAlign {
+    #[arg(short, long, help = "Path to the directory containing reads")]
+    dir: String,
+    #[arg(short, long, help = "Path to the reference file")]
+    reference: String,
+    #[arg(short, long, help = "Path to the output directory")]
+    output: String,
+    #[arg(short, long, help = "Recursively search for reads in subdirectories")]
+    recursive: bool,
+    #[arg(
+        short,
+        long,
+        help = "Test mode: only list found samples without aligning"
+    )]
+    dry_run: bool,
+}
+
 fn run_index(args: Index) {
     let bwa = BwaIndex::build()
-        .reference_path(std::path::Path::new(&args.reference))
-        .index_prefix(std::path::Path::new("bwa_index"))
-        .algorithm("is")
+        .reference_path(&args.reference)
+        .index_prefix(args.index_prefix)
+        .algorithm(&args.algorithm)
         .build()
         .expect("Failed to build BWA index");
 
@@ -60,4 +100,19 @@ fn run_align(args: Align) {
         .expect("Failed to build BWA mem");
 
     bwa_mem.align().expect("Failed to run BWA mem");
+}
+
+fn run_batch_align(args: BatchAlign) {
+    let batch = BatchBwaAlign::builder()
+        .dir(&args.dir)
+        .reference(&args.reference)
+        .output(&args.output)
+        .recursive(args.recursive)
+        .build()
+        .expect("Failed to build Batch BWA Align");
+    if args.dry_run {
+        batch.dry_run();
+    } else {
+        batch.run();
+    }
 }
