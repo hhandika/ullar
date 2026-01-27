@@ -42,7 +42,7 @@ macro_rules! create_output_dir {
     };
 }
 
-#[derive(Debug, PartialEq, Clone, Eq)]
+#[derive(Debug, Default, PartialEq, Clone, Eq)]
 pub enum SampleNameFormat {
     /// Capture sample name as a single word
     /// at the beginning of the file name.
@@ -63,6 +63,7 @@ pub enum SampleNameFormat {
     /// - genus_species_2.fastq,
     /// - genus_species_singleton.fastq
     /// - genus_species_L001_R1.fastq
+    #[default]
     Descriptive,
     /// Define custom pattern for capturing sample name
     Custom(String),
