@@ -21,7 +21,7 @@ enum Cli {
     #[command(name = "align", about = "Align reads to a reference genome using BWA")]
     Align(Align),
     #[command(
-        name = "batch-align",
+        name = "batch",
         about = "Perform batch BWA alignment on a directory of reads"
     )]
     BatchAlign(BatchAlign),
@@ -68,13 +68,9 @@ struct BatchAlign {
     reference: String,
     #[arg(short, long, help = "Path to the output directory")]
     output: String,
-    #[arg(short, long, help = "Recursively search for reads in subdirectories")]
+    #[arg(long, help = "Recursively search for reads in subdirectories")]
     recursive: bool,
-    #[arg(
-        short,
-        long,
-        help = "Test mode: only list found samples without aligning"
-    )]
+    #[arg(long, help = "Test mode: only list found samples without aligning")]
     dry_run: bool,
 }
 

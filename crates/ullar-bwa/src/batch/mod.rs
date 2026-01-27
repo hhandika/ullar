@@ -78,6 +78,7 @@ impl BatchBwaAlign {
         let files = FileFinder::new(&self.dir, &SupportedFormats::Fastq)
             .find(self.recursive)
             .expect("Failed to find read files");
+        println!("Found {} read files.", files.len());
         ReadAssignment::new(&files, &self.sample_name_format).assign()
     }
 }
