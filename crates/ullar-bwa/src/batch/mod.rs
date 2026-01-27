@@ -11,7 +11,7 @@ use ullar::{
     },
 };
 
-use crate::bwa::subprocess::BwaMem;
+use crate::bwa::mem::BwaMem;
 
 pub struct BatchBwaAlign {
     pub dir: PathBuf,
@@ -19,6 +19,7 @@ pub struct BatchBwaAlign {
     pub recursive: bool,
     pub output_format: String,
     pub sample_name_format: SampleNameFormat,
+    pub threads: usize,
     pub output: PathBuf,
 }
 
@@ -28,6 +29,7 @@ impl BatchBwaAlign {
         sample_name_format: SampleNameFormat,
         reference: PathBuf,
         recursive: bool,
+        threads: usize,
         output: PathBuf,
     ) -> Self {
         BatchBwaAlign {
@@ -35,6 +37,7 @@ impl BatchBwaAlign {
             reference,
             recursive,
             output_format: "bam".to_string(),
+            threads: threads,
             sample_name_format,
             output,
         }
@@ -76,6 +79,7 @@ impl BatchBwaAlign {
             .query_read2(read.get_read2())
             .output_path(output_path)
             .output_format(&self.output_format)
+            .threads(self.threads)
             .build()
             .expect("Failed to build BWA MEM command");
         bwa_mem.align().expect("Failed to run BWA MEM");
@@ -101,6 +105,7 @@ pub struct BatchBwaAlignBuilder {
     reference: Option<PathBuf>,
     recursive: bool,
     sample_name_format: SampleNameFormat,
+    threads: usize,
     output: Option<PathBuf>,
 }
 
@@ -127,6 +132,11 @@ impl BatchBwaAlignBuilder {
         self
     }
 
+    pub fn threads(mut self, threads: usize) -> Self {
+        self.threads = threads;
+        self
+    }
+
     pub fn recursive(mut self, yes: bool) -> Self {
         self.recursive = yes;
         self
@@ -138,6 +148,7 @@ impl BatchBwaAlignBuilder {
             self.sample_name_format,
             self.reference.ok_or("reference is required")?,
             self.recursive,
+            self.threads,
             self.output.ok_or("output is required")?,
         ))
     }

@@ -1,7 +1,7 @@
 use clap::{Args, Parser, builder};
 use ullar_bwa::{
     batch::BatchBwaAlign,
-    bwa::subprocess::{BwaIndex, BwaMem},
+    bwa::{index::BwaIndex, mem::BwaMem},
 };
 
 fn main() {
@@ -70,6 +70,8 @@ struct BatchAlign {
     output: String,
     #[arg(long, help = "Recursively search for reads in subdirectories")]
     recursive: bool,
+    #[arg(short, long, help = "Number of threads to use", default_value_t = 4)]
+    threads: usize,
     #[arg(long, help = "Test mode: only list found samples without aligning")]
     dry_run: bool,
 }
@@ -104,6 +106,7 @@ fn run_batch_align(args: BatchAlign) {
         .reference(&args.reference)
         .output(&args.output)
         .recursive(args.recursive)
+        .threads(args.threads)
         .build()
         .expect("Failed to build Batch BWA Align");
     if args.dry_run {

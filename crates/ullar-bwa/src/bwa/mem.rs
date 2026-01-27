@@ -11,6 +11,7 @@ pub struct BwaMem {
     pub output_path: PathBuf,
     pub output_format: BwaOutputFormat,
     pub use_samtools_view: bool,
+    pub threads: usize,
 }
 
 impl BwaMem {
@@ -29,7 +30,7 @@ impl BwaMem {
             bwa.arg(read2);
         }
 
-        bwa.arg("-t").arg(Self::get_threads().to_string());
+        bwa.arg("-t").arg(self.get_threads().to_string());
 
         if self.use_samtools_view {
             let mut bwa_child = bwa.stdout(Stdio::piped()).spawn()?;
@@ -68,86 +69,16 @@ impl BwaMem {
         Ok(())
     }
 
-    fn get_threads() -> usize {
-        let threads = num_cpus::get();
-        if threads > 4 { threads / 2 } else { threads }
-    }
-}
-
-pub struct BwaIndex {
-    pub reference_path: PathBuf,
-    pub index_prefix: Option<PathBuf>,
-    pub algorithm: Option<String>,
-}
-
-impl BwaIndex {
-    pub fn new(
-        reference_path: PathBuf,
-        index_prefix: Option<PathBuf>,
-        algorithm: Option<String>,
-    ) -> Self {
-        BwaIndex {
-            reference_path,
-            index_prefix,
-            algorithm,
+    fn get_threads(&self) -> usize {
+        if self.threads > 0 {
+            return self.threads;
         }
-    }
-
-    pub fn build() -> BwaIndexBuilder {
-        BwaIndexBuilder::default()
-    }
-
-    pub fn index(&self) {
-        let mut command = Command::new("bwa");
-
-        command.arg("index").arg(&self.reference_path);
-
-        if let Some(prefix) = &self.index_prefix {
-            command.arg("-p").arg(prefix);
-        }
-        if let Some(alg) = &self.algorithm {
-            command.arg("-a").arg(alg);
-        }
-        let status = command
-            .status()
-            .expect("Failed to execute BWA index command");
-        if !status.success() {
-            panic!("BWA index command failed");
-        }
+        let sys_threads = num_cpus::get();
+        let threads = sys_threads / 2;
+        if threads > 4 { threads } else { sys_threads }
     }
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct BwaIndexBuilder {
-    reference_path: Option<PathBuf>,
-    index_prefix: Option<PathBuf>,
-    algorithm: Option<String>,
-}
-
-impl BwaIndexBuilder {
-    pub fn reference_path<P: AsRef<Path>>(mut self, p: P) -> Self {
-        self.reference_path = Some(p.as_ref().to_path_buf());
-        self
-    }
-
-    pub fn index_prefix<P: AsRef<Path>>(mut self, p: Option<P>) -> Self {
-        self.index_prefix = p.as_ref().map(|path| path.as_ref().to_path_buf());
-        self
-    }
-
-    pub fn algorithm(mut self, alg: &str) -> Self {
-        self.algorithm = Some(alg.to_string());
-        self
-    }
-
-    pub fn build(self) -> Result<BwaIndex, &'static str> {
-        Ok(BwaIndex {
-            reference_path: self.reference_path.ok_or("reference_path is required")?,
-            index_prefix: self.index_prefix,
-            algorithm: self.algorithm,
-        })
-    }
-}
 #[derive(Default)]
 pub struct BwaMemBuilder {
     reference_path: Option<PathBuf>,
@@ -155,6 +86,7 @@ pub struct BwaMemBuilder {
     query_read2: Option<PathBuf>,
     output_path: Option<PathBuf>,
     output_format: Option<BwaOutputFormat>,
+    threads: usize,
     use_samtools_view: bool,
 }
 
@@ -184,6 +116,11 @@ impl BwaMemBuilder {
         self
     }
 
+    pub fn threads(mut self, t: usize) -> Self {
+        self.threads = t;
+        self
+    }
+
     /// Enable piping into samtools view to write BAM.
     pub fn use_samtools_view(mut self, yes: bool) -> Self {
         self.use_samtools_view = yes;
@@ -197,6 +134,7 @@ impl BwaMemBuilder {
             query_read2: self.query_read2,
             output_path: self.output_path.ok_or("output_path is required")?,
             output_format: self.output_format.ok_or("output_format is required")?,
+            threads: self.threads,
             use_samtools_view: self.use_samtools_view,
         })
     }
