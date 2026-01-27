@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use ullar::{
     helper::files::FileFinder,
@@ -14,6 +17,7 @@ pub struct BatchBwaAlign {
     pub dir: PathBuf,
     pub reference: PathBuf,
     pub recursive: bool,
+    pub output_format: String,
     pub sample_name_format: SampleNameFormat,
     pub output: PathBuf,
 }
@@ -30,6 +34,7 @@ impl BatchBwaAlign {
             dir,
             reference,
             recursive,
+            output_format: "bam".to_string(),
             sample_name_format,
             output,
         }
@@ -54,21 +59,23 @@ impl BatchBwaAlign {
         let total_samples = reads.len();
         println!("Found {} samples to align.", total_samples);
         let processed_samples = 0;
+        fs::create_dir_all(&self.output).expect("Failed to create output directory");
         for read in reads {
             println!("Aligning sample: {}", read.sample_name);
-            self.run_bwa(&read);
+            let output_path = self.get_output_path(&read.sample_name);
+            self.run_bwa(&read, &output_path);
             let processed_samples = processed_samples + 1;
             println!("Completed {}/{} samples.", processed_samples, total_samples);
         }
     }
 
-    fn run_bwa(&self, read: &FastqReads) {
+    fn run_bwa(&self, read: &FastqReads, output_path: &Path) {
         let bwa_mem = BwaMem::builder()
             .reference_path(&self.reference)
             .query_read1(read.get_read1())
             .query_read2(read.get_read2())
-            .output_path(self.output.join(format!("{}.sam", read.sample_name)))
-            .output_format("bam")
+            .output_path(output_path)
+            .output_format(&self.output_format)
             .build()
             .expect("Failed to build BWA MEM command");
         bwa_mem.align().expect("Failed to run BWA MEM");
@@ -80,6 +87,11 @@ impl BatchBwaAlign {
             .expect("Failed to find read files");
         println!("Found {} read files.", files.len());
         ReadAssignment::new(&files, &self.sample_name_format).assign()
+    }
+
+    fn get_output_path(&self, sample_name: &str) -> PathBuf {
+        self.output
+            .join(format!("{}.{}", sample_name, self.output_format))
     }
 }
 
