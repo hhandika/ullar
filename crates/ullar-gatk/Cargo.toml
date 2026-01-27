@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 clap = { version = "4.5.54", features = ["derive"] }
+ullar-vcf = { version = "0.1.0", path = "../ullar-vcf" }
