@@ -58,13 +58,13 @@ impl BatchBwaAlign {
         let reads = self.find_reads();
         let total_samples = reads.len();
         println!("Found {} samples to align.", total_samples);
-        let processed_samples = 0;
+        let mut processed_samples = 0;
         fs::create_dir_all(&self.output).expect("Failed to create output directory");
         for read in reads {
             println!("Aligning sample: {}", read.sample_name);
             let output_path = self.get_output_path(&read.sample_name);
             self.run_bwa(&read, &output_path);
-            let processed_samples = processed_samples + 1;
+            processed_samples += 1;
             println!("Completed {}/{} samples.", processed_samples, total_samples);
         }
     }
