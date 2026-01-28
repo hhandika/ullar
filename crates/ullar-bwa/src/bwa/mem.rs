@@ -2,6 +2,7 @@ use crate::bwa::errors::validate_bwa_inputs;
 use crate::bwa::types::BwaFormat;
 use crate::samtools::view::SamtoolsView;
 
+use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
@@ -86,8 +87,12 @@ impl BwaMem {
     /// Align reads using BWA mem and output to BAM using samtools view
     fn align_to_samtools_bam(&self) -> Result<(), Box<dyn std::error::Error>> {
         self.validate_inputs()?;
+        let log_file = File::create("bwa.log")?;
         let mut bwa = self.get_bwa_command();
-        let mut bwa_child = bwa.stdout(Stdio::piped()).spawn()?;
+        let mut bwa_child = bwa
+            .stdout(Stdio::piped())
+            .stderr(Stdio::from(log_file))
+            .spawn()?;
 
         let bwa_stdout = bwa_child
             .stdout
