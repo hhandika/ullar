@@ -6,7 +6,7 @@
 
 ULLAR is a lightweight, efficient, and scalable pipeline developed to minimize learning curve and required bioinformatic knowledge for phylogenomic and population genetic data analyses. We defined efficiency as efficient in both using computational resources and user time.
 
-For starter, ULLAR is designed as a single executable binary to eliminate potential conflicts with core dependencies. We eliminate the need to prepare complex configuration files and scripts. The app automatically infer optimal resource allocation based on the data and available resources, but is flexible to override the default settings. See the [Motivation](#motivation) section for more details of our design goals.
+For starter, ULLAR is designed as a single executable binary to avoid potential conflicts with genomic applications it depends on. We eliminate the need to prepare configuration files and scripts. The app also automatically infers optimal resource allocation based on the data and available resources, but provides flexibility for users to override the default settings. See the [Motivation](#motivation) section for more details of our design goals.
 
 In addition to Linux and macOS, the typical supported operating systems for bioinformatics, ULLAR runs natively on Windows whenever possible.
 
