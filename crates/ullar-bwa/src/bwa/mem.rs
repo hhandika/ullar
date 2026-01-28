@@ -1,7 +1,7 @@
 use crate::bwa::errors::validate_bwa_inputs;
 use crate::bwa::types::BwaOutputFormat;
 use crate::samtools::view::SamtoolsView;
-use std::fs;
+use std::fs::{self, File};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 
@@ -68,10 +68,13 @@ impl BwaMem {
     pub fn align(&self) -> Result<(), Box<dyn std::error::Error>> {
         self.validate_inputs()?;
         let mut bwa = Command::new("bwa");
-
+        // Set verbosity level to 1 (errors only)
+        // Other levels: 2 (warnings), 3 (info), 4 (debug)
         bwa.arg("mem")
             .arg("-t")
             .arg(self.get_threads().to_string())
+            .arg("-v")
+            .arg("1")
             .arg(&self.reference_path)
             .arg(&self.query_read1);
 
