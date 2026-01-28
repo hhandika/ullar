@@ -162,7 +162,7 @@ ullar tree init -d /path/to/aligned_sequences_dir --autorun
 
 #### Population Genomic Workflow
 
-This workflow is under development. Currently, it requires installation of separate package within ULLAR, such as `ullar-bwa` for read mapping. The final version will integrate all components within ULLAR itself, making it only a single executable binary. It will also offers separate workflow installation for those who only need specific workflows.
+This workflow is under development. Currently, it requires installation of separate packages within ULLAR, such as `ullar-bwa` for read mapping. The final version will integrate all components within ULLAR itself, making it only a single executable binary. It will also offers separate workflow installation for those who only need specific workflows.
 
 ```bash
 # Step 1: Clean raw reads
