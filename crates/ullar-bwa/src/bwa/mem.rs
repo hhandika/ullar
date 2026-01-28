@@ -1,5 +1,4 @@
 use crate::bwa::errors::validate_bwa_inputs;
-use crate::bwa::metadata::BWA_EXE;
 use crate::bwa::types::BwaOutputFormat;
 use crate::samtools::view::SamtoolsView;
 use std::fs;

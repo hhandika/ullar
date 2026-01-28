@@ -82,15 +82,15 @@ impl BatchBwaAlign {
     }
 
     fn run_bwa(&self, read: &FastqReads, output_path: &Path) {
-        BwaMem::new()
+        let mut bwa_mem = BwaMem::new();
+        bwa_mem
             .reference_path(&self.reference)
             .query_read1(read.get_read1())
             .query_read2(read.get_read2())
             .output_path(output_path)
             .output_format(&self.output_format)
-            .threads(self.threads)
-            .align()
-            .expect("Failed to run BWA MEM");
+            .threads(self.threads);
+        bwa_mem.align().expect("BWA MEM alignment failed");
     }
 
     fn find_reads(&self) -> Vec<FastqReads> {

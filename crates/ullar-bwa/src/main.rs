@@ -89,14 +89,14 @@ fn run_index(args: Index) {
 }
 
 fn run_align(args: Align) {
-    BwaMem::new()
+    let mut bwa_mem = BwaMem::new();
+    bwa_mem
         .reference_path(&args.reference)
         .query_read1(&args.read1)
         .output_format(&args.output_format)
         .query_read2(args.read2)
-        .output_path(&args.output)
-        .align()
-        .expect("Failed to run BWA mem");
+        .output_path(&args.output);
+    bwa_mem.align().expect("Failed to run BWA mem");
 }
 
 fn run_batch_align(args: BatchAlign) {
