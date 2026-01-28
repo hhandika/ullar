@@ -1,17 +1,21 @@
+use std::fs::OpenOptions;
+use std::io::{BufWriter, Read, Write};
 use std::{
     path::PathBuf,
-    process::{ChildStdout, Command},
+    process::{ChildStdout, Command, Stdio},
 };
 
 pub struct SamtoolsView {
     pub bwa_stdout: Option<ChildStdout>,
+    pub sample_name: String,
     pub output_path: Option<PathBuf>,
 }
 
 impl SamtoolsView {
-    pub fn new(bwa_stdout: Option<ChildStdout>) -> Self {
+    pub fn new(bwa_stdout: Option<ChildStdout>, sample_name: &str) -> Self {
         SamtoolsView {
             bwa_stdout,
+            sample_name: sample_name.to_string(),
             output_path: None,
         }
     }
@@ -31,19 +35,40 @@ impl SamtoolsView {
             .as_ref()
             .ok_or("Output path must be provided")?;
 
-        let status = Command::new("samtools")
+        let mut samtools = Command::new("samtools")
             .arg("view")
             .arg("-bS")
             .arg("-o")
             .arg(output_path)
             .arg("-")
             .stdin(bwa_stdout)
-            .status()?;
+            .stderr(Stdio::piped()) // Capture stderr, don't print to terminal
+            .spawn()?;
 
+        let status = samtools.wait()?;
         if !status.success() {
             return Err("samtools view failed".into());
         }
 
+        if let Some(mut stderr) = samtools.stderr {
+            let mut log_content = String::new();
+            stderr.read_to_string(&mut log_content)?;
+            self.write_log(&log_content)?;
+        }
+
+        Ok(())
+    }
+
+    fn write_log(&self, log_content: &str) -> Result<(), Box<dyn std::error::Error>> {
+        // Append contnet to samtools log file
+        // Write sample name at the top for clarity
+        let log_file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open("samtools_view.log")?;
+        let mut writer = BufWriter::new(log_file);
+        writeln!(writer, "Sample: {}", self.sample_name)?;
+        writeln!(writer, "{}", log_content)?;
         Ok(())
     }
 }

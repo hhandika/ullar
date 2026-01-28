@@ -1,7 +1,8 @@
 use crate::bwa::errors::validate_bwa_inputs;
 use crate::bwa::types::BwaOutputFormat;
 use crate::samtools::view::SamtoolsView;
-use std::fs::{self, File};
+
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 
@@ -11,18 +12,20 @@ pub struct BwaMem {
     pub query_read2: Option<PathBuf>,
     pub output_path: PathBuf,
     pub output_format: BwaOutputFormat,
+    pub sample_name: String,
     pub use_samtools_view: bool,
     pub threads: usize,
 }
 
 impl BwaMem {
-    pub fn new() -> Self {
+    pub fn new(sample_name: &str) -> Self {
         BwaMem {
             reference_path: PathBuf::new(),
             query_read1: PathBuf::new(),
             query_read2: None,
             output_path: PathBuf::new(),
             output_format: BwaOutputFormat::Bam,
+            sample_name: sample_name.to_string(),
             use_samtools_view: true,
             threads: 2,
         }
@@ -68,8 +71,7 @@ impl BwaMem {
     pub fn align(&self) -> Result<(), Box<dyn std::error::Error>> {
         self.validate_inputs()?;
         let mut bwa = Command::new("bwa");
-        // Set verbosity level to 1 (errors only)
-        // Other levels: 2 (warnings), 3 (info), 4 (debug)
+
         bwa.arg("mem")
             .arg("-t")
             .arg(self.get_threads().to_string())
@@ -89,10 +91,10 @@ impl BwaMem {
                 .stdout
                 .take()
                 .ok_or("Failed to capture BWA stdout")?;
+            let mut sam = SamtoolsView::new(Some(bwa_stdout), &self.sample_name)
+                .output_path(&self.output_path);
+            sam.to_bam()?;
 
-            SamtoolsView::new(Some(bwa_stdout))
-                .output_path(&self.output_path)
-                .to_bam()?;
             let bwa_output = bwa_child.wait_with_output()?;
             if !bwa_output.status.success() {
                 let stderr = String::from_utf8_lossy(&bwa_output.stderr);

@@ -1,8 +1,8 @@
+use colored::Colorize;
 use std::{
     fs,
     path::{Path, PathBuf},
 };
-
 use ullar::{
     helper::files::FileFinder,
     types::{
@@ -73,16 +73,18 @@ impl BatchBwaAlign {
         let mut processed_samples = 0;
         fs::create_dir_all(&self.output).expect("Failed to create output directory");
         for read in reads {
-            println!("Aligning sample: {}", read.sample_name);
+            let msg = format!("Processing sample: {}", read.sample_name);
+            println!("{}", msg.cyan().bold());
             let output_path = self.get_output_path(&read.sample_name);
             self.run_bwa(&read, &output_path);
             processed_samples += 1;
-            println!("Completed {}/{} samples.", processed_samples, total_samples);
+            let progress = format!("Completed {}/{} samples.", processed_samples, total_samples);
+            println!("{} {}", "✓", progress.green().bold());
         }
     }
 
     fn run_bwa(&self, read: &FastqReads, output_path: &Path) {
-        let mut bwa_mem = BwaMem::new();
+        let mut bwa_mem = BwaMem::new(&read.sample_name);
         bwa_mem
             .reference_path(&self.reference)
             .query_read1(read.get_read1())

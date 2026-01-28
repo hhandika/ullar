@@ -57,6 +57,8 @@ struct Align {
     read1: String,
     #[arg(long, help = "Path to the query read 2 file")]
     read2: Option<String>,
+    #[arg(short, long, help = "Sample name for the alignment")]
+    sample_name: String,
     #[arg(short = 'F', long, help = "Output format", default_value = "bam", value_parser = builder::PossibleValuesParser::new(["sam", "bam"]))]
     output_format: String,
     #[arg(short, long, help = "Path to the output file")]
@@ -89,7 +91,7 @@ fn run_index(args: Index) {
 }
 
 fn run_align(args: Align) {
-    let mut bwa_mem = BwaMem::new();
+    let mut bwa_mem = BwaMem::new(&args.sample_name);
     bwa_mem
         .reference_path(&args.reference)
         .query_read1(&args.read1)
