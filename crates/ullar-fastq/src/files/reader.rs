@@ -7,6 +7,8 @@ use std::path::Path;
 use flate2::bufread::MultiGzDecoder;
 use noodles::fastq::io::Reader as NoodleReader;
 
+use crate::types::illumina::IlluminaName;
+
 // use crate::files::description::{self, IluminaDescription};
 
 pub struct FastqReader<'a> {
@@ -27,16 +29,25 @@ impl<'a> FastqReader<'a> {
         let mut reader = NoodleReader::new(buff);
         let mut records = reader.records();
         if let Some(Ok(record)) = records.next() {
-            println!("Name: {}", record.name());
-            println!("Description: {}", record.description());
+            let name = record.name().to_string();
+            let description = record.description().to_string();
+            let parser = IlluminaName::parse(&name);
+            if let Some(illumina_header) = parser {
+                println!("Parsed Illumina Header: {}\n", illumina_header);
+            } else {
+                println!("Raw Header Name: {}\n", name);
+                println!("Raw Header Description: {}", description);
+            }
         } else {
             println!("No records found in the FASTQ file.");
         }
 
         // Print second record as well
         if let Some(Ok(record)) = records.next() {
-            println!("Name: {}", record.name());
-            println!("Description: {}", record.description());
+            let name = record.name().to_string();
+            let description = record.description().to_string();
+            println!("Second Record Name: {}\n", name);
+            println!("Description: {}\n", description);
         } else {
             println!("Only one record found in the FASTQ file.");
         }
