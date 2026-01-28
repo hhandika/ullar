@@ -1,4 +1,5 @@
 use crate::bwa::errors::validate_bwa_inputs;
+use crate::bwa::metadata::BWA_EXE;
 use crate::bwa::types::BwaOutputFormat;
 use crate::samtools::view::SamtoolsView;
 use std::fs;
@@ -103,7 +104,7 @@ impl BwaMem {
     }
 
     fn validate_inputs(&self) -> Result<(), Box<dyn std::error::Error>> {
-        validate_bwa_inputs(&self.reference_path, &self.query_read1, &self.query_read2)?;
+        validate_bwa_inputs(&self.query_read1, &self.query_read2)?;
         Ok(())
     }
 

@@ -1,7 +1,7 @@
 use clap::{Args, Parser, builder};
 use ullar_bwa::{
     batch::BatchBwaAlign,
-    bwa::{index::BwaIndex, mem::BwaMem},
+    bwa::{index::BwaIndex, mem::BwaMem, metadata::BwaMetadata},
 };
 
 fn main() {
@@ -11,6 +11,7 @@ fn main() {
         Cli::Index(index_args) => run_index(index_args),
         Cli::Align(align_args) => run_align(align_args),
         Cli::BatchAlign(batch_args) => run_batch_align(batch_args),
+        Cli::Deps => check_bwa_installed(),
     }
 }
 
@@ -25,6 +26,8 @@ enum Cli {
         about = "Perform batch BWA alignment on a directory of reads"
     )]
     BatchAlign(BatchAlign),
+    #[command(name = "deps", about = "Print help information")]
+    Deps,
 }
 
 #[derive(Args)]
@@ -106,5 +109,19 @@ fn run_batch_align(args: BatchAlign) {
         batch.dry_run();
     } else {
         batch.run();
+    }
+}
+
+fn check_bwa_installed() {
+    let mut meta = BwaMetadata::new();
+    meta.get();
+
+    match meta.version {
+        Some(version) => {
+            println!("BWA is installed. Version: {}", version);
+        }
+        None => {
+            println!("BWA is not installed or not found in PATH.");
+        }
     }
 }

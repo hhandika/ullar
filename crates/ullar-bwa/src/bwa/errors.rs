@@ -27,19 +27,11 @@ impl fmt::Display for ValidationError {
 impl Error for ValidationError {}
 
 pub fn validate_bwa_inputs(
-    reference_path: &Path,
     query_read1: &Path,
     query_read2: &Option<PathBuf>,
 ) -> Result<(), ValidationError> {
-    if reference_path.as_os_str().is_empty() {
-        return Err(ValidationError::EmptyPath("reference_path".to_string()));
-    }
     if query_read1.as_os_str().is_empty() {
         return Err(ValidationError::EmptyPath("query_read1".to_string()));
-    }
-
-    if !Path::new(reference_path).exists() {
-        return Err(ValidationError::FileNotFound(reference_path.to_path_buf()));
     }
 
     if !Path::new(query_read1).exists() {
@@ -52,13 +44,13 @@ pub fn validate_bwa_inputs(
         }
     }
 
-    let index_extensions = ["amb", "ann", "bwt", "pac", "sa"];
-    for ext in &index_extensions {
-        let index_file = format!("{}.{}", reference_path.display(), ext);
-        if !Path::new(&index_file).exists() {
-            return Err(ValidationError::IndexMissing(index_file));
-        }
-    }
+    // let index_extensions = ["amb", "ann", "bwt", "pac", "sa"];
+    // for ext in &index_extensions {
+    //     let index_file = format!("{}.{}", reference_path.display(), ext);
+    //     if !Path::new(&index_file).exists() {
+    //         return Err(ValidationError::IndexMissing(index_file));
+    //     }
+    // }
 
     Ok(())
 }
