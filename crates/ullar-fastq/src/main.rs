@@ -32,5 +32,5 @@ fn run_description(args: Description) {
             return;
         }
     };
-    reader.get_header();
+    reader.get_header().unwrap();
 }
