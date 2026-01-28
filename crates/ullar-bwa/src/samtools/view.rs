@@ -1,5 +1,5 @@
 use std::fs::OpenOptions;
-use std::io::{BufWriter, Read, Write};
+use std::io::{BufReader, BufWriter, Read, Write};
 use std::{
     path::PathBuf,
     process::{ChildStdout, Command, Stdio},
@@ -47,7 +47,14 @@ impl SamtoolsView {
 
         let status = samtools.wait()?;
         if !status.success() {
-            return Err("samtools view failed".into());
+            let stderr = samtools
+                .stderr
+                .take()
+                .ok_or("Failed to capture samtools stderr")?;
+            let mut err_content = String::new();
+            let mut reader = BufReader::new(stderr);
+            reader.read_to_string(&mut err_content)?;
+            return Err(format!("samtools view failed {}", err_content).into());
         }
 
         if let Some(mut stderr) = samtools.stderr {

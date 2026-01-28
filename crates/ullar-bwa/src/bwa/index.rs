@@ -34,16 +34,16 @@ impl BwaIndex {
     }
 
     pub fn index(&self) {
-        let mut command = Command::new("bwa");
+        let mut command = Command::new("bwa-mem2.avx2");
 
         command.arg("index").arg(&self.reference_path);
 
         if let Some(prefix) = &self.index_prefix {
             command.arg("-p").arg(prefix);
         }
-        if let Some(alg) = &self.algorithm {
-            command.arg("-a").arg(alg);
-        }
+        // if let Some(alg) = &self.algorithm {
+        //     command.arg("-a").arg(alg);
+        // }
         let status = command
             .status()
             .expect("Failed to execute BWA index command");

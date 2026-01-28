@@ -1,17 +1,16 @@
 use crate::bwa::errors::validate_bwa_inputs;
-use crate::bwa::types::BwaOutputFormat;
+use crate::bwa::types::BwaFormat;
 use crate::samtools::view::SamtoolsView;
 
-use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Output, Stdio};
+use std::process::{Command, Stdio};
 
 pub struct BwaMem {
     pub reference_path: PathBuf,
     pub query_read1: PathBuf,
     pub query_read2: Option<PathBuf>,
     pub output_path: PathBuf,
-    pub output_format: BwaOutputFormat,
+    pub output_format: BwaFormat,
     pub sample_name: String,
     pub use_samtools_view: bool,
     pub threads: usize,
@@ -24,7 +23,7 @@ impl BwaMem {
             query_read1: PathBuf::new(),
             query_read2: None,
             output_path: PathBuf::new(),
-            output_format: BwaOutputFormat::Bam,
+            output_format: BwaFormat::Bam,
             sample_name: sample_name.to_string(),
             use_samtools_view: true,
             threads: 2,
@@ -55,11 +54,11 @@ impl BwaMem {
 
     pub fn output_format(&mut self, format: &str) -> &mut Self {
         self.output_format = match format.to_lowercase().as_str() {
-            "sam" => BwaOutputFormat::Sam,
-            "bam" => BwaOutputFormat::Bam,
-            _ => BwaOutputFormat::Bam,
+            "sam" => BwaFormat::Sam,
+            "bam" => BwaFormat::Bam,
+            _ => BwaFormat::Bam,
         };
-        self.use_samtools_view = matches!(self.output_format, BwaOutputFormat::Bam);
+        self.use_samtools_view = matches!(self.output_format, BwaFormat::Bam);
         self
     }
 
@@ -69,8 +68,46 @@ impl BwaMem {
     }
 
     pub fn align(&self) -> Result<(), Box<dyn std::error::Error>> {
+        if self.use_samtools_view {
+            self.align_to_samtools_bam()
+        // } else {
+        //     self.align_to_bam()
+        } else {
+            Err("Only BAM output via samtools view is currently supported".into())
+        }
+    }
+
+    // fn align_to_bam(&self) -> Result<(), Box<dyn std::error::Error>> {
+    //     let mut bwa = self.get_bwa_command();
+    //     bwa.arg("-o").arg(&self.output_path);
+    //     self.write_output(&mut bwa)
+    // }
+
+    /// Align reads using BWA mem and output to BAM using samtools view
+    fn align_to_samtools_bam(&self) -> Result<(), Box<dyn std::error::Error>> {
         self.validate_inputs()?;
-        let mut bwa = Command::new("bwa");
+        let mut bwa = self.get_bwa_command();
+        let mut bwa_child = bwa.stdout(Stdio::piped()).spawn()?;
+
+        let bwa_stdout = bwa_child
+            .stdout
+            .take()
+            .ok_or("Failed to capture BWA stdout")?;
+        let mut sam =
+            SamtoolsView::new(Some(bwa_stdout), &self.sample_name).output_path(&self.output_path);
+        sam.to_bam()?;
+
+        let bwa_output = bwa_child.wait_with_output()?;
+        if !bwa_output.status.success() {
+            let stderr = String::from_utf8_lossy(&bwa_output.stderr);
+            return Err(format!("BWA mem failed: {}", stderr).into());
+        }
+
+        Ok(())
+    }
+
+    pub fn get_bwa_command(&self) -> Command {
+        let mut bwa = Command::new("bwa-mem2.avx2");
 
         bwa.arg("mem")
             .arg("-t")
@@ -84,27 +121,7 @@ impl BwaMem {
             bwa.arg(read2);
         }
 
-        if self.use_samtools_view {
-            let mut bwa_child = bwa.stdout(Stdio::piped()).spawn()?;
-
-            let bwa_stdout = bwa_child
-                .stdout
-                .take()
-                .ok_or("Failed to capture BWA stdout")?;
-            let mut sam = SamtoolsView::new(Some(bwa_stdout), &self.sample_name)
-                .output_path(&self.output_path);
-            sam.to_bam()?;
-
-            let bwa_output = bwa_child.wait_with_output()?;
-            if !bwa_output.status.success() {
-                let stderr = String::from_utf8_lossy(&bwa_output.stderr);
-                return Err(format!("BWA mem failed: {}", stderr).into());
-            }
-        } else {
-            self.write_output(&mut bwa)?;
-        }
-
-        Ok(())
+        bwa
     }
 
     fn validate_inputs(&self) -> Result<(), Box<dyn std::error::Error>> {
@@ -112,16 +129,32 @@ impl BwaMem {
         Ok(())
     }
 
-    fn write_output(&self, output: &mut Command) -> Result<(), Box<dyn std::error::Error>> {
-        let output: Output = output.output()?;
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(format!("BWA mem command failed: {}", stderr).into());
-        }
+    // fn write_output(&self, output: &mut Command) -> Result<(), Box<dyn std::error::Error>> {
+    //     let output: Output = output.output()?;
+    //     if !output.status.success() {
+    //         let stderr = String::from_utf8_lossy(&output.stderr);
+    //         return Err(format!("BWA mem command failed: {}", stderr).into());
+    //     }
 
-        fs::write(&self.output_path, output.stdout)?;
-        Ok(())
-    }
+    //     let mut bam_file = fs::File::create(&self.output_path)?;
+    //     let mut bam_writer = BamWriter::new(&mut bam_file);
+
+    //     let bwa_stdout = BufReader::new(&output.stdout[..]);
+    //     let mut sam_reader = sam::io::Reader::new(bwa_stdout);
+
+    //     // Read and PARSE header
+    //     let header = sam_reader.read_header()?;
+    //     bam_writer.write_header(&header)?;
+
+    //     // Process EACH record: read -> PARSE -> write
+    //     for result in sam_reader.records() {
+    //         let bam_record = bam::Record::from_sam_record(&header, &result?)?;
+    //         bam_writer.write_record(&header, &record)?;
+    //     }
+
+    //     bam_writer.finish()?;
+    //     Ok(())
+    // }
 
     fn get_threads(&self) -> usize {
         if self.threads > 0 {
