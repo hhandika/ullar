@@ -7,7 +7,7 @@ use colored::Colorize;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::files::types::{FastqReads, ReadChecker};
+use crate::types::reads::{FastqReads, ReadChecker};
 
 #[derive(Debug, Serialize, Default, Deserialize)]
 pub struct FastqInput {
