@@ -4,7 +4,9 @@
 ![GitHub top language](https://img.shields.io/github/languages/top/hhandika/ullar)
 ![GitHub last commit](https://img.shields.io/github/last-commit/hhandika/ullar?color=yellow)
 
-ULLAR is a lightweight, efficient, and scalable pipeline developed to minimize learning curve and required bioinformatic knowledge for phylogenomic and population genetic data analyses. We defined efficiency as efficient in both using computational resources and user time, which could also mean efficient in using financial resources.
+ULLAR is a lightweight, efficient, and scalable pipeline developed to minimize learning curve and required bioinformatic knowledge for phylogenomic and population genetic data analyses. We defined efficiency as efficient in both using computational resources and user time.
+
+For starter, ULLAR is designed as a single executable binary to eliminate potential conflicts with core dependencies. We eliminate the need to prepare complex configuration files and scripts. The app automatically infer optimal resource allocation based on the data and available resources, but is flexible to override the default settings. See the [Motivation](#motivation) section for more details of our design goals.
 
 In addition to Linux and macOS, the typical supported operating systems for bioinformatics, ULLAR runs natively on Windows whenever possible.
 
@@ -159,6 +161,8 @@ ullar tree init -d /path/to/aligned_sequences_dir --autorun
 ```
 
 #### Population Genomic Workflow
+
+This workflow is under development. Currently, it requires installation of separate package within ULLAR, such as `ullar-bwa` for read mapping. The final version will integrate all components within ULLAR itself, making it only a single executable binary. It will also offers separate workflow installation for those who only need specific workflows.
 
 ```bash
 # Step 1: Clean raw reads
