@@ -66,29 +66,52 @@ Check ULLAR installation:
 ullar --version
 ```
 
-You can also install ULLAR from source code using the Rust package manager, `cargo`. Follow the Rust installation guide [here](https://www.rust-lang.org/tools/install). After installing Rust, you can install it using the following command in your terminal application:
+#### Install from Source Code
+
+You can also install ULLAR from source code. You will need `git` and rust compiler. Follow [the Rust installation guide](https://www.rust-lang.org/tools/install). After installing Rust, you can install it using the following command in your terminal application:
+
+##### Clone the repository
 
 ```bash
-cargo install --git https://github.com/hhandika/ullar.git
+git clone https://github.com/hhandika/ullar.git
+
+# or using GitHub CLI
+gh repo clone hhandika/ullar
 ```
 
-If you need more detailed guidelines, SEGUL provides comprehensive instructions for installing Rust-based software [here](https://www.segul.app/docs/installation/install_source).
+```bash
+cd ullar
+```
+
+##### Build and install ULLAR
+
+```bash
+cargo install --path . --package ullar
+```
+
+ULLAR is designed to be modular and to install other packages within ULLAR, such as `ullar-bwa`, you can run:
+
+```bash
+cargo install --path . --package ullar-bwa
+```
+
+If you need more detailed guidelines, SEGUL provides comprehensive instructions for installing Rust-based software in [the installation guide](https://www.segul.app/docs/installation/install_source).
 
 ### Features & Dependencies
 
-| Feature                             | Dependencies                                       |
-| ----------------------------------- | -------------------------------------------------- |
-| Raw read cleaning                   | [Fastp](https://github.com/OpenGene/fastp)         |
-| De novo assembly                    | [SPAdes](http://cab.spbu.ru/software/spades/)      |
-| Reference mapping                   | [LASTZ](https://github.com/lastz/lastz)            |
-| Sequence alignment                  | [MAFFT](https://mafft.cbrc.jp/alignment/software/) |
-| ML phylogeny                        | [IQ-TREE](http://www.iqtree.org/)                  |
-| MSC phylogeny                       | [ASTER](https://github.com/chaoszhang/ASTER)       |
-| Data cleaning                       | [SEGUL](https://www.segul.app/)                    |
-| Summary statistics                  | [SEGUL](https://www.segul.app/)                    |
+| Feature            | Dependencies                                       |
+| ------------------ | -------------------------------------------------- |
+| Raw read cleaning  | [Fastp](https://github.com/OpenGene/fastp)         |
+| De novo assembly   | [SPAdes](http://cab.spbu.ru/software/spades/)      |
+| Reference mapping  | [LASTZ](https://github.com/lastz/lastz)            |
+| Sequence alignment | [MAFFT](https://mafft.cbrc.jp/alignment/software/) |
+| ML phylogeny       | [IQ-TREE](http://www.iqtree.org/)                  |
+| MSC phylogeny      | [ASTER](https://github.com/chaoszhang/ASTER)       |
+| Data cleaning      | [SEGUL](https://www.segul.app/)                    |
+| Summary statistics | [SEGUL](https://www.segul.app/)                    |
 
 > NOTE: Summary statistics and other data cleaning features are under development, but you can install SEGUL separately.
-> Check out SEGUL documentation [here](https://www.segul.app/)
+> Check out [SEGUL documentation](https://www.segul.app/)
 
 You can check if you have the dependencies installed by running the following commands:
 
@@ -102,6 +125,8 @@ By default, ULLAR will use available dependencies in your system. For missing de
 
 For a complete analysis, consider using [SEGUL](https://www.segul.app/) for alignment cleaning and summary statistics. Eventually, all essential features from SEGUL will be integrated into ULLAR, eliminating the need to install SEGUL separately.
 
+#### Phylogenomic Workflow
+
 ```bash
 # Step 1: Clean raw reads
 ullar clean init -d /raw_read_dir --autorun
@@ -110,20 +135,50 @@ ullar clean init -d /raw_read_dir --autorun
 ullar assemble init -d /cleaned_read_dir --autorun
 
 # Step 3: Reference mapping
+# For a probe-based reference, such as Ultra-Conserved Elements (UCEs) phylogenomics
 ullar map init -d /cleaned_read_dir --reference /path/to/reference.fasta --reference-type probes --autorun
-# or if your reference is a locus
+# or if your reference is a locus, such as mitochondrial genome or nuclear genes
 ullar map init -d /cleaned_read_dir --reference /path/to/reference.fasta --reference-type loci --autorun
 
 # Step 4: Sequence alignment
 ullar align init -d /path/to/unaligned_sequences_dir --autorun
 
+# Step 5: Alignment cleaning and data processing (optional, recommended)
+# For now, use SEGUL for alignment cleaning: https://www.segul.app/
+# Step 5.1 Checking alignment quality
+segul align summary --dir path/to/aligned_sequences_dir
+# Step 5.2 Filter by parsimony informative sites of 1
+segul align filter -d mafft-nexus-edge-trimmed-segul-clean/  --pinf 1
+# Step 5.3 Filter alignments containing 80 percent of samples
+segul align filter --dir mafft-nexus-edge-trimmed-segul-clean/  \
+--percent .8 \
+-o output/path
+
 # Step 5: Phylogenetic analysis
 ullar tree init -d /path/to/aligned_sequences_dir --autorun
 ```
 
-### Detailed Steps
+#### Population Genomic Workflow
 
-#### Cleaning raw reads
+```bash
+# Step 1: Clean raw reads
+# Skip if you have cleaned reads already
+ullar clean init -d /raw_read_dir --autorun
+
+
+# Step 2: Map reads to reference genome
+# In development, available through ullar-bwa crate
+# Support BWA and BWA-MEM2 aligners
+# Recursive flags look for reads in subdirectories, required if cleaned reads are processed using ullar clean
+# Step 2.1: Index the reference genome
+ullar-bwa index /path/to/reference_genome.fasta
+# Step 2.2: Map reads to the reference genome
+ullar-bwa batch -d /cleaned_read_dir --reference /path/to/reference_genome.fasta --threads 8 --recursive
+
+# Step 3: Variant calling
+
+# Step 4: Population genomic analyses
+```
 
 A quick way to clean reads:
 
