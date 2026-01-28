@@ -6,6 +6,6 @@ members = [
     "crates/ullar-deps",
     "crates/ullar-gatk",
     "crates/ullar-ncbi",
-    "crates/ullar-vcf",
+    "crates/ullar-vcf", "crates/ullar-vcftools",
 ]
 resolver = "2"
