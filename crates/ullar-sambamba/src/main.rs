@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use clap::{Args, Parser, builder};
+use clap::{Args, Parser, builder, crate_authors, crate_description, crate_name, crate_version};
 use ullar_sambamba::{batch::markdup::BatchMarkDup, sambamba::markdup::SambambaMarkDup};
 
 const LOG_FILE: &str = "ullar-sambamba.log";
@@ -14,6 +14,7 @@ fn main() {
 }
 
 #[derive(Parser)]
+#[command(name = crate_name!(), version = crate_version!(), about = crate_description!(), author = crate_authors!())]
 enum Cli {
     #[command(
         name = "markdup",

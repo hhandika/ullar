@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use clap::{Args, Parser, builder};
+use clap::{Args, Parser, builder, crate_authors, crate_description, crate_name, crate_version};
 
 use ullar_bwa::{
     batch::BatchBwaAlign,
@@ -19,6 +19,7 @@ fn main() {
 }
 
 #[derive(Parser)]
+#[command(name = crate_name!(), version = crate_version!(), about = crate_description!(), author = crate_authors!())]
 enum Cli {
     #[command(name = "index", about = "Index a reference genome using BWA")]
     Index(Index),

@@ -2,9 +2,16 @@
 name = "ullar-sambamba"
 version = "0.1.0"
 edition = "2024"
+authors = ["Heru Handika <herubiolog@gmail.com>"]
+license = "MIT"
+description = "A high-performance, accessible phylogenomic pipeline using Sambamba for BAM processing"
+readme = "../README.md"
+repository = "https://github.com/hhandika/ullar"
+keywords = ["cli", "utility", "pipeline", "genomics", "phylogenomics"]
+categories = ["command-line-utilities", "science"]
 
 [dependencies]
-clap = { version = "4.5.56", features = ["derive"] }
+clap = { version = "4.5.56", features = ["cargo", "derive"] }
 colored = "3.1.1"
 log = "0.4.29"
 log4rs = "1.4.0"
