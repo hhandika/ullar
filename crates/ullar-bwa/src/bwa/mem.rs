@@ -1,5 +1,5 @@
 use crate::bwa::errors::validate_bwa_inputs;
-use crate::bwa::types::BwaFormat;
+use crate::bwa::types::{BwaFormat, BwaRunStatus};
 use crate::samtools::sort::SamtoolsSort;
 
 use std::fs::File;
@@ -75,7 +75,7 @@ impl BwaMem {
         self
     }
 
-    pub fn align(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn align(&self) -> Result<BwaRunStatus, Box<dyn std::error::Error>> {
         if self.use_samtools_view {
             self.align_to_samtools_bam()
         // } else {
@@ -92,7 +92,7 @@ impl BwaMem {
     // }
 
     /// Align reads using BWA mem and output to BAM using samtools view
-    fn align_to_samtools_bam(&self) -> Result<(), Box<dyn std::error::Error>> {
+    fn align_to_samtools_bam(&self) -> Result<BwaRunStatus, Box<dyn std::error::Error>> {
         self.validate_inputs()?;
         let log_file = File::create("bwa.log")?;
         let mut bwa = self.get_bwa_command();
@@ -112,10 +112,10 @@ impl BwaMem {
         let bwa_output = bwa_child.wait_with_output()?;
         if !bwa_output.status.success() {
             let stderr = String::from_utf8_lossy(&bwa_output.stderr);
-            return Err(format!("BWA mem failed: {}", stderr).into());
+            return Err(format!("BWA mem command failed: {}", stderr).into());
         }
 
-        Ok(())
+        Ok(BwaRunStatus::Success)
     }
 
     pub fn get_bwa_command(&self) -> Command {

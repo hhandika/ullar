@@ -13,7 +13,7 @@ impl SamtoolsIndex {
         }
     }
 
-    pub fn output_path<P: AsRef<std::path::Path>>(mut self, p: P) -> Self {
+    pub fn output_path<P: AsRef<std::path::Path>>(&mut self, p: P) -> &mut Self {
         self.output_path = p.as_ref().to_path_buf();
         self
     }

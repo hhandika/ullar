@@ -63,3 +63,9 @@ impl BwaVersion {
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum BwaRunStatus {
+    Success,
+    Failure(String),
+}
