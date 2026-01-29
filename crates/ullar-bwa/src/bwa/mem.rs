@@ -1,6 +1,6 @@
 use crate::bwa::errors::validate_bwa_inputs;
 use crate::bwa::types::{BwaExecutable, BwaFormat, BwaRunStatus};
-use crate::samtools::sort::SamtoolsSort;
+use ullar_samtools::samtools::sort::SamtoolsSort;
 
 use std::fs::File;
 use std::path::{Path, PathBuf};

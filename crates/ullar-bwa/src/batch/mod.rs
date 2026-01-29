@@ -13,10 +13,8 @@ use ullar::{
 };
 use ullar_fastq::{files::reader::FastqReader, types::illumina::IlluminaName};
 
-use crate::{
-    bwa::{mem::BwaMem, types::BwaRunStatus},
-    samtools::index::SamtoolsIndex,
-};
+use crate::bwa::{mem::BwaMem, types::BwaRunStatus};
+use ullar_samtools::samtools::index::SamtoolsIndex;
 
 pub struct BatchBwaAlign {
     pub dir: PathBuf,

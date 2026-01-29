@@ -22,4 +22,5 @@ serde = { version = "1.0.228", features = ["derive"] }
 ullar = { version = "0.4.1", path = "../ullar" }
 ullar-fastq = { version = "0.1.0", path = "../ullar-fastq" }
 ullar-logger = { version = "0.1.0", path = "../ullar-logger" }
+ullar-samtools = { version = "0.1.0", path = "../ullar-samtools" }
 which = "8.0.0"
