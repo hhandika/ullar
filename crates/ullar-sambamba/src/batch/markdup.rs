@@ -111,7 +111,7 @@ impl BatchMarkDup {
             log::info!("{}", msg.blue().bold());
             let output_dir = self.get_output_dir(&file_stem);
             let output_bam = self.get_output_file(&output_dir, &file_stem);
-            let mut markdup = SambambaMarkDup::new(self.executable.as_deref());
+            let mut markdup = SambambaMarkDup::new(self.executable.as_deref(), &file_stem);
             markdup
                 .input_bam(&bam_file)
                 .output_bam(&output_bam)

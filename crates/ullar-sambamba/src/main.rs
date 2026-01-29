@@ -75,7 +75,11 @@ struct CommonArgs {
 }
 
 fn run_markdup(args: MarkDupArgs) -> Result<(), Box<dyn std::error::Error>> {
-    let mut sambamba = SambambaMarkDup::new(args.common.executable.as_deref());
+    let sample_name = Path::new(&args.input)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("sample");
+    let mut sambamba = SambambaMarkDup::new(args.common.executable.as_deref(), sample_name);
     sambamba
         .input_bam(&args.input)
         .output_bam(&args.output)

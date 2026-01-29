@@ -2,9 +2,10 @@
 //!
 //!
 
-use std::{fs::OpenOptions, path::PathBuf, process::Command};
-
-use colored::Colorize;
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 const SAMBAMBA_LOG_FILE: &str = "sambamba_markdup.log";
 /// Mark duplicates in BAM files using Sambamba.
@@ -12,6 +13,7 @@ const SAMBAMBA_LOG_FILE: &str = "sambamba_markdup.log";
 pub struct SambambaMarkDup {
     pub executable: String,
     pub input_bam: PathBuf,
+    pub sample_name: String,
     pub output_bam: PathBuf,
     pub remove_duplicates: bool,
     pub threads: usize,
@@ -21,11 +23,12 @@ pub struct SambambaMarkDup {
 
 impl SambambaMarkDup {
     /// Create a new SambambaMarkDup instance.
-    pub fn new(executable: Option<&str>) -> Self {
+    pub fn new(executable: Option<&str>, sample_name: &str) -> Self {
         Self {
             executable: executable.unwrap_or("sambamba").to_string(),
             input_bam: PathBuf::new(),
             output_bam: PathBuf::new(),
+            sample_name: sample_name.to_string(),
             remove_duplicates: false,
             threads: 4,
             compression_level: None,
@@ -90,11 +93,12 @@ impl SambambaMarkDup {
         command.arg(&self.output_bam);
 
         // Log command to sambamba_markdup.log
-        self.log_info(&command);
-        let log = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(SAMBAMBA_LOG_FILE)?;
+        ullar_logger::commands::log_commands(&command);
+        let log = ullar_logger::commands::get_file_cmd_logger(
+            Path::new(SAMBAMBA_LOG_FILE),
+            &command,
+            &format!("{}", self.sample_name),
+        )?;
         command.stdout(log.try_clone()?);
         command.stderr(log);
 
@@ -103,13 +107,6 @@ impl SambambaMarkDup {
             return Err(format!("Sambamba markdup failed with status: {}", status).into());
         }
         Ok(())
-    }
-
-    fn log_info(&self, cmd: &Command) {
-        let msg = "Running Sambamba with command:";
-        log::info!("{}", msg.green().bold());
-        log::info!("{:?}\n\n", cmd);
-        log::info!("Logging to file: {}\n", SAMBAMBA_LOG_FILE);
     }
 
     fn get_default_options(&self) -> Vec<String> {
