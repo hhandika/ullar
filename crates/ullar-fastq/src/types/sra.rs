@@ -39,6 +39,10 @@ impl SraHeader {
         }
     }
 
+    pub fn get_run_accession(&self) -> &str {
+        &self.run_accession
+    }
+
     // Helper: Check if this looks like standard SRA format
     pub fn is_sra_standard(&self) -> bool {
         self.run_accession.starts_with("SR") && self.original_header.is_none()

@@ -37,6 +37,10 @@ impl PacBioHeader {
         }
     }
 
+    pub fn get_movie_name(&self) -> &str {
+        &self.movie_name
+    }
+
     /// Check if header line matches PacBio format
     /// #
     /// Examples
