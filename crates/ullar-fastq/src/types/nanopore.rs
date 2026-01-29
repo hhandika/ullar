@@ -10,6 +10,7 @@ pub struct NanoporeHeader {
 }
 
 impl NanoporeHeader {
+    /// Parse FULL FASTQ header line
     pub fn parse(header_line: &str) -> Option<Self> {
         let parts: Vec<&str> = header_line.split_whitespace().collect();
         if parts.is_empty() {
@@ -29,6 +30,18 @@ impl NanoporeHeader {
             read_id,
             attributes: attrs,
         })
+    }
+
+    /// Check if the header line matches Nanopore format
+    /// #
+    /// Examples
+    /// ```rust
+    ///
+    /// let header_line = "@read_id runid=abcd1234 ch=123 start_time=2020-01-01T00:00:00Z";
+    /// assert!(NanoporeHeader::matches(header_line));
+    /// ```
+    pub fn matches(header_line: &str) -> bool {
+        NanoporeHeader::parse(header_line).is_some()
     }
 
     pub fn get_runid(&self) -> Option<&str> {

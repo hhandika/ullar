@@ -19,6 +19,12 @@ pub struct IlluminaName {
 
 impl IlluminaName {
     /// Parse FULL FASTQ header OR name-only (e.g. "E00440:754:HJGTYCCX2:4:1101:28534:1344")
+    /// # Examples
+    /// ```rust
+    /// let header_line = "@E00440:754:HJGTYCCX2:4:1101:28534:1344 1:N:0:NATTACCG+NAATGTGG";
+    /// let illumina_name = IlluminaName::parse(header_line).unwrap();
+    /// assert_eq!(illumina_name.instrument, "E00440");
+    /// ```
     pub fn parse(header_line: &str) -> Option<Self> {
         // FIXED: Handles @ prefix (optional), description (optional)
         let re = Regex::new(
@@ -45,6 +51,17 @@ impl IlluminaName {
         } else {
             None
         }
+    }
+
+    /// Check if header line matches Illumina format
+    ///
+    /// # Examples
+    /// ```rust
+    /// let header_line = "@E00440:754:HJGTYCCX2:4:1101:28534:1344 1:N:0:NATTACCG+NAATGTGG";
+    /// assert!(IlluminaName::matches(header_line));
+    ///
+    pub fn matches(header_line: &str) -> bool {
+        IlluminaName::parse(header_line).is_some()
     }
 }
 

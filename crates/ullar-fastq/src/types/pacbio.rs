@@ -12,6 +12,7 @@ pub struct PacBioHeader {
 }
 
 impl PacBioHeader {
+    /// Parse FULL FASTQ header line
     pub fn parse(header_line: &str) -> Option<Self> {
         let re = Regex::new(r"^@(.*)/(\d+)/(\d+)_(\d+)$").unwrap(); // Subread format
         // Fallback for simple @movie/hole
@@ -34,5 +35,16 @@ impl PacBioHeader {
         } else {
             None
         }
+    }
+
+    /// Check if header line matches PacBio format
+    /// #
+    /// Examples
+    /// ```rust
+    /// let header_line = "@m141104_013014_42198_c100785852550000001823174916181301_s1_p0/910/0_3460";
+    /// assert!(PacBioHeader::matches(header_line));
+    /// ```
+    pub fn matches(header_line: &str) -> bool {
+        PacBioHeader::parse(header_line).is_some()
     }
 }
