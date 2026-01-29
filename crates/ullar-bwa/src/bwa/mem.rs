@@ -1,6 +1,6 @@
 use crate::bwa::errors::validate_bwa_inputs;
 use crate::bwa::types::BwaFormat;
-use crate::samtools::view::SamtoolsView;
+use crate::samtools::sort::SamtoolsSort;
 
 use std::fs::File;
 use std::path::{Path, PathBuf};
@@ -12,6 +12,7 @@ pub struct BwaMem {
     pub query_read2: Option<PathBuf>,
     pub output_path: PathBuf,
     pub output_format: BwaFormat,
+    pub read_group: String,
     pub sample_name: String,
     pub use_samtools_view: bool,
     pub threads: usize,
@@ -25,6 +26,7 @@ impl BwaMem {
             query_read2: None,
             output_path: PathBuf::new(),
             output_format: BwaFormat::Bam,
+            read_group: String::new(),
             sample_name: sample_name.to_string(),
             use_samtools_view: true,
             threads: 2,
@@ -68,6 +70,11 @@ impl BwaMem {
         self
     }
 
+    pub fn read_group(&mut self, rg: &str) -> &mut Self {
+        self.read_group = rg.to_string();
+        self
+    }
+
     pub fn align(&self) -> Result<(), Box<dyn std::error::Error>> {
         if self.use_samtools_view {
             self.align_to_samtools_bam()
@@ -99,7 +106,7 @@ impl BwaMem {
             .take()
             .ok_or("Failed to capture BWA stdout")?;
         let mut sam =
-            SamtoolsView::new(Some(bwa_stdout), &self.sample_name).output_path(&self.output_path);
+            SamtoolsSort::new(Some(bwa_stdout), &self.sample_name).output_path(&self.output_path);
         sam.to_bam()?;
 
         let bwa_output = bwa_child.wait_with_output()?;
@@ -117,8 +124,8 @@ impl BwaMem {
         bwa.arg("mem")
             .arg("-t")
             .arg(self.get_threads().to_string())
-            .arg("-v")
-            .arg("1")
+            .arg("-R")
+            .arg(&self.read_group)
             .arg(&self.reference_path)
             .arg(&self.query_read1);
 

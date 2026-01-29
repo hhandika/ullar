@@ -10,6 +10,7 @@ use ullar::{
         reads::{FastqReads, ReadAssignment, SampleNameFormat},
     },
 };
+use ullar_fastq::files::reader::FastqReader;
 
 use crate::bwa::mem::BwaMem;
 
@@ -90,9 +91,19 @@ impl BatchBwaAlign {
             .query_read1(read.get_read1())
             .query_read2(read.get_read2())
             .output_path(output_path)
+            .read_group(&self.get_read_group(read))
             .output_format(&self.output_format)
             .threads(self.threads);
         bwa_mem.align().expect("BWA MEM alignment failed");
+    }
+
+    fn get_read_group(&self, read: &FastqReads) -> String {
+        let file_path = read.get_read1();
+        let mut reader = FastqReader::new(&file_path).expect("Failed to create FASTQ reader");
+        let read_groud = reader
+            .get_read_group()
+            .expect("Failed to extract Read Group from FASTQ header");
+        read_groud
     }
 
     fn find_reads(&self) -> Vec<FastqReads> {
