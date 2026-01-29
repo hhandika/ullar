@@ -32,5 +32,11 @@ fn run_description(args: Description) {
             return;
         }
     };
-    reader.get_header().unwrap();
+    match reader.get_illumina_name() {
+        Ok(h) => println!("Parsed Illumina Header: {}\n", h),
+        Err(e) => {
+            eprintln!("Error reading FASTQ header: {}", e);
+            return;
+        }
+    }
 }
