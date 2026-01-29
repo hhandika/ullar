@@ -7,6 +7,7 @@ pub struct GatkVariantCalling {
     pub reference_path: PathBuf,
     pub output_path: PathBuf,
     pub executable: String,
+    pub ploidy: u8,
 }
 
 impl GatkVariantCalling {
@@ -16,20 +17,30 @@ impl GatkVariantCalling {
             reference_path: PathBuf::new(),
             output_path: PathBuf::new(),
             executable: exe.unwrap_or("gatk").to_string(),
+            ploidy: 2,
         }
     }
+
     pub fn input_path<P: AsRef<std::path::Path>>(&mut self, p: P) -> &mut Self {
         self.input_path = p.as_ref().to_path_buf();
         self
     }
+
     pub fn reference_path<P: AsRef<std::path::Path>>(&mut self, p: P) -> &mut Self {
         self.reference_path = p.as_ref().to_path_buf();
         self
     }
+
     pub fn output_path<P: AsRef<std::path::Path>>(&mut self, p: P) -> &mut Self {
         self.output_path = p.as_ref().to_path_buf();
         self
     }
+
+    pub fn ploidy(&mut self, ploidy: u8) -> &mut Self {
+        self.ploidy = ploidy;
+        self
+    }
+
     pub fn execute(&self) -> Result<(), Box<dyn std::error::Error>> {
         let mut command = std::process::Command::new(&self.executable);
         command.arg("HaplotypeCaller");
