@@ -2,7 +2,10 @@ use std::path::PathBuf;
 
 use clap::{builder, Args, Subcommand};
 
-use crate::{core::map::{configs::DEFAULT_REF_MAPPING_CONFIG, DEFAULT_CONTIG_MAPPING_OUTPUT_DIR, }, helper::regex::CONTIG_SAMPLE_REGEX};
+use crate::{
+    core::map::{configs::DEFAULT_REF_MAPPING_CONFIG, DEFAULT_CONTIG_MAPPING_OUTPUT_DIR},
+    helper::regex::CONTIG_SAMPLE_REGEX,
+};
 
 use super::common::{CommonInitArgs, CommonRunnerArgs};
 
@@ -39,7 +42,12 @@ pub struct MapContigArgs {
 #[derive(Args)]
 pub struct MapInitArgs {
     /// Input directory containing query sequences
-    #[arg(short, long, required_unless_present = "input", help = "Path to the directory containing query sequences")]
+    #[arg(
+        short,
+        long,
+        required_unless_present = "input",
+        help = "Path to the directory containing query sequences"
+    )]
     pub dir: Option<PathBuf>,
     /// Input query path.
     #[arg(
@@ -66,7 +74,7 @@ pub struct MapInitArgs {
         long,
         default_value = "^(uce|locus)-\\d+",
         help = "Regular expression to extract reference name",
-        require_equals = true,
+        require_equals = true
     )]
     pub re_reference: String,
     #[arg(
@@ -99,10 +107,7 @@ pub struct MapInitArgs {
         value_parser = builder::PossibleValuesParser::new(["probes", "loci", "genome"])
     )]
     pub reference_type: String,
-    #[arg(
-        long,
-        help = "Input reference file contains a single reference",
-    )]
+    #[arg(long, help = "Input reference file contains a single reference")]
     pub single_ref: bool,
     /// Config file name
     #[arg(

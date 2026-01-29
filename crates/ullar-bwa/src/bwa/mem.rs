@@ -1,5 +1,5 @@
 use crate::bwa::errors::validate_bwa_inputs;
-use crate::bwa::types::{BwaFormat, BwaRunStatus};
+use crate::bwa::types::{BwaExecutable, BwaFormat, BwaRunStatus};
 use crate::samtools::sort::SamtoolsSort;
 
 use std::fs::File;
@@ -16,6 +16,7 @@ pub struct BwaMem {
     pub sample_name: String,
     pub use_samtools_view: bool,
     pub threads: usize,
+    pub executable: BwaExecutable,
 }
 
 impl BwaMem {
@@ -30,6 +31,7 @@ impl BwaMem {
             sample_name: sample_name.to_string(),
             use_samtools_view: true,
             threads: 2,
+            executable: BwaExecutable::BwaMem2,
         }
     }
 
@@ -85,6 +87,11 @@ impl BwaMem {
         }
     }
 
+    pub fn set_executable(&mut self, exe: BwaExecutable) -> &mut Self {
+        self.executable = exe;
+        self
+    }
+
     // fn align_to_bam(&self) -> Result<(), Box<dyn std::error::Error>> {
     //     let mut bwa = self.get_bwa_command();
     //     bwa.arg("-o").arg(&self.output_path);
@@ -119,7 +126,8 @@ impl BwaMem {
     }
 
     pub fn get_bwa_command(&self) -> Command {
-        let mut bwa = Command::new("bwa-mem2.avx2");
+        let exe = self.executable.executable();
+        let mut bwa = Command::new(exe);
 
         bwa.arg("mem")
             .arg("-t")

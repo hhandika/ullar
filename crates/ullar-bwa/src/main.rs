@@ -69,7 +69,13 @@ struct Align {
     read2: Option<String>,
     #[arg(short, long, help = "Sample name for the alignment")]
     sample_name: String,
-    #[arg(short = 'F', long, help = "Output format", default_value = "bam", value_parser = builder::PossibleValuesParser::new(["sam", "bam"]))]
+    #[arg(
+        short = 'F',
+        long,
+        help = "Output format",
+        default_value = "bam",
+        value_parser = builder::PossibleValuesParser::new(["sam", "bam"])
+    )]
     output_format: String,
     #[arg(short, long, help = "Path to the output file")]
     output: String,
@@ -87,6 +93,14 @@ struct BatchAlign {
     recursive: bool,
     #[arg(short, long, help = "Number of threads to use", default_value_t = 4)]
     threads: usize,
+    #[arg(
+        short,
+        long,
+        help = "BWA executable to use",
+        default_value = "bwa-mem2",
+        value_parser = builder::PossibleValuesParser::new(["bwa", "bwa-mem2", "bwa-mem2.avx", "bwa-mem2.avx2", "bwa-mem2.avx512bw", "bwa-mem2.sse41", "bwa-mem2.sse42"])
+    )]
+    executable: String,
     #[arg(long, help = "Test mode: only list found samples without aligning")]
     dry_run: bool,
 }
@@ -116,7 +130,8 @@ fn run_batch_align(args: BatchAlign) {
         .reference(&args.reference)
         .output(&args.output)
         .recursive(args.recursive)
-        .threads(args.threads);
+        .threads(args.threads)
+        .bwa_executable(&args.executable);
     if args.dry_run {
         batch.dry_run();
     } else {

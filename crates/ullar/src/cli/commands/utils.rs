@@ -1,8 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{
-    builder, Args, Subcommand,
-};
+use clap::{builder, Args, Subcommand};
 
 #[derive(Subcommand)]
 pub(crate) enum UtilSubCommand {
@@ -27,8 +25,6 @@ pub(crate) enum ScannerSubcommand {
     ReadSubCommand(ReadScanArgs),
 }
 
-
-
 #[derive(Args)]
 pub struct Sha256Args {
     /// Path to the file to hash
@@ -47,7 +43,12 @@ pub struct Sha256Args {
     )]
     pub format: String,
     /// Output file for the hash
-    #[arg(short, long, default_value = "sha256", help = "Output file for the hash")]
+    #[arg(
+        short,
+        long,
+        default_value = "sha256",
+        help = "Output file for the hash"
+    )]
     pub output: PathBuf,
     /// Use stdout for the output
     #[arg(long, help = "Use stdout for the output")]
@@ -117,6 +118,10 @@ pub struct RenameArgs {
     #[arg(short, long, help = "Path to the name sources")]
     pub name_sources: PathBuf,
     /// Flag to indicate if the input is a directory
-    #[arg(long, default_value_t = false, help = "Flag to indicate if the input is a directory")]
+    #[arg(
+        long,
+        default_value_t = false,
+        help = "Flag to indicate if the input is a directory"
+    )]
     pub is_dir: bool,
 }

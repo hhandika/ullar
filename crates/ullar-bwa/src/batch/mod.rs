@@ -26,6 +26,7 @@ pub struct BatchBwaAlign {
     pub sample_name_format: SampleNameFormat,
     pub threads: usize,
     pub output: PathBuf,
+    pub bwa_executable: String,
 }
 
 impl BatchBwaAlign {
@@ -38,6 +39,7 @@ impl BatchBwaAlign {
             sample_name_format: SampleNameFormat::default(),
             threads: 4,
             output: PathBuf::new(),
+            bwa_executable: "bwa-mem2".to_string(),
         }
     }
 
@@ -58,6 +60,11 @@ impl BatchBwaAlign {
 
     pub fn threads(mut self, n: usize) -> Self {
         self.threads = n;
+        self
+    }
+
+    pub fn bwa_executable(mut self, exe: &str) -> Self {
+        self.bwa_executable = exe.to_string();
         self
     }
 
@@ -109,6 +116,7 @@ impl BatchBwaAlign {
             .query_read2(read.get_read2())
             .output_path(output_path)
             .read_group(&self.get_read_group(read))
+            .set_executable(self.bwa_executable.parse().unwrap_or_default())
             .output_format(&self.output_format)
             .threads(self.threads);
         bwa_mem.align()

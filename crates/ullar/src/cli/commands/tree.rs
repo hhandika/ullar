@@ -1,11 +1,13 @@
 use std::path::PathBuf;
 
-use clap::{builder::{self, PossibleValuesParser}, Args, Subcommand};
+use clap::{
+    builder::{self, PossibleValuesParser},
+    Args, Subcommand,
+};
 
 use crate::core::tree::DEFAULT_PHYLO_OUTPUT_DIR;
 
 use super::common::{CommonInitArgs, CommonRunnerArgs};
-
 
 #[derive(Subcommand)]
 pub(crate) enum TreeInferenceSubcommand {
@@ -53,7 +55,7 @@ pub struct TreeInferenceInitArgs {
         value_parser = PossibleValuesParser::new(["ml-species", "ml-genes", "gscf", "msc"])
     )]
     pub specify_analyses: Option<Vec<String>>,
-    /// Sequence data type. 
+    /// Sequence data type.
     /// Uses by SEGUL (https://segul.app) to parse the alignment files.
     /// We use DNA as the default because the pipeline
     /// is optimized for DNA sequences.
@@ -77,7 +79,6 @@ pub struct TreeInferenceInitArgs {
     #[command(flatten)]
     pub common: CommonInitArgs,
 }
-
 
 #[derive(Args)]
 pub struct TreeInferenceArgs {
@@ -118,28 +119,30 @@ pub struct IqTreeSettingArgs {
     #[arg(
         short,
         long,
-        help = "Use codon model partitioning for species tree inference",
+        help = "Use codon model partitioning for species tree inference"
     )]
     pub codon: bool,
     /// Set different models for gene tree inference
     /// Otherwise, the same model will be used for both
     /// species and gene tree inference.
     #[arg(
-        short='M',
+        short = 'M',
         long,
         help = "Set different models for gene tree inference"
     )]
     pub gene_models: Option<String>,
-    /// Override arguments for IQ-TREE 
+    /// Override arguments for IQ-TREE
     /// species tree inference.
     /// Example: -m GTR+G+I -T 2 -B 1000
-    #[arg(
-        long,
-        help = "Override arguments for IQ-TREE species tree inference"
-    )]
+    #[arg(long, help = "Override arguments for IQ-TREE species tree inference")]
     /// Number of threads to use
     /// It will be overridden by override_args_species
-    #[arg(short, long, default_value = "1", help = "Number of threads to use for IQ-TREE.")]
+    #[arg(
+        short,
+        long,
+        default_value = "1",
+        help = "Number of threads to use for IQ-TREE."
+    )]
     pub threads: String,
     /// Number of bootstrap replicates
     #[arg(
@@ -149,16 +152,12 @@ pub struct IqTreeSettingArgs {
     )]
     pub bootstrap: Option<String>,
     /// Optional arguments for IQ-TREE
-    /// Use the additional arguments other than other 
+    /// Use the additional arguments other than other
     /// options provided by other args.
     /// This is different from override_args_species
     /// and override_args_genes, which will override
     /// the arguments provided by the other args.
-    #[arg(
-        long,
-        require_equals = true,
-        help = "Optional arguments for IQ-TREE"
-    )]
+    #[arg(long, require_equals = true, help = "Optional arguments for IQ-TREE")]
     pub optional_args_species: Option<String>,
     /// Optional arguments for IQ-TREE
     /// gene tree inference. Behaves the same as
@@ -171,9 +170,9 @@ pub struct IqTreeSettingArgs {
     pub optional_args_genes: Option<String>,
     /// Override arguments for IQ-TREE
     /// species tree inference. It will override
-    /// bootstrap, threads, and models. 
+    /// bootstrap, threads, and models.
     /// DOES NOT include partition arguments.
-    /// ULLAR will parse the arguments that match 
+    /// ULLAR will parse the arguments that match
     /// models, threads, and bootstrap.
     /// Example: -m GTR+G+I -T 2 -B 1000
     /// Additional arguments will be considered as
@@ -208,14 +207,11 @@ pub struct IqTreeSettingArgs {
     /// species tree inference.
     /// The model detection will look for file with extension "best_model.nex".
     /// This method will speed up the process for large datasets.
-    /// Learn more here: 
+    /// Learn more here:
     /// http://www.iqtree.org/doc/Concordance-Factor#gene-concordance-factor-gcf
     /// When this option is set, ULLAR will run IQ-TREE gscf
     /// without model detection.
-    #[arg(
-        long,
-        help = "Recompute likelihoods for gene-site concordance factors"
-    )]
+    #[arg(long, help = "Recompute likelihoods for gene-site concordance factors")]
     pub recompute_likelihoods: bool,
     /// Enforce v1 for IQ-TREE gene tree and species tree analyses.
     #[arg(
@@ -224,7 +220,6 @@ pub struct IqTreeSettingArgs {
     )]
     pub force_v1: bool,
 }
-
 
 #[derive(Args)]
 pub struct AsterSettingArgs {
