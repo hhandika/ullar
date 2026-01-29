@@ -51,3 +51,21 @@ impl BamFormat {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_bam_format_from_extension() {
+        assert_eq!(BamFormat::from_extension("bam"), Some(BamFormat::Bam));
+        assert_eq!(BamFormat::from_extension("bai"), Some(BamFormat::Bai));
+        assert_eq!(BamFormat::from_extension("txt"), None);
+    }
+    #[test]
+    fn test_bam_format_from_path() {
+        assert_eq!(BamFormat::from_path("sample.bam"), Some(BamFormat::Bam));
+        assert_eq!(BamFormat::from_path("sample.bai"), Some(BamFormat::Bai));
+        assert_eq!(BamFormat::from_path("sample.txt"), None);
+    }
+}
