@@ -1,3 +1,5 @@
+pub mod commands;
+
 use std::{fs, path::Path};
 
 use log::LevelFilter;
