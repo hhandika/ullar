@@ -42,6 +42,29 @@ struct Sort {
     exe: Option<String>,
 }
 
+#[derive(Args)]
+struct AddReplaceGroups {
+    #[arg(short, long, help = "Path to the input BAM/CRAM file")]
+    input: String,
+    #[arg(
+        short,
+        long,
+        default_value = "rg_added_bam",
+        help = "Path to the output BAM/CRAM file"
+    )]
+    output: String,
+    #[arg(long, help = "Read group ID")]
+    rg_id: String,
+    #[arg(long, help = "Read group sample name")]
+    rg_sm: String,
+    #[arg(long, help = "Read group library")]
+    rg_lb: Option<String>,
+    #[arg(long, help = "Read group platform")]
+    rg_pl: Option<String>,
+    #[arg(long, help = "Path to the GATK executable")]
+    exe: Option<String>,
+}
+
 fn run_sort(args: Sort) {
     let mut gatk_sort = GatkSort::new(args.exe.as_deref());
     gatk_sort
