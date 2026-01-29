@@ -21,6 +21,8 @@ impl IlluminaName {
     /// Parse FULL FASTQ header OR name-only (e.g. "E00440:754:HJGTYCCX2:4:1101:28534:1344")
     /// # Examples
     /// ```rust
+    /// use ullar_fastq::types::illumina::IlluminaName;
+    ///
     /// let header_line = "@E00440:754:HJGTYCCX2:4:1101:28534:1344 1:N:0:NATTACCG+NAATGTGG";
     /// let illumina_name = IlluminaName::parse(header_line).unwrap();
     /// assert_eq!(illumina_name.instrument, "E00440");
@@ -64,6 +66,8 @@ impl IlluminaName {
     ///
     /// # Examples
     /// ```rust
+    /// use ullar_fastq::types::illumina::IlluminaName;
+    ///
     /// let header_line = "@E00440:754:HJGTYCCX2:4:1101:28534:1344 1:N:0:NATTACCG+NAATGTGG";
     /// assert!(IlluminaName::matches(header_line));
     ///

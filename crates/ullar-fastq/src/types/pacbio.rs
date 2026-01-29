@@ -52,6 +52,8 @@ impl PacBioHeader {
     /// #
     /// Examples
     /// ```rust
+    /// use ullar_fastq::types::pacbio::PacBioHeader;
+    ///
     /// let header_line = "@m141104_013014_42198_c100785852550000001823174916181301_s1_p0/910/0_3460";
     /// assert!(PacBioHeader::matches(header_line));
     /// ```

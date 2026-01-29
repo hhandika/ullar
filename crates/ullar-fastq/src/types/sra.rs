@@ -65,8 +65,10 @@ impl SraHeader {
     /// Check if header line matches SRA format
     /// # Examples
     /// ```rust
+    /// use ullar_fastq::types::sra::SraHeader;
+    ///
     /// let header_line = "@SRR1234567.1 length=150";
-    /// assert!(SRAHeader::matches(header_line));
+    /// assert!(SraHeader::matches(header_line));
     /// ```
     pub fn matches(header_line: &str) -> bool {
         SraHeader::parse(header_line).is_some()

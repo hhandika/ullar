@@ -36,6 +36,7 @@ impl NanoporeHeader {
     /// #
     /// Examples
     /// ```rust
+    /// use ullar_fastq::types::nanopore::NanoporeHeader;
     ///
     /// let header_line = "@read_id runid=abcd1234 ch=123 start_time=2020-01-01T00:00:00Z";
     /// assert!(NanoporeHeader::matches(header_line));
