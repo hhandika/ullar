@@ -1,7 +1,10 @@
 use std::path::Path;
 
-use clap::{Args, Parser, builder, crate_authors, crate_description, crate_name, crate_version};
-use ullar_sambamba::{batch::markdup::BatchMarkDup, sambamba::markdup::SambambaMarkDup};
+use clap::{Args, Parser, crate_authors, crate_description, crate_name, crate_version};
+use ullar_sambamba::{
+    batch::markdup::{BatchMarkDup, DEFAULT_MARKDUP_DIR},
+    sambamba::markdup::SambambaMarkDup,
+};
 
 const LOG_FILE: &str = "ullar-sambamba.log";
 fn main() {
@@ -34,6 +37,8 @@ struct MarkDupArgs {
     input: String,
     #[command(flatten)]
     common: CommonArgs,
+    #[arg(short, long, help = "Path to the output BAM file or directory")]
+    output: String,
 }
 
 #[derive(Args)]
@@ -44,20 +49,19 @@ struct BatchMarkDupArgs {
     recursive: bool,
     #[command(flatten)]
     common: CommonArgs,
+    #[arg(short, long, default_value = DEFAULT_MARKDUP_DIR, help = "Path to the output BAM file or directory")]
+    output: String,
     #[arg(short, long, help = "Perform a dry run without executing commands")]
     dry_run: bool,
 }
 
 #[derive(Args)]
 struct CommonArgs {
-    #[arg(short, long, help = "Path to the output BAM file or directory")]
-    output: String,
     #[arg(
         short,
         long,
         help = "Sambamba executable to use",
-        default_value = "sambamba",
-        value_parser = builder::PossibleValuesParser::new(["sambamba", "sambamba-0.7.1", "sambamba-0.8.0"])
+        default_value = "sambamba"
     )]
     executable: Option<String>,
     #[arg(short, long, help = "Number of threads to use", default_value_t = 4)]
@@ -74,7 +78,7 @@ fn run_markdup(args: MarkDupArgs) -> Result<(), Box<dyn std::error::Error>> {
     let mut sambamba = SambambaMarkDup::new(args.common.executable.as_deref());
     sambamba
         .input_bam(&args.input)
-        .output_bam(&args.common.output)
+        .output_bam(&args.output)
         .threads(args.common.threads)
         .remove_duplicates(args.common.remove_duplicates)
         .compression_level(args.common.compression_level.unwrap_or(5));
@@ -89,7 +93,7 @@ fn run_markdup(args: MarkDupArgs) -> Result<(), Box<dyn std::error::Error>> {
 fn run_batch_markdup(args: BatchMarkDupArgs) -> Result<(), Box<dyn std::error::Error>> {
     let mut batch = BatchMarkDup::new(&args.dir);
     batch = batch
-        .output_dir(&args.common.output)
+        .output_dir(&args.output)
         .recursive(args.recursive)
         .threads(args.common.threads)
         .remove_duplicates(args.common.remove_duplicates);

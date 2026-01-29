@@ -2,7 +2,11 @@
 //!
 //!
 
-use std::{path::PathBuf, process::Command};
+use std::{fs::OpenOptions, path::PathBuf, process::Command};
+
+use colored::Colorize;
+
+const SAMBAMBA_LOG_FILE: &str = "sambamba_markdup.log";
 /// Mark duplicates in BAM files using Sambamba.
 #[derive(Debug)]
 pub struct SambambaMarkDup {
@@ -85,6 +89,15 @@ impl SambambaMarkDup {
         command.arg(&self.input_bam);
         command.arg(&self.output_bam);
 
+        // Log command to sambamba_markdup.log
+        self.log_info(&command);
+        let log = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(SAMBAMBA_LOG_FILE)?;
+        command.stdout(log.try_clone()?);
+        command.stderr(log);
+
         let status = command.status()?;
         if !status.success() {
             return Err(format!("Sambamba markdup failed with status: {}", status).into());
@@ -92,11 +105,20 @@ impl SambambaMarkDup {
         Ok(())
     }
 
+    fn log_info(&self, cmd: &Command) {
+        let msg = "Running Sambamba with command:";
+        log::info!("{}", msg.green().bold());
+        log::info!("{:?}\n\n", cmd);
+        log::info!("Logging to file: {}\n", SAMBAMBA_LOG_FILE);
+    }
+
     fn get_default_options(&self) -> Vec<String> {
         let mut options = Vec::new();
-        options.push(format!("-t {}", self.get_threads()));
+        options.push("-t".to_string());
+        options.push(self.get_threads().to_string());
         if let Some(level) = self.compression_level {
-            options.push(format!("-l {}", level));
+            options.push("-l".to_string());
+            options.push(level.to_string());
         }
 
         if self.remove_duplicates {

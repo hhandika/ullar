@@ -1,11 +1,14 @@
 use colored::Colorize;
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use ullar_bam::{finder::files::BamFileFinder, types::BamFormat};
 
 use crate::sambamba::markdup::SambambaMarkDup;
 
-const MARKDUP_DIR: &str = "bam_markeddup";
+pub const DEFAULT_MARKDUP_DIR: &str = "bam_markeddup";
 
 pub struct BatchMarkDup {
     pub executable: Option<String>,
@@ -23,7 +26,7 @@ impl BatchMarkDup {
         Self {
             executable: None,
             input_dir: input_dir.as_ref().to_path_buf(),
-            output_dir: PathBuf::new(),
+            output_dir: PathBuf::from(DEFAULT_MARKDUP_DIR),
             recursive: false,
             threads: 4,
             remove_duplicates: false,
@@ -94,8 +97,7 @@ impl BatchMarkDup {
 
     pub fn execute(&self) -> Result<(), Box<dyn std::error::Error>> {
         let bam_files = self.find_bam_files();
-        let output_dir = self.get_output_dir();
-        fs::create_dir_all(&output_dir)?;
+        fs::create_dir_all(&self.output_dir)?;
         let sample_count = bam_files.len();
         log::info!(
             "Found {} BAM files to process in {}",
@@ -104,9 +106,11 @@ impl BatchMarkDup {
         );
         let mut processed_samples = 0;
         for bam_file in bam_files {
-            let msg = format!("Processing BAM file: {}", bam_file.display());
+            let file_stem = self.get_file_stem(&bam_file);
+            let msg = format!("Processing sample: {}", file_stem);
             log::info!("{}", msg.blue().bold());
-            let output_bam = self.get_output_file(&bam_file);
+            let output_dir = self.get_output_dir(&file_stem);
+            let output_bam = self.get_output_file(&output_dir, &file_stem);
             let mut markdup = SambambaMarkDup::new(self.executable.as_deref());
             markdup
                 .input_bam(&bam_file)
@@ -142,19 +146,21 @@ impl BatchMarkDup {
         }
     }
 
-    fn get_output_dir(&self) -> PathBuf {
-        if self.output_dir.as_os_str().is_empty() {
-            self.input_dir.join(MARKDUP_DIR)
-        } else {
-            self.output_dir.clone()
-        }
+    fn get_output_dir(&self, file_stem: &str) -> PathBuf {
+        let output_subdir = self.output_dir.join(file_stem);
+        fs::create_dir_all(&output_subdir).expect("Failed to create output subdirectory");
+        output_subdir
     }
 
-    fn get_output_file(&self, input_bam: &PathBuf) -> PathBuf {
-        let file_name = input_bam
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or("output");
-        self.get_output_dir().join(file_name).with_extension("bam")
+    fn get_file_stem(&self, file_path: &PathBuf) -> String {
+        file_path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("output")
+            .to_string()
+    }
+
+    fn get_output_file(&self, output_dir: &Path, file_stem: &str) -> PathBuf {
+        output_dir.join(file_stem).with_extension("bam")
     }
 }
