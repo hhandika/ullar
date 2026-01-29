@@ -175,13 +175,31 @@ ullar clean init -d /raw_read_dir --autorun
 # Support BWA and BWA-MEM2 aligners
 # Recursive flags look for reads in subdirectories, required if cleaned reads are processed using ullar clean
 # Step 2.1: Index the reference genome
+# Require ullar-bwa and BWA installation
 ullar-bwa index /path/to/reference_genome.fasta
 # Step 2.2: Map reads to the reference genome
+# ullar-bwa auto infers read group based on the fastq headers
 ullar-bwa batch -d /cleaned_read_dir --reference /path/to/reference_genome.fasta --threads 8 --recursive
 
-# Step 3: Variant calling
+# Step 3: Mark duplicates
+# Require sambamba installation: https://github.com/biod/sambamba
+ullar-sambamba markdup -d /mapped_reads_dir --recursive --autorun
 
-# Step 4: Population genomic analyses
+# Step 4: Variant calling
+# Require ullar-gatk and GATK installation
+ullar-gatk variant -d /marked_duplicates_bam_dir --reference /path/to/reference
+
+# Step 5: DB import
+ullar-gatk db -d /variant_calling_dir --reference /path/to/reference
+
+# Step 6: Joint genotyping
+ullar-gatk joint -d /db_import_dir --reference /path/to/reference
+
+# Step 7: Variant filtering
+ullar-gatk filter -d /joint_genotyping_dir --reference /path/to/reference
+
+# Step 8: Population genomic analyses
+# Under development
 ```
 
 A quick way to clean reads:
