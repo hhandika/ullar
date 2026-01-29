@@ -3,10 +3,13 @@ use std::{
     process::Command,
 };
 
+use crate::bwa::types::BwaExecutable;
+
 pub struct BwaIndex {
     pub reference_path: PathBuf,
     pub index_prefix: Option<PathBuf>,
     pub algorithm: Option<String>,
+    pub executable: BwaExecutable,
 }
 
 impl BwaIndex {
@@ -20,6 +23,7 @@ impl BwaIndex {
             reference_path: ref_path.as_ref().to_path_buf(),
             index_prefix: None,
             algorithm: None,
+            executable: BwaExecutable::default(),
         }
     }
 
@@ -33,8 +37,14 @@ impl BwaIndex {
         self
     }
 
+    pub fn set_executable(&mut self, exe: BwaExecutable) -> &mut Self {
+        self.executable = exe;
+        self
+    }
+
     pub fn index(&self) {
-        let mut command = Command::new("bwa-mem2.avx2");
+        let exe = &self.executable.executable();
+        let mut command = Command::new(&exe);
 
         command.arg("index").arg(&self.reference_path);
 

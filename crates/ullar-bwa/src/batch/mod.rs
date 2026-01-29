@@ -11,7 +11,7 @@ use ullar::{
         reads::{FastqReads, ReadAssignment, SampleNameFormat},
     },
 };
-use ullar_fastq::files::reader::FastqReader;
+use ullar_fastq::{files::reader::FastqReader, types::illumina::IlluminaName};
 
 use crate::{
     bwa::{mem::BwaMem, types::BwaRunStatus},
@@ -110,12 +110,13 @@ impl BatchBwaAlign {
         output_path: &Path,
     ) -> Result<BwaRunStatus, Box<dyn std::error::Error>> {
         let mut bwa_mem = BwaMem::new(&read.sample_name);
+        let read_group = self.get_read_group(read)?;
         bwa_mem
             .reference_path(&self.reference)
             .query_read1(read.get_read1())
             .query_read2(read.get_read2())
             .output_path(output_path)
-            .read_group(&self.get_read_group(read))
+            .read_group(&read_group)
             .set_executable(self.bwa_executable.parse().unwrap_or_default())
             .output_format(&self.output_format)
             .threads(self.threads);
@@ -137,13 +138,22 @@ impl BatchBwaAlign {
             .expect("Failed to create BAM index");
     }
 
-    fn get_read_group(&self, read: &FastqReads) -> String {
+    fn get_read_group(&self, read: &FastqReads) -> Result<String, Box<dyn std::error::Error>> {
         let file_path = read.get_read1();
         let mut reader = FastqReader::new(&file_path).expect("Failed to create FASTQ reader");
-        let read_groud = reader
-            .get_read_group()
-            .expect("Failed to extract Read Group from FASTQ header");
-        read_groud
+        let header = reader
+            .get_header_line()
+            .expect("Failed to read FASTQ header");
+        let illumina_header = IlluminaName::parse(&header);
+        if let Some(illumina) = illumina_header {
+            Ok(illumina.to_bam_rg(&read.sample_name))
+        } else {
+            Err(format!(
+                "Failed to parse Illumina header for sample: {}",
+                read.sample_name
+            )
+            .into())
+        }
     }
 
     fn find_reads(&self) -> Vec<FastqReads> {

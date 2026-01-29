@@ -44,6 +44,13 @@ impl NanoporeHeader {
         NanoporeHeader::parse(header_line).is_some()
     }
 
+    pub fn to_bam_rg(&self, sample_name: &str) -> String {
+        format!(
+            "@RG\\tID:{}\\tSM:{}\\tPL:NANOPORE\\tLB:lib1\\tPU:{}",
+            self.read_id, sample_name, self.read_id
+        )
+    }
+
     pub fn get_runid(&self) -> Option<&str> {
         self.attributes.get("runid").map(|s| s.as_str())
     }

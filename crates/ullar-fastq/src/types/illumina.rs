@@ -53,6 +53,13 @@ impl IlluminaName {
         }
     }
 
+    pub fn to_bam_rg(&self, sample_name: &str) -> String {
+        format!(
+            "@RG\\tID:{}\\tSM:{}\\tPL:ILLUMINA\\tLB:lib1\\tPU:{}",
+            self.flowcell_id, sample_name, self.flowcell_id
+        )
+    }
+
     /// Check if header line matches Illumina format
     ///
     /// # Examples

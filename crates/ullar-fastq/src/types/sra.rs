@@ -48,6 +48,20 @@ impl SraHeader {
         self.run_accession.starts_with("SR") && self.original_header.is_none()
     }
 
+    pub fn to_bam_rg(&self, sample_name: &str) -> String {
+        if let Some(orig) = &self.original_header {
+            format!(
+                "@RG\\tID:{}\\tSM:{}\\tPL:UNKNOWN\\tLB:lib1\\tPU:{}",
+                self.run_accession, sample_name, orig
+            )
+        } else {
+            format!(
+                "@RG\\tID:{}\\tSM:{}\\tPL:UNKNOWN\\tLB:lib1\\tPU:{}",
+                self.run_accession, sample_name, self.run_accession
+            )
+        }
+    }
+
     /// Check if header line matches SRA format
     /// # Examples
     /// ```rust

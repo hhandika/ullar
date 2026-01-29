@@ -41,7 +41,8 @@ impl SamtoolsSort {
             .arg(output_path)
             .arg("-")
             .stdin(bwa_stdout)
-            .stderr(Stdio::piped()) // Capture stderr, don't print to terminal
+            .stderr(Stdio::piped())
+            .stdout(Stdio::null()) // Suppress if needed
             .spawn()?;
 
         let status = samtools.wait()?;
@@ -53,7 +54,7 @@ impl SamtoolsSort {
             let mut err_content = String::new();
             let mut reader = BufReader::new(stderr);
             reader.read_to_string(&mut err_content)?;
-            return Err(format!("samtools view failed {}", err_content).into());
+            return Err(format!("samtools sort failed {}", err_content).into());
         }
 
         if let Some(mut stderr) = samtools.stderr {

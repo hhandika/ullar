@@ -41,6 +41,13 @@ impl PacBioHeader {
         &self.movie_name
     }
 
+    pub fn to_bam_rg(&self, sample_name: &str) -> String {
+        format!(
+            "@RG\\tID:{}\\tSM:{}\\tPL:PACBIO\\tLB:lib1\\tPU:{}",
+            self.movie_name, sample_name, self.movie_name
+        )
+    }
+
     /// Check if header line matches PacBio format
     /// #
     /// Examples

@@ -57,6 +57,14 @@ struct Index {
         default_value = "is"
     )]
     algorithm: String,
+    #[arg(
+        short,
+        long,
+        help = "BWA executable to use",
+        default_value = "bwa-mem2",
+        value_parser = builder::PossibleValuesParser::new(["bwa", "bwa-mem2", "bwa-mem2.avx", "bwa-mem2.avx2", "bwa-mem2.avx512bw", "bwa-mem2.sse41", "bwa-mem2.sse42"])
+    )]
+    executable: String,
 }
 
 #[derive(Args)]
@@ -77,8 +85,8 @@ struct Align {
         value_parser = builder::PossibleValuesParser::new(["sam", "bam"])
     )]
     output_format: String,
-    #[arg(short, long, help = "Path to the output file")]
-    output: String,
+    #[command(flatten)]
+    common: CommonArgs,
 }
 
 #[derive(Args)]
@@ -87,12 +95,22 @@ struct BatchAlign {
     dir: String,
     #[arg(short, long, help = "Path to the reference file")]
     reference: String,
-    #[arg(short, long, help = "Path to the output directory")]
-    output: String,
     #[arg(long, help = "Recursively search for reads in subdirectories")]
     recursive: bool,
     #[arg(short, long, help = "Number of threads to use", default_value_t = 4)]
     threads: usize,
+    #[arg(long, help = "Test mode: only list found samples without aligning")]
+    dry_run: bool,
+    #[command(flatten)]
+    common: CommonArgs,
+}
+
+#[derive(Args)]
+struct CommonArgs {
+    #[arg(short, long, help = "Path to the reference file")]
+    reference: String,
+    #[arg(short, long, help = "Path to the output directory")]
+    output: String,
     #[arg(
         short,
         long,
@@ -101,8 +119,6 @@ struct BatchAlign {
         value_parser = builder::PossibleValuesParser::new(["bwa", "bwa-mem2", "bwa-mem2.avx", "bwa-mem2.avx2", "bwa-mem2.avx512bw", "bwa-mem2.sse41", "bwa-mem2.sse42"])
     )]
     executable: String,
-    #[arg(long, help = "Test mode: only list found samples without aligning")]
-    dry_run: bool,
 }
 
 fn run_index(args: Index) {
@@ -111,7 +127,8 @@ fn run_index(args: Index) {
     if let Some(prefix) = args.index_prefix {
         bwa_index.index_prefix(&prefix);
     }
-    bwa_index.index();
+    let exe = args.executable.parse().unwrap_or_default();
+    bwa_index.set_executable(exe).index();
 }
 
 fn run_align(args: Align) {
@@ -121,17 +138,17 @@ fn run_align(args: Align) {
         .query_read1(&args.read1)
         .output_format(&args.output_format)
         .query_read2(args.read2)
-        .output_path(&args.output);
+        .output_path(&args.common.output);
     bwa_mem.align().expect("Failed to run BWA mem");
 }
 
 fn run_batch_align(args: BatchAlign) {
     let batch = BatchBwaAlign::new(&args.dir)
         .reference(&args.reference)
-        .output(&args.output)
+        .output(&args.common.output)
         .recursive(args.recursive)
         .threads(args.threads)
-        .bwa_executable(&args.executable);
+        .bwa_executable(&args.common.executable);
     if args.dry_run {
         batch.dry_run();
     } else {
