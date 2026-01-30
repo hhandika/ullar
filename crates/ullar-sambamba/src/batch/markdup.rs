@@ -98,10 +98,10 @@ impl BatchMarkDup {
     pub fn execute(&self) -> Result<(), Box<dyn std::error::Error>> {
         let bam_files = self.find_bam_files();
         fs::create_dir_all(&self.output_dir)?;
-        let sample_count = bam_files.len();
+        let sample_counts = bam_files.len();
         log::info!(
             "Found {} BAM files to process in {}",
-            sample_count,
+            sample_counts,
             self.input_dir.display()
         );
         let mut processed_samples = 0;
@@ -129,7 +129,7 @@ impl BatchMarkDup {
             markdup.execute()?;
             log::info!("Finished processing: {}", bam_file.display());
             processed_samples += 1;
-            let progress = format!("{} Completed: {}/{}", "✓", processed_samples, sample_count);
+            let progress = format!("{} Completed: {}/{}", "✓", processed_samples, sample_counts);
             log::info!("{}", progress.green().bold());
         }
         Ok(())

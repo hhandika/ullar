@@ -176,6 +176,9 @@ ullar clean init -d /raw_read_dir --autorun
 # Recursive flags look for reads in subdirectories, required if cleaned reads are processed using ullar clean
 # Step 2.1: Index the reference genome
 # Require ullar-bwa and BWA installation
+# This will index the reference genome,
+# create fai index using samtools, and
+# create sequence dictionary using GATK
 ullar-bwa index /path/to/reference_genome.fasta
 # Step 2.2: Map reads to the reference genome
 # ullar-bwa auto infers read group based on the fastq headers

@@ -8,8 +8,8 @@ use std::{
 
 use colored::Colorize;
 
-pub fn log_commands(cmd: &Command) {
-    let msg = "\nRunning command:";
+pub fn log_commands(cmd: &Command, app_name: &str) {
+    let msg = format!("\n{} command:", app_name);
     log::info!("{}", msg.bold());
     let command_str = format!("{:?}", cmd).replace("\"", "");
     log::info!("{}\n", command_str.italic());
@@ -30,5 +30,9 @@ pub fn get_file_cmd_logger(
     writeln!(log, "\n=== {} ===", title)?;
     writeln!(log, "Timestamp: {}", chrono::Local::now())?;
     writeln!(log, "Running command: {:?}", cmd)?;
+    log::info!(
+        "Check log file for progress: {}",
+        file_path.display().to_string().italic()
+    );
     Ok(log)
 }

@@ -93,7 +93,7 @@ impl SambambaMarkDup {
         command.arg(&self.output_bam);
 
         // Log command to sambamba_markdup.log
-        ullar_logger::commands::log_commands(&command);
+        ullar_logger::commands::log_commands(&command, "Sambamba MarkDup");
         let log = ullar_logger::commands::get_file_cmd_logger(
             Path::new(SAMBAMBA_LOG_FILE),
             &command,

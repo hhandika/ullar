@@ -30,7 +30,7 @@ impl VcfFormat {
         matches!(self, VcfFormat::Vcf)
     }
 
-    pub fn file_extension(&self) -> &str {
+    pub fn extension(&self) -> &str {
         match self {
             VcfFormat::Vcf => "vcf",
             VcfFormat::VcfGz => "vcf.gz",
