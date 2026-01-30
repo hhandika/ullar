@@ -1,0 +1,181 @@
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
+
+use colored::Colorize;
+use ullar_bam::{finder::files::BamFileFinder, types::BamFormat};
+use ullar_vcf::types::VcfFormat;
+
+use crate::gatk::variant_calling::GatkVariantCalling;
+
+pub const DEFAULT_VARIANT_CALLING_DIR: &str = "variant_gvcfs";
+
+pub struct BatchVariantCalling {
+    pub executable: Option<String>,
+    pub input_dir: PathBuf,
+    pub output_dir: PathBuf,
+    pub reference_genome: PathBuf,
+    pub threads: usize,
+    pub ploidy: u8,
+    pub java_options: Option<String>,
+    pub recursive: bool,
+    pub optional_params: Vec<String>,
+    pub override_options: Option<String>,
+    pub output_format: VcfFormat,
+}
+
+impl BatchVariantCalling {
+    pub fn new<P: AsRef<std::path::Path>>(input_dir: P) -> Self {
+        Self {
+            executable: None,
+            input_dir: input_dir.as_ref().to_path_buf(),
+            output_dir: PathBuf::from(DEFAULT_VARIANT_CALLING_DIR),
+            reference_genome: PathBuf::new(),
+            threads: 4,
+            ploidy: 2,
+            java_options: None,
+            recursive: false,
+            optional_params: Vec::new(),
+            override_options: None,
+            output_format: VcfFormat::VcfGz,
+        }
+    }
+
+    pub fn exe(&mut self, exe: &str) -> &mut Self {
+        self.executable = Some(exe.to_string());
+        self
+    }
+
+    pub fn reference<P: AsRef<std::path::Path>>(&mut self, p: P) -> &mut Self {
+        self.reference_genome = p.as_ref().to_path_buf();
+        self
+    }
+
+    pub fn output_dir<P: AsRef<std::path::Path>>(&mut self, p: P) -> &mut Self {
+        self.output_dir = p.as_ref().to_path_buf();
+        self
+    }
+
+    pub fn threads(&mut self, n: usize) -> &mut Self {
+        self.threads = n;
+        self
+    }
+
+    pub fn java_options(&mut self, options: &str) -> &mut Self {
+        self.java_options = Some(options.to_string());
+        self
+    }
+
+    pub fn optional_params(&mut self, params: Vec<String>) -> &mut Self {
+        self.optional_params = params;
+        self
+    }
+
+    pub fn override_options(&mut self, options: &str) -> &mut Self {
+        self.override_options = Some(options.to_string());
+        self
+    }
+
+    pub fn ploidy(&mut self, ploidy: u8) -> &mut Self {
+        self.ploidy = ploidy;
+        self
+    }
+
+    pub fn recursive(&mut self, yes: bool) -> &mut Self {
+        self.recursive = yes;
+        self
+    }
+
+    pub fn dry_run(&self) {
+        log::info!("{}", "Batch Variant Calling (Dry Run)".cyan());
+        log::info!("Input Directory     : {}", self.input_dir.display());
+        log::info!("Output Directory    : {}", self.output_dir.display());
+        log::info!("Reference Genome    : {}", self.reference_genome.display());
+        log::info!("Threads             : {}", self.threads);
+        log::info!("Ploidy              : {}", self.ploidy);
+        if let Some(ref exe) = self.executable {
+            log::info!("GATK Executable     : {}", exe);
+        } else {
+            log::info!("GATK Executable     : gatk (default)");
+        }
+    }
+
+    pub fn execute(&self) -> Result<(), Box<dyn std::error::Error>> {
+        log::info!("{}", "Starting Batch Variant Calling...".green());
+        let bam_files = self.find_bam_files();
+        fs::create_dir_all(&self.output_dir)?;
+        let sample_counts = bam_files.len();
+        log::info!(
+            "Found {} BAM/CRAM files in {}",
+            sample_counts,
+            self.input_dir.display()
+        );
+        let mut processed_samples = 0;
+        for bam_file in bam_files {
+            let sample_name = self.get_sample_name(&bam_file);
+            let output_vcf = self.get_output_dir(&sample_name);
+            let output_path = self.get_output_path(&output_vcf, &sample_name);
+            let msg = format!("Processing sample {}", sample_name);
+            log::info!("{}", msg.blue().bold());
+            let mut gatk_vc = GatkVariantCalling::new(self.executable.as_deref());
+            gatk_vc
+                .input_path(&bam_file)
+                .reference_path(&self.reference_genome)
+                .output_path(&output_path)
+                .ploidy(self.ploidy);
+            if let Some(ref java_opts) = self.java_options {
+                gatk_vc.java_options(java_opts);
+            }
+            if !self.optional_params.is_empty() {
+                gatk_vc.optional_params(self.optional_params.clone());
+            }
+            if let Some(ref override_opts) = self.override_options {
+                gatk_vc.override_options(override_opts);
+            }
+            gatk_vc.execute()?;
+            log::info!("Finished processing: {}", bam_file.display());
+            processed_samples += 1;
+            let progress = format!("{} Completed: {}/{}", "✓", processed_samples, sample_counts);
+            log::info!("{}", progress.green().bold());
+        }
+        Ok(())
+    }
+
+    fn get_sample_name(&self, bam_file: &PathBuf) -> String {
+        if let Some(stem) = bam_file.file_stem() {
+            stem.to_string_lossy().to_string()
+        } else {
+            "unknown_sample".to_string()
+        }
+    }
+
+    fn get_output_dir(&self, sample_name: &str) -> PathBuf {
+        let output_dir = self.output_dir.join(sample_name);
+        fs::create_dir_all(&output_dir).unwrap_or_else(|e| {
+            log::error!(
+                "Failed to create output directory {}: {}",
+                output_dir.display(),
+                e
+            );
+        });
+        output_dir
+    }
+
+    fn get_output_path(&self, output_dir: &Path, sample_name: &str) -> PathBuf {
+        output_dir
+            .join(sample_name)
+            .with_extension(self.output_format.extension())
+    }
+
+    fn find_bam_files(&self) -> Vec<PathBuf> {
+        let finder = BamFileFinder::new(&self.input_dir, self.recursive, BamFormat::Bam);
+        match finder.find() {
+            Ok(files) => files,
+            Err(e) => {
+                log::error!("Error finding BAM files: {}", e);
+                vec![]
+            }
+        }
+    }
+}
