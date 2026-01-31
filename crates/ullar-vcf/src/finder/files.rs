@@ -48,6 +48,9 @@ impl<'a> VcfFileFinder<'a> {
 
     fn is_vcf(&self, path: &std::path::Path) -> bool {
         if let Some(vcf_format) = VcfFormat::from_path(path) {
+            if self.format == &VcfFormat::Any {
+                return true;
+            }
             return &vcf_format == self.format;
         }
         false

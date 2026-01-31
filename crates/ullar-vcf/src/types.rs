@@ -2,6 +2,8 @@
 pub enum VcfFormat {
     Vcf,
     VcfGz,
+    /// Any VCF format, either compressed or uncompressed
+    Any,
 }
 
 impl ToString for VcfFormat {
@@ -9,6 +11,7 @@ impl ToString for VcfFormat {
         match self {
             VcfFormat::Vcf => "vcf".to_string(),
             VcfFormat::VcfGz => "vcf.gz".to_string(),
+            VcfFormat::Any => "any".to_string(),
         }
     }
 }
@@ -34,6 +37,7 @@ impl VcfFormat {
         match self {
             VcfFormat::Vcf => "vcf",
             VcfFormat::VcfGz => "vcf.gz",
+            _ => unreachable!("Please specify either Vcf or VcfGz format to get the extension"),
         }
     }
 
