@@ -5,7 +5,7 @@ members = [
     "crates/ullar-bwa",
     "crates/ullar-deps", "crates/ullar-fastq",
     "crates/ullar-gatk", "crates/ullar-logger",
-    "crates/ullar-ncbi", "crates/ullar-sambamba", "crates/ullar-samtools", "crates/ullar-segul", "crates/ullar-sys",
+    "crates/ullar-ncbi", "crates/ullar-sambamba", "crates/ullar-samtools", "crates/ullar-segul", "crates/ullar-sys", "crates/ullar-utils",
     "crates/ullar-vcf", "crates/ullar-vcftools",
 ]
 resolver = "2"

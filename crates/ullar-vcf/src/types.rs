@@ -1,3 +1,6 @@
+use once_cell::sync::Lazy;
+use regex::Regex;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum VcfFormat {
     /// Uncompressed VCF format
@@ -7,6 +10,8 @@ pub enum VcfFormat {
     /// Any VCF format, either compressed or uncompressed
     Any,
 }
+
+const VCF_SAMPLE_NAME_PATTERN: &str = r"^(?P<sample>.+?)\.vcf(?:\.gz)?$";
 
 impl ToString for VcfFormat {
     fn to_string(&self) -> String {
@@ -25,6 +30,10 @@ impl VcfFormat {
             "vcf.gz" | "vcfgz" => Some(VcfFormat::Gvcf),
             _ => None,
         }
+    }
+
+    pub fn sample_name_from_path<P: AsRef<std::path::Path>>(path: P) -> Option<String> {
+        capture_vcf_sample_name(path)
     }
 
     pub fn is_compressed(&self) -> bool {
@@ -65,5 +74,58 @@ impl VcfFormat {
             }
         }
         None
+    }
+}
+
+fn capture_vcf_sample_name<P: AsRef<std::path::Path>>(path: P) -> Option<String> {
+    static RE: Lazy<Regex> =
+        Lazy::new(|| Regex::new(VCF_SAMPLE_NAME_PATTERN).expect("Failed to compile regex"));
+
+    let filename = path.as_ref().file_name()?.to_str()?;
+
+    RE.captures(filename)?
+        .name("sample")
+        .map(|m| m.as_str().to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_vcf_format_from_extension() {
+        assert_eq!(VcfFormat::from_extension("vcf"), Some(VcfFormat::Vcf));
+        assert_eq!(VcfFormat::from_extension("vcf.gz"), Some(VcfFormat::Gvcf));
+        assert_eq!(VcfFormat::from_extension("vcfgz"), Some(VcfFormat::Gvcf));
+        assert_eq!(VcfFormat::from_extension("txt"), None);
+    }
+
+    #[test]
+    fn test_vcf_format_from_path() {
+        let vcf_path = std::path::Path::new("sample.vcf");
+        let vcfgz_path = std::path::Path::new("sample.vcf.gz");
+        let invalid_path = std::path::Path::new("sample.txt");
+        assert_eq!(VcfFormat::from_path(vcf_path), Some(VcfFormat::Vcf));
+        assert_eq!(VcfFormat::from_path(vcfgz_path), Some(VcfFormat::Gvcf));
+        assert_eq!(VcfFormat::from_path(invalid_path), None);
+    }
+
+    #[test]
+    fn test_sample_name_from_path() {
+        let vcf_path = std::path::Path::new("sample1.vcf");
+        let vcfgz_path = std::path::Path::new("sample2.vcf.gz");
+        let long_sample_path = std::path::Path::new("my_sample_name_A123.vcf.gz");
+        assert_eq!(
+            VcfFormat::sample_name_from_path(vcf_path),
+            Some("sample1".to_string())
+        );
+        assert_eq!(
+            VcfFormat::sample_name_from_path(vcfgz_path),
+            Some("sample2".to_string())
+        );
+        assert_eq!(
+            VcfFormat::sample_name_from_path(long_sample_path),
+            Some("my_sample_name_A123".to_string())
+        );
     }
 }
