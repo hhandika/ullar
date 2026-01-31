@@ -1,10 +1,12 @@
 use std::fs::OpenOptions;
 use std::io::{BufReader, BufWriter, Read, Write};
+use std::path::Path;
 use std::{
     path::PathBuf,
     process::{ChildStdout, Command, Stdio},
 };
 
+const SAMTOOLS_SORT_LOG_FILE: &str = "samtools_sort.log";
 pub struct SamtoolsSort {
     pub bwa_stdout: Option<ChildStdout>,
     pub sample_name: String,
@@ -12,9 +14,17 @@ pub struct SamtoolsSort {
 }
 
 impl SamtoolsSort {
-    pub fn new(bwa_stdout: Option<ChildStdout>, sample_name: &str) -> Self {
+    pub fn new(sample_name: &str) -> Self {
         SamtoolsSort {
-            bwa_stdout,
+            bwa_stdout: None,
+            sample_name: sample_name.to_string(),
+            output_path: None,
+        }
+    }
+
+    pub fn from_bwa_stdout(bwa_stdout: ChildStdout, sample_name: &str) -> Self {
+        SamtoolsSort {
+            bwa_stdout: Some(bwa_stdout),
             sample_name: sample_name.to_string(),
             output_path: None,
         }
@@ -25,7 +35,28 @@ impl SamtoolsSort {
         self
     }
 
-    pub fn to_bam(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn sort(&self, input_bam: &Path) -> Result<(), Box<dyn std::error::Error>> {
+        let mut cmd = Command::new("samtools");
+
+        cmd.arg("sort")
+            .arg("-o")
+            .arg(self.output_path.as_ref().unwrap())
+            .arg(input_bam);
+        ullar_logger::commands::log_commands(&cmd, "Samtools sort");
+        let log = ullar_logger::commands::get_file_cmd_logger(
+            Path::new(SAMTOOLS_SORT_LOG_FILE),
+            &cmd,
+            "Samtools sort",
+        )?;
+        cmd.stdout(log.try_clone()?).stderr(log);
+        let status = cmd.status()?;
+        if !status.success() {
+            return Err(format!("samtools sort failed for {}", input_bam.display()).into());
+        }
+        Ok(())
+    }
+
+    pub fn to_bam_piped(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let bwa_stdout = self
             .bwa_stdout
             .take()

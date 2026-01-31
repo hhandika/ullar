@@ -1,5 +1,7 @@
+//! Samtools module to index BAM files
 use std::path::PathBuf;
 
+/// Index BAM using samtools index command
 pub struct SamtoolsIndex {
     pub bam_path: PathBuf,
     pub output_path: PathBuf,

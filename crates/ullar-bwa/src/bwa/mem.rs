@@ -112,9 +112,9 @@ impl BwaMem {
             .stdout
             .take()
             .ok_or("Failed to capture BWA stdout")?;
-        let mut sam =
-            SamtoolsSort::new(Some(bwa_stdout), &self.sample_name).output_path(&self.output_path);
-        sam.to_bam()?;
+        let mut sam = SamtoolsSort::from_bwa_stdout(bwa_stdout, &self.sample_name)
+            .output_path(&self.output_path);
+        sam.to_bam_piped()?;
 
         let bwa_output = bwa_child.wait_with_output()?;
         if !bwa_output.status.success() {
