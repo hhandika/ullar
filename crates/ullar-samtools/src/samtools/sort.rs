@@ -30,7 +30,7 @@ impl SamtoolsSort {
         }
     }
 
-    pub fn output_path<P: AsRef<std::path::Path>>(mut self, p: P) -> Self {
+    pub fn output_path<P: AsRef<std::path::Path>>(&mut self, p: P) -> &mut Self {
         self.output_path = Some(p.as_ref().to_path_buf());
         self
     }
@@ -98,7 +98,7 @@ impl SamtoolsSort {
     }
 
     fn write_log(&self, log_content: &str) -> Result<(), Box<dyn std::error::Error>> {
-        // Append contnet to samtools log file
+        // Append content to samtools log file
         // Write sample name at the top for clarity
         let log_file = OpenOptions::new()
             .create(true)

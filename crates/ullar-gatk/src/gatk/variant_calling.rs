@@ -1,4 +1,4 @@
-//! Variaant calling functionalities using GATK.
+//! Variant calling functionalities using GATK.
 use std::{
     path::{Path, PathBuf},
     process::Command,
