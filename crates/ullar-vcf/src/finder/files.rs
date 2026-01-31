@@ -71,7 +71,7 @@ mod tests {
     #[test]
     fn test_find_vcfgz_files() {
         let file_name = Path::new("tests/data/vcf/sample2.vcf.gz");
-        let finder = VcfFileFinder::new(Path::new("tests/data/vcf"), &VcfFormat::VcfGz);
+        let finder = VcfFileFinder::new(Path::new("tests/data/vcf"), &VcfFormat::Gvcf);
         assert!(finder.is_vcf(file_name));
     }
 }

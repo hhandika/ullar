@@ -38,7 +38,7 @@ impl BatchVariantCalling {
             recursive: false,
             optional_params: Vec::new(),
             override_options: None,
-            output_format: VcfFormat::VcfGz,
+            output_format: VcfFormat::Gvcf,
         }
     }
 
