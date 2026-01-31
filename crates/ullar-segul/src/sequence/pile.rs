@@ -10,6 +10,7 @@ use segul::helper::types::InputFmt;
 pub struct PileSequence {
     pub input_files: Vec<PathBuf>,
     pub input_fmt: InputFmt,
+    pub output_dir: PathBuf,
 }
 
 impl PileSequence {
@@ -18,6 +19,18 @@ impl PileSequence {
         Self {
             input_files,
             input_fmt,
+            output_dir: PathBuf::new(),
         }
+    }
+
+    pub fn output_dir<P: AsRef<std::path::Path>>(&mut self, output_dir: P) -> &mut Self {
+        self.output_dir = output_dir.as_ref().to_path_buf();
+        self
+    }
+
+    /// Run the pile sequence process
+    pub fn pile(&self) -> Result<(), Box<dyn std::error::Error>> {
+        println!("Pile sequences from files: {:?}", self.input_files);
+        Ok(())
     }
 }
