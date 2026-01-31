@@ -5,7 +5,7 @@ use std::{
 
 use colored::Colorize;
 use ullar_bam::{finder::files::BamFileFinder, types::BamFormat};
-use ullar_vcf::types::VcfFormat;
+use ullar_vcf::{finder::files::VcfFileFinder, types::VcfFormat};
 
 use crate::gatk::variant_calling::GatkVariantCalling;
 
@@ -103,11 +103,21 @@ impl BatchVariantCalling {
 
     pub fn execute(&self) -> Result<(), Box<dyn std::error::Error>> {
         log::info!("{}", "Starting Batch Variant Calling...".green());
-        let bam_files = self.find_bam_files();
-        fs::create_dir_all(&self.output_dir)?;
+        let mut bam_files = self.find_bam_files();
+        if self.output_exists() {
+            self.skip_existing_results(&mut bam_files);
+        } else {
+            fs::create_dir_all(&self.output_dir)?;
+        }
+
+        if bam_files.is_empty() {
+            log::warn!("No BAM files found to process. Exiting.");
+            return Ok(());
+        }
+
         let sample_counts = bam_files.len();
         log::info!(
-            "Found {} BAM/CRAM files in {}",
+            "Found {} BAM files in {}",
             sample_counts,
             self.input_dir.display()
         );
@@ -142,6 +152,14 @@ impl BatchVariantCalling {
         Ok(())
     }
 
+    fn skip_existing_results(&self, input_bam: &mut Vec<PathBuf>) {
+        log::warn!(
+            "Output directory {} already exists. checking for existing outputs...",
+            self.output_dir.display().to_string().yellow()
+        );
+        self.remove_matching_output(input_bam);
+    }
+
     fn get_sample_name(&self, bam_file: &PathBuf) -> String {
         if let Some(stem) = bam_file.file_stem() {
             stem.to_string_lossy().to_string()
@@ -168,12 +186,39 @@ impl BatchVariantCalling {
             .with_extension(self.output_format.extension())
     }
 
+    fn output_exists(&self) -> bool {
+        self.output_dir.exists()
+    }
+
+    fn remove_matching_output(&self, input_bam: &mut Vec<PathBuf>) {
+        let output_gvf_paths = self.find_gvfs_output_sample_names();
+        // Remove BAM files that already have corresponding GVCF outputs
+        input_bam.retain(|bam_path| {
+            let input_sample_name = self.get_sample_name(bam_path);
+            !output_gvf_paths.contains(&input_sample_name)
+        });
+    }
+
     fn find_bam_files(&self) -> Vec<PathBuf> {
         let finder = BamFileFinder::new(&self.input_dir, self.recursive, BamFormat::Bam);
         match finder.find() {
             Ok(files) => files,
             Err(e) => {
                 log::error!("Error finding BAM files: {}", e);
+                vec![]
+            }
+        }
+    }
+
+    fn find_gvfs_output_sample_names(&self) -> Vec<String> {
+        let finder = VcfFileFinder::new(&self.output_dir, &VcfFormat::Any);
+        match finder.find(self.recursive) {
+            Ok(files) => files
+                .iter()
+                .map(|path| self.get_sample_name(path))
+                .collect(),
+            Err(e) => {
+                log::error!("Error finding GVCF files: {}", e);
                 vec![]
             }
         }
