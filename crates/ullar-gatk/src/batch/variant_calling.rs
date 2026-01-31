@@ -117,7 +117,7 @@ impl BatchVariantCalling {
 
         let sample_counts = bam_files.len();
         log::info!(
-            "Found {} BAM files in {}",
+            "Found {} BAM files in {} to process.",
             sample_counts,
             self.input_dir.display()
         );
@@ -157,7 +157,8 @@ impl BatchVariantCalling {
             "Output directory {} already exists. checking for existing outputs...",
             self.output_dir.display().to_string().yellow()
         );
-        self.remove_matching_output(input_bam);
+        let output_gvf_paths = self.find_gvfs_output_sample_names();
+        self.remove_matching_output(input_bam, output_gvf_paths);
     }
 
     fn get_sample_name(&self, bam_file: &PathBuf) -> String {
@@ -190,12 +191,23 @@ impl BatchVariantCalling {
         self.output_dir.exists()
     }
 
-    fn remove_matching_output(&self, input_bam: &mut Vec<PathBuf>) {
-        let output_gvf_paths = self.find_gvfs_output_sample_names();
-        // Remove BAM files that already have corresponding GVCF outputs
+    fn remove_matching_output(
+        &self,
+        input_bam: &mut Vec<PathBuf>,
+        output_sample_names: Vec<String>,
+    ) {
+        // Remove BAM files that already have corresponding GVCF outputs and track skipped samples
         input_bam.retain(|bam_path| {
-            let input_sample_name = self.get_sample_name(bam_path);
-            !output_gvf_paths.contains(&input_sample_name)
+            let sample_name = self.get_sample_name(bam_path);
+            if output_sample_names.contains(&sample_name) {
+                log::warn!(
+                    "Skipping sample {} as output already exists.",
+                    sample_name.yellow()
+                );
+                false
+            } else {
+                true
+            }
         });
     }
 
@@ -215,12 +227,72 @@ impl BatchVariantCalling {
         match finder.find(self.recursive) {
             Ok(files) => files
                 .iter()
-                .map(|path| self.get_sample_name(path))
+                .filter_map(|path| VcfFormat::sample_name_from_path(path))
                 .collect(),
             Err(e) => {
                 log::error!("Error finding GVCF files: {}", e);
                 vec![]
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sample_name_from_path() {
+        let vcf_path = std::path::Path::new("sample1.vcf");
+        let vcfgz_path = std::path::Path::new("sample2.vcf.gz");
+        let long_sample_path = std::path::Path::new("my_sample_name_A123.vcf.gz");
+        assert_eq!(
+            VcfFormat::sample_name_from_path(vcf_path),
+            Some("sample1".to_string())
+        );
+        assert_eq!(
+            VcfFormat::sample_name_from_path(vcfgz_path),
+            Some("sample2".to_string())
+        );
+        assert_eq!(
+            VcfFormat::sample_name_from_path(long_sample_path),
+            Some("my_sample_name_A123".to_string())
+        );
+    }
+
+    #[test]
+    fn test_get_output_path() {
+        let mut batch_vc = BatchVariantCalling::new("input_dir");
+        batch_vc.output_dir("output_dir");
+        let output_dir = batch_vc.get_output_dir("sample1");
+        let output_path = batch_vc.get_output_path(&output_dir, "sample1");
+        assert_eq!(
+            output_path,
+            PathBuf::from("output_dir/sample1/sample1.vcf.gz")
+        );
+    }
+
+    #[test]
+    fn test_get_sample_name() {
+        let batch_vc = BatchVariantCalling::new("input_dir");
+        let bam_path = PathBuf::from("input_dir/sample1.bam");
+        let sample_name = batch_vc.get_sample_name(&bam_path);
+        assert_eq!(sample_name, "sample1".to_string());
+    }
+
+    #[test]
+    fn test_input_bam_matches_output_vcf() {
+        let mut batch_vc = BatchVariantCalling::new("input_dir");
+        batch_vc.output_dir("output_dir");
+        let mut input_bams = vec![
+            PathBuf::from("input_dir/sample1.bam"),
+            PathBuf::from("input_dir/sample2.bam"),
+            PathBuf::from("input_dir/sample3.bam"),
+        ];
+        // Simulate existing output for sample2
+        let existing_outputs = vec!["sample2".to_string()];
+        batch_vc.remove_matching_output(&mut input_bams, existing_outputs);
+        assert_eq!(input_bams.len(), 2);
+        assert!(input_bams.contains(&PathBuf::from("input_dir/sample1.bam")));
     }
 }
