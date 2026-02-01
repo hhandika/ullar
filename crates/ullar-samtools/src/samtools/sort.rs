@@ -56,7 +56,46 @@ impl SamtoolsSort {
         Ok(())
     }
 
-    pub fn to_bam_piped(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn sort_piped_by(
+        &mut self,
+        by_name: bool,
+    ) -> Result<ChildStdout, Box<dyn std::error::Error>> {
+        let bwa_stdout = self
+            .bwa_stdout
+            .take()
+            .ok_or("BWA stdout must be provided")?;
+        let mut cmd = Command::new("samtools");
+        cmd.arg("sort");
+        if by_name {
+            cmd.arg("-n");
+        }
+        cmd.arg("-")
+            .stdin(bwa_stdout)
+            .stderr(Stdio::piped())
+            .stdout(Stdio::piped());
+        ullar_logger::commands::log_commands(&cmd, "Samtools sort");
+        let program_name = if by_name {
+            "Samtools sort by name"
+        } else {
+            "Samtools sort"
+        };
+        let log_file = ullar_logger::commands::get_file_cmd_logger(
+            Path::new(SAMTOOLS_SORT_LOG_FILE),
+            &cmd,
+            program_name,
+        )?;
+        let mut samtools_child = cmd
+            .stdout(Stdio::piped())
+            .stderr(Stdio::from(log_file))
+            .spawn()?;
+        let samtools_stdout = samtools_child
+            .stdout
+            .take()
+            .ok_or("Failed to capture samtools stdout")?;
+        Ok(samtools_stdout)
+    }
+
+    pub fn to_bam_sorted(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let bwa_stdout = self
             .bwa_stdout
             .take()

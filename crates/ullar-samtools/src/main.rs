@@ -2,7 +2,8 @@ use std::path::PathBuf;
 
 use clap::{Args, Parser, builder, crate_authors, crate_description, crate_name, crate_version};
 use ullar_samtools::{
-    samtools::{faidx::SamtoolsFaIndex, phase::SamtoolsPhase, sort::SamtoolsSort},
+    batch::phase::BatchPhaseBam,
+    samtools::{faidx::SamtoolsFaIndex, sort::SamtoolsSort},
     types::SamtoolsIndexFormat,
 };
 
@@ -79,28 +80,30 @@ struct FaidxArgs {
 
 #[derive(Args)]
 struct PhaseArgs {
-    #[arg(short, long, help = "Path to the input BAM file")]
-    input: String,
-    #[arg(short, long, help = "Path to the output BAM file")]
+    #[arg(short, long, help = "Path to the BAM file directory")]
+    dir: String,
+    #[arg(short, long, help = "Path to the output BAM file directory")]
     output: String,
-    #[arg(short, long, help = "Path to the reference fasta file")]
-    reference: Option<String>,
-    #[arg(long, help = "Drop reads with ambiguous phase")]
-    drop_ambiguous: bool,
-    #[arg(long, help = "Skip chimera check")]
-    skip_chimera_check: bool,
-    #[arg(long, help = "Maximum length for local phasing")]
-    max_phase_length: Option<usize>,
-    #[arg(
-        long,
-        help = "Minimum Phred quality for a base to be considered in phasing"
-    )]
-    min_base_quality: Option<u8>,
-    #[arg(
-        long,
-        help = "Additional optional arguments for samtools phase command"
-    )]
-    optional_args: Vec<String>,
+    #[arg(short, long, help = "Path to the reference fasta file directory")]
+    reference: String,
+    #[arg(long, help = "Dry run mode (do not execute commands)")]
+    dry_run: bool,
+    // #[arg(long, help = "Drop reads with ambiguous phase")]
+    // drop_ambiguous: bool,
+    // #[arg(long, help = "Skip chimera check")]
+    // skip_chimera_check: bool,
+    // #[arg(long, help = "Maximum length for local phasing")]
+    // max_phase_length: Option<usize>,
+    // #[arg(
+    //     long,
+    //     help = "Minimum Phred quality for a base to be considered in phasing"
+    // )]
+    // min_base_quality: Option<u8>,
+    // #[arg(
+    //     long,
+    //     help = "Additional optional arguments for samtools phase command"
+    // )]
+    // optional_args: Vec<String>,
 }
 
 fn run_faidx(args: FaidxArgs) -> Result<(), Box<dyn std::error::Error>> {
@@ -143,29 +146,15 @@ fn run_sort(args: Sort) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn run_phase(args: PhaseArgs) -> Result<(), Box<dyn std::error::Error>> {
-    let mut phase = SamtoolsPhase::new(PathBuf::from(&args.input));
+    let mut phase = BatchPhaseBam::new(&args.dir);
 
-    phase.output_bam(PathBuf::from(&args.output));
+    phase
+        .output_dir(&args.output)
+        .reference_dir(&args.reference);
 
-    if let Some(reference) = args.reference {
-        phase.reference_fasta(PathBuf::from(reference));
+    if args.dry_run {
+        phase.dry_run();
     }
-
-    phase.drop_ambiguous(args.drop_ambiguous);
-    phase.skip_chimera_check(args.skip_chimera_check);
-
-    if let Some(max_length) = args.max_phase_length {
-        phase.max_phase_length(max_length);
-    }
-
-    if let Some(min_quality) = args.min_base_quality {
-        phase.min_base_quality(min_quality);
-    }
-
-    if !args.optional_args.is_empty() {
-        phase.optional_args(args.optional_args);
-    }
-
     phase.phase()?;
     Ok(())
 }

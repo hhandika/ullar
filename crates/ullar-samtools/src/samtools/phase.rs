@@ -6,7 +6,6 @@ const PHASE_LOG_PREFIX: &str = "samtools_phase";
 
 pub struct SamtoolsPhase {
     pub input_bam: PathBuf,
-    pub output_bam: PathBuf,
     /// reference file for phasing
     pub reference_fasta: Option<PathBuf>,
     /// If true, reads with ambiguous phase will be dropped.
@@ -21,25 +20,21 @@ pub struct SamtoolsPhase {
     /// Additional arguments to pass to samtools phase command.
     /// See [samtools phase documentation](https://www.htslib.org/doc/samtools-phase.html) for more details.
     pub optional_args: Vec<String>,
+    pub prefix: PathBuf,
 }
 
 impl SamtoolsPhase {
     pub fn new(input_bam: PathBuf) -> Self {
         Self {
             input_bam,
-            output_bam: PathBuf::new(),
             reference_fasta: None,
             drop_ambiguous: false,
             skip_chimera_check: false,
             max_phase_length: None,
             min_base_quality: None,
             optional_args: Vec::new(),
+            prefix: PathBuf::new(),
         }
-    }
-
-    pub fn output_bam<P: AsRef<Path>>(&mut self, output_bam: P) -> &mut Self {
-        self.output_bam = output_bam.as_ref().to_path_buf();
-        self
     }
 
     pub fn reference_fasta<P: AsRef<Path>>(&mut self, reference_fasta: P) -> &mut Self {
@@ -59,6 +54,11 @@ impl SamtoolsPhase {
 
     pub fn max_phase_length(&mut self, length: usize) -> &mut Self {
         self.max_phase_length = Some(length);
+        self
+    }
+
+    pub fn prefix<P: AsRef<std::path::Path>>(&mut self, prefix: P) -> &mut Self {
+        self.prefix = prefix.as_ref().to_path_buf();
         self
     }
 
@@ -96,12 +96,11 @@ impl SamtoolsPhase {
             cmd.arg("-q").arg(quality.to_string());
         }
 
-        for arg in &self.optional_args {
-            cmd.arg(arg);
+        if !self.optional_args.is_empty() {
+            cmd.args(&self.optional_args);
         }
 
-        cmd.arg(&self.input_bam);
-        cmd.arg(&self.output_bam);
+        cmd.arg("-b").arg(&self.prefix).arg(&self.input_bam);
         ullar_logger::commands::log_commands(&cmd, "samtools phase");
         let log_file = ullar_logger::commands::get_file_cmd_logger(
             Path::new(PHASE_LOG_PREFIX),
