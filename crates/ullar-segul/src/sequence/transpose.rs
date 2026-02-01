@@ -2,6 +2,7 @@
 
 use std::{
     collections::HashMap,
+    fs,
     path::{Path, PathBuf},
 };
 
@@ -106,7 +107,9 @@ impl TransposeSequence {
     }
 
     fn get_output_path(&self, sample_id: &str) -> PathBuf {
-        let output_path = self.output_dir.join(sample_id);
+        let output_dir = self.output_dir.join(sample_id);
+        fs::create_dir_all(&self.output_dir).expect("Failed to create output directory");
+        let output_path = output_dir.join(sample_id);
         files::create_output_fname_from_path(&output_path, &self.output_fmt)
     }
 
