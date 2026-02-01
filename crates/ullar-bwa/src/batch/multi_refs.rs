@@ -59,6 +59,7 @@ impl BatchBwaAlignMultiRefs {
 
     pub fn output_dir<P: AsRef<std::path::Path>>(&mut self, output_dir: P) -> &mut Self {
         self.output_dir = output_dir.as_ref().to_path_buf();
+        fs::create_dir_all(&self.output_dir).expect("Unable to create output directory");
         self
     }
 
@@ -73,6 +74,17 @@ impl BatchBwaAlignMultiRefs {
         log::info!("Found {} samples to align.", reads.len());
         let references = self.find_references();
         log::info!("Found {} reference files.", references.len());
+        let matching_refs = self.match_reads_to_reference(&references, &reads);
+        if matching_refs.len() != references.len() {
+            log::warn!(
+                "{}",
+                "Some references do not have matching reads and will be skipped."
+                    .yellow()
+                    .bold()
+            );
+        }
+        let sample_counts = matching_refs.len();
+        let mut processed_samples = 0;
         for (sample_name, ref_path) in references {
             if let Some(fq_reads) = reads.get(&sample_name) {
                 self.index_ref(&ref_path)?;
@@ -87,6 +99,13 @@ impl BatchBwaAlignMultiRefs {
                         self.log_error(&sample_name, &e.to_string());
                     }
                 }
+                processed_samples += 1;
+                log::info!(
+                    "{}",
+                    format!("Processed {}/{} samples.", processed_samples, sample_counts)
+                        .cyan()
+                        .bold()
+                );
             } else {
                 log::warn!(
                     "No reads found for sample: {}. Skipping alignment.",
@@ -195,6 +214,38 @@ impl BatchBwaAlignMultiRefs {
             .iter()
             .map(|r| (r.sample_name.to_string(), r.clone()))
             .collect()
+    }
+
+    fn match_reads_to_reference(
+        &self,
+        ref_paths: &[(String, PathBuf)],
+        reads: &HashMap<String, FastqReads>,
+    ) -> Vec<PathBuf> {
+        let mut matching_refs: Vec<PathBuf> = Vec::with_capacity(ref_paths.len());
+        let mut missing_reads: Vec<String> = Vec::new();
+        for (sample_name, ref_path) in ref_paths {
+            if reads.contains_key(sample_name) {
+                matching_refs.push(ref_path.to_path_buf());
+            } else {
+                log::warn!("No reads found for sample: {}", sample_name,);
+                missing_reads.push(sample_name.to_string());
+            }
+        }
+        // Write missing references to file
+        if !missing_reads.is_empty() {
+            self.write_missing_reads(&missing_reads);
+        }
+        matching_refs
+    }
+
+    fn write_missing_reads(&self, missing_reads: &[String]) {
+        let missing_file = self.output_dir.join("missing_references.txt");
+        fs::write(&missing_file, missing_reads.join("\n"))
+            .expect("Unable to write missing references file");
+        log::warn!(
+            "List of references without matching reads written to {}",
+            missing_file.display()
+        );
     }
 
     fn get_output_path(&self, sample_name: &str) -> Result<PathBuf, Box<dyn std::error::Error>> {
