@@ -4,4 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+clap = { version = "4.5.56", features = ["cargo", "derive"] }
+log = "0.4.29"
+log4rs = "1.4.0"
+rayon = "1.11.0"
 segul = "0.*"
+ullar-logger = { version = "0.1.0", path = "../ullar-logger" }
