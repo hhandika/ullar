@@ -7,7 +7,13 @@ use colored::Colorize;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::types::reads::{FastqReads, ReadChecker};
+use crate::{
+    files::reader::FastqReader,
+    types::{
+        illumina::IlluminaName,
+        reads::{FastqReads, ReadChecker},
+    },
+};
 
 #[derive(Debug, Serialize, Default, Deserialize)]
 pub struct FastqInput {
@@ -101,6 +107,24 @@ impl FastqConfigCheck {
         if self.failed_samples > 0 {
             log::info!("{:18}: {}", "Fail", self.failed_samples);
         }
+    }
+}
+
+pub fn get_read_group_ilumina(read: &FastqReads) -> Result<String, Box<dyn std::error::Error>> {
+    let file_path = read.get_read1();
+    let mut reader = FastqReader::new(&file_path).expect("Failed to create FASTQ reader");
+    let header = reader
+        .get_header_line()
+        .expect("Failed to read FASTQ header");
+    let illumina_header = IlluminaName::parse(&header);
+    if let Some(illumina) = illumina_header {
+        Ok(illumina.to_bam_rg(&read.sample_name))
+    } else {
+        Err(format!(
+            "Failed to parse Illumina header for sample: {}",
+            read.sample_name
+        )
+        .into())
     }
 }
 

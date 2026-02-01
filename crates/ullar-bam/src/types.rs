@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Copy, Eq)]
 pub enum BamFormat {
     /// BAM file format
     Bam,
