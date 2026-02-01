@@ -18,6 +18,7 @@ log4rs = "1.4.0"
 noodles = { version = "0.104.0", features = ["bam", "sam"] }
 num_cpus = "1.17.0"
 regex = "1.12.2"
+segul = "0.23.2"
 serde = { version = "1.0.228", features = ["derive"] }
 ullar = { version = "0.4.1", path = "../ullar" }
 ullar-fastq = { version = "0.1.0", path = "../ullar-fastq" }

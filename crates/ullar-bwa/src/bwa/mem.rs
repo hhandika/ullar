@@ -2,10 +2,10 @@ use crate::bwa::errors::validate_bwa_inputs;
 use crate::bwa::types::{BwaExecutable, BwaFormat, BwaRunStatus};
 use ullar_samtools::samtools::sort::SamtoolsSort;
 
-use std::fs::File;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::{ChildStdout, Command, Stdio};
 
+const LOG_FILE_NAME: &str = "bwa_mem.log";
 pub struct BwaMem {
     pub reference_path: PathBuf,
     pub query_read1: PathBuf,
@@ -57,12 +57,8 @@ impl BwaMem {
         self
     }
 
-    pub fn output_format(&mut self, format: &str) -> &mut Self {
-        self.output_format = match format.to_lowercase().as_str() {
-            "sam" => BwaFormat::Sam,
-            "bam" => BwaFormat::Bam,
-            _ => BwaFormat::Bam,
-        };
+    pub fn output_format(&mut self, format: BwaFormat) -> &mut Self {
+        self.output_format = format;
         self.use_samtools_view = matches!(self.output_format, BwaFormat::Bam);
         self
     }
@@ -92,17 +88,13 @@ impl BwaMem {
         self
     }
 
-    // fn align_to_bam(&self) -> Result<(), Box<dyn std::error::Error>> {
-    //     let mut bwa = self.get_bwa_command();
-    //     bwa.arg("-o").arg(&self.output_path);
-    //     self.write_output(&mut bwa)
-    // }
-
     /// Align reads using BWA mem and output to BAM using samtools view
     fn align_to_samtools_bam(&self) -> Result<BwaRunStatus, Box<dyn std::error::Error>> {
         self.validate_inputs()?;
-        let log_file = File::create("bwa.log")?;
         let mut bwa = self.get_bwa_command();
+        ullar_logger::commands::log_commands(&bwa, "BWA mem");
+        let log_file =
+            ullar_logger::commands::get_file_cmd_logger(Path::new(LOG_FILE_NAME), &bwa, "BWA mem")?;
         let mut bwa_child = bwa
             .stdout(Stdio::piped())
             .stderr(Stdio::from(log_file))
@@ -114,7 +106,7 @@ impl BwaMem {
             .ok_or("Failed to capture BWA stdout")?;
         let mut sam = SamtoolsSort::from_bwa_stdout(bwa_stdout, &self.sample_name);
         sam.output_path(&self.output_path);
-        sam.to_bam_piped()?;
+        sam.to_bam_sorted()?;
 
         let bwa_output = bwa_child.wait_with_output()?;
         if !bwa_output.status.success() {
@@ -123,6 +115,23 @@ impl BwaMem {
         }
 
         Ok(BwaRunStatus::Success)
+    }
+
+    /// Align reads using BWA mem and return the stdout pipe
+    pub fn align_piped(&self) -> Result<ChildStdout, Box<dyn std::error::Error>> {
+        let mut bwa = self.get_bwa_command();
+        ullar_logger::commands::log_commands(&bwa, "BWA mem");
+        let log_file =
+            ullar_logger::commands::get_file_cmd_logger(Path::new(LOG_FILE_NAME), &bwa, "BWA mem")?;
+        let mut bwa_child = bwa
+            .stdout(Stdio::piped())
+            .stderr(Stdio::from(log_file))
+            .spawn()?;
+        let bwa_stdout = bwa_child
+            .stdout
+            .take()
+            .ok_or("Failed to capture BWA stdout")?;
+        Ok(bwa_stdout)
     }
 
     pub fn get_bwa_command(&self) -> Command {

@@ -21,6 +21,15 @@ impl str::FromStr for BwaFormat {
     }
 }
 
+impl BwaFormat {
+    pub fn extension(&self) -> &str {
+        match self {
+            BwaFormat::Sam => "sam",
+            BwaFormat::Bam => "bam",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub enum BwaExecutable {
     #[default]

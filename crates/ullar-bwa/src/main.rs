@@ -3,8 +3,8 @@ use std::path::Path;
 use clap::{Args, Parser, builder, crate_authors, crate_description, crate_name, crate_version};
 
 use ullar_bwa::{
-    batch::BatchBwaAlign,
-    bwa::{index::BwaIndex, mem::BwaMem, metadata::BwaMetadata},
+    batch::{multi_refs::BatchBwaAlignMultiRefs, single_ref::BatchBwaAlignSingleRef},
+    bwa::{index::BwaIndex, mem::BwaMem, metadata::BwaMetadata, types::BwaFormat},
 };
 
 fn main() {
@@ -14,6 +14,7 @@ fn main() {
         Cli::Index(index_args) => run_index(index_args),
         Cli::Align(align_args) => run_align(align_args),
         Cli::BatchAlign(batch_args) => run_batch_align(batch_args),
+        Cli::BatchSampleAlign(batch_sample_args) => run_batch_sample_align(batch_sample_args),
         Cli::Deps => check_bwa_installed(),
     }
 }
@@ -30,6 +31,11 @@ enum Cli {
         about = "Perform batch BWA alignment on a directory of reads"
     )]
     BatchAlign(BatchAlign),
+    #[command(
+        name = "batch-sample",
+        about = "Perform batch BWA alignment on sample/individual-specific references"
+    )]
+    BatchSampleAlign(BatchSampleAlign),
     #[command(name = "deps", about = "Print help information")]
     Deps,
 }
@@ -100,6 +106,30 @@ struct BatchAlign {
 }
 
 #[derive(Args)]
+struct BatchSampleAlign {
+    #[arg(short, long, help = "Path to the directory containing reads")]
+    dir: String,
+    #[arg(short, long, help = "Path to the reference directory")]
+    reference_dir: String,
+    #[arg(long, help = "Recursively search for reads in subdirectories")]
+    recursive: bool,
+    #[arg(short, long, help = "Number of threads to use", default_value_t = 4)]
+    threads: usize,
+    #[arg(long, help = "Test mode: only list found samples without aligning")]
+    dry_run: bool,
+    #[arg(short, long, help = "Path to the output directory")]
+    output: String,
+    #[arg(
+        short,
+        long,
+        help = "BWA executable to use",
+        default_value = "bwa-mem2",
+        value_parser = builder::PossibleValuesParser::new(["bwa", "bwa-mem2", "bwa-mem2.avx", "bwa-mem2.avx2", "bwa-mem2.avx512bw", "bwa-mem2.sse41", "bwa-mem2.sse42"])
+    )]
+    executable: String,
+}
+
+#[derive(Args)]
 struct CommonArgs {
     #[arg(short, long, help = "Path to the reference file")]
     reference: String,
@@ -127,17 +157,22 @@ fn run_index(args: Index) {
 
 fn run_align(args: Align) {
     let mut bwa_mem = BwaMem::new(&args.sample_name);
+    let output_fmt = args
+        .output_format
+        .to_lowercase()
+        .parse()
+        .unwrap_or(BwaFormat::Bam);
     bwa_mem
         .reference_path(&args.reference)
         .query_read1(&args.read1)
-        .output_format(&args.output_format)
+        .output_format(output_fmt)
         .query_read2(args.read2)
         .output_path(&args.common.output);
     bwa_mem.align().expect("Failed to run BWA mem");
 }
 
 fn run_batch_align(args: BatchAlign) {
-    let batch = BatchBwaAlign::new(&args.dir)
+    let batch = BatchBwaAlignSingleRef::new(&args.dir)
         .reference(&args.reference)
         .output(&args.common.output)
         .recursive(args.recursive)
@@ -148,6 +183,19 @@ fn run_batch_align(args: BatchAlign) {
     } else {
         batch.run().expect("Failed to run batch BWA alignment");
     }
+}
+
+fn run_batch_sample_align(args: BatchSampleAlign) {
+    let mut batch = BatchBwaAlignMultiRefs::new(&args.dir);
+    batch
+        .reference_dir(&args.reference_dir)
+        .output_dir(&args.output)
+        .recursive(args.recursive)
+        .bwa_executable(&args.executable);
+
+    batch
+        .run()
+        .expect("Failed to run batch BWA alignment with sample-specific references");
 }
 
 fn check_bwa_installed() {
