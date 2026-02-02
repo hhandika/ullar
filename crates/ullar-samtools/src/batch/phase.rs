@@ -38,7 +38,7 @@ impl BatchPhaseBam {
             is_locus_aligned_refs: false,
             recursive: false,
             bam_format: BamFormat::Bam,
-            reference_format: InputFmt::Fasta,
+            reference_format: InputFmt::Auto,
         }
     }
 
@@ -54,6 +54,11 @@ impl BatchPhaseBam {
 
     pub fn is_locus_aligned_refs(&mut self, yes: bool) -> &mut Self {
         self.is_locus_aligned_refs = yes;
+        self
+    }
+
+    pub fn recursive(&mut self, yes: bool) -> &mut Self {
+        self.recursive = yes;
         self
     }
 

@@ -88,6 +88,8 @@ struct PhaseArgs {
     reference: String,
     #[arg(long, help = "Dry run mode (do not execute commands)")]
     dry_run: bool,
+    #[arg(long, help = "Find reads recursively in the read directory")]
+    recursive: bool,
     // #[arg(long, help = "Drop reads with ambiguous phase")]
     // drop_ambiguous: bool,
     // #[arg(long, help = "Skip chimera check")]
@@ -150,7 +152,8 @@ fn run_phase(args: PhaseArgs) -> Result<(), Box<dyn std::error::Error>> {
 
     phase
         .output_dir(&args.output)
-        .reference_dir(&args.reference);
+        .reference_dir(&args.reference)
+        .recursive(args.recursive);
 
     if args.dry_run {
         phase.dry_run();
