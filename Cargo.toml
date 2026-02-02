@@ -1,11 +1,11 @@
 [workspace]
 members = [
     "crates/py-ullar",
-    "crates/ullar", "crates/ullar-bam",
+    "crates/ullar", "crates/ullar-aster", "crates/ullar-bam", "crates/ullar-bcftools", "crates/ullar-bpp",
     "crates/ullar-bwa",
-    "crates/ullar-deps", "crates/ullar-fastq",
-    "crates/ullar-gatk", "crates/ullar-logger",
-    "crates/ullar-ncbi", "crates/ullar-sambamba", "crates/ullar-samtools", "crates/ullar-segul", "crates/ullar-sys", "crates/ullar-utils",
+    "crates/ullar-deps", "crates/ullar-fastp", "crates/ullar-fastq",
+    "crates/ullar-gatk", "crates/ullar-iqtree", "crates/ullar-lastz", "crates/ullar-logger", "crates/ullar-mafft",
+    "crates/ullar-ncbi", "crates/ullar-sambamba", "crates/ullar-samtools", "crates/ullar-segul", "crates/ullar-spades", "crates/ullar-sys", "crates/ullar-utils",
     "crates/ullar-vcf", "crates/ullar-vcftools",
 ]
 resolver = "2"
