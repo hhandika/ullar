@@ -103,7 +103,7 @@ impl BatchBwaAlignMultiRefs {
                 log::info!(
                     "{}",
                     format!("Processed {}/{} samples.", processed_samples, sample_counts)
-                        .cyan()
+                        .green()
                         .bold()
                 );
             } else {
