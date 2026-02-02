@@ -15,7 +15,7 @@ members = [
     "crates/ullar-lastz",
     "crates/ullar-logger",
     "crates/ullar-mafft",
-    "crates/ullar-ncbi",
+    "crates/ullar-ncbi", "crates/ullar-pilon",
     "crates/ullar-sambamba",
     "crates/ullar-samtools",
     "crates/ullar-segul",
