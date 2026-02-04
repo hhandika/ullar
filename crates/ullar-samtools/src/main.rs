@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::{Args, Parser, builder, crate_authors, crate_description, crate_name, crate_version};
 use ullar_samtools::{
-    batch::phase::BatchPhaseBam,
+    batch::{index::BatchIndexBams, phase::BatchPhaseBam},
     samtools::{faidx::SamtoolsFaIndex, sort::SamtoolsSort},
     types::SamtoolsIndexFormat,
 };
@@ -15,6 +15,7 @@ fn main() {
         Cli::Sort(sort_args) => run_sort(sort_args).expect("Failed to run sort"),
         Cli::Faidx(faidx_args) => run_faidx(faidx_args).expect("Failed to run faidx"),
         Cli::Phase(phase_args) => run_phase(phase_args).expect("Failed to run phase"),
+        Cli::Index(index_args) => run_index(index_args).expect("Failed to run index"),
     }
 }
 
@@ -28,6 +29,11 @@ enum Cli {
         about = "Index a reference fasta file using samtools faidx"
     )]
     Faidx(FaidxArgs),
+    #[command(
+        name = "index",
+        about = "Index BAM files in a directory using samtools index"
+    )]
+    Index(IndexArgs),
     #[command(
         name = "phase",
         about = "Phase reads in a BAM file using samtools phase"
@@ -76,6 +82,16 @@ struct FaidxArgs {
         help = "Additional optional arguments for samtools faidx command"
     )]
     optional_args: Vec<String>,
+}
+
+#[derive(Args)]
+struct IndexArgs {
+    #[arg(short, long, help = "Path to the BAM file directory")]
+    dir: String,
+    #[arg(long, help = "Find reads recursively in the read directory")]
+    recursive: bool,
+    #[arg(long, help = "Dry run mode (do not execute commands)")]
+    dry_run: bool,
 }
 
 #[derive(Args)]
@@ -159,5 +175,16 @@ fn run_phase(args: PhaseArgs) -> Result<(), Box<dyn std::error::Error>> {
         phase.dry_run();
     }
     phase.phase()?;
+    Ok(())
+}
+
+fn run_index(args: IndexArgs) -> Result<(), Box<dyn std::error::Error>> {
+    let mut indexer = BatchIndexBams::new(&args.dir);
+    indexer.recursive(args.recursive);
+
+    if args.dry_run {
+        indexer.dry_run();
+    }
+    indexer.index();
     Ok(())
 }
