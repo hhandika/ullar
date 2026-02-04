@@ -1,4 +1,7 @@
-use std::{io::ErrorKind, path::PathBuf, process::Command};
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 use crate::pilon::types::PilonInputFormat;
 
@@ -6,12 +9,13 @@ static DEFAULT_CMD_OPTIONS: &[&str] = &[
     "--fix",
     "snps,indels",
     "--vcf",
-    "--change",
     "--minqual",
     "20",
     "--mindepth",
     "5",
 ];
+
+const PHILON_LOG_FILE: &str = "pilon_genome_polishing.log";
 
 pub struct PilonGenomePolishing {
     pub input_path: PathBuf,
@@ -81,12 +85,11 @@ impl PilonGenomePolishing {
         self
     }
 
-    pub fn execute(&self) -> std::io::Result<std::process::Output> {
+    pub fn execute(&self) -> Result<(), Box<dyn std::error::Error>> {
         if self.override_options.is_some() && !self.optional_params.is_empty() {
-            return Err(std::io::Error::new(
-                ErrorKind::InvalidInput,
-                "Cannot use both override_options and optional_params simultaneously",
-            ));
+            return Err(
+                "Cannot use both override options and optional parameters simultaneously".into(),
+            );
         }
 
         let mut cmd = Command::new("java");
@@ -125,8 +128,24 @@ impl PilonGenomePolishing {
             Some(ref opts) => self.get_override_options(&mut cmd, opts),
         }
 
-        // Execute command
-        cmd.output()
+        ullar_logger::commands::log_commands(&cmd, "Pilon Genome Polishing");
+        let log = ullar_logger::commands::get_file_cmd_logger(
+            Path::new(PHILON_LOG_FILE),
+            &cmd,
+            "Pilon Genome Polishing",
+        )?;
+        cmd.stdout(log.try_clone()?).stderr(log);
+        let output = cmd.output()?;
+        if !output.status.success() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(format!(
+                "Pilon genome polishing failed.\nStdout: {}\nStderr: {}",
+                stdout, stderr
+            )
+            .into());
+        }
+        Ok(())
     }
 
     // Get total system memory in MB

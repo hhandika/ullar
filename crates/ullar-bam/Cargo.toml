@@ -4,4 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+log = "0.4.29"
+log4rs = "1.4.0"
+once_cell = "1.21.3"
+regex = "1.12.3"
+ullar-logger = { version = "0.1.0", path = "../ullar-logger" }
 walkdir = "2.5.0"

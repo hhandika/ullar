@@ -72,7 +72,7 @@ impl GatkVariantCalling {
         let mut command = Command::new(&self.executable);
         command.arg("HaplotypeCaller");
         if let Some(java_opts) = &self.java_options {
-            command.arg("-J").arg(java_opts);
+            command.arg("--java-options").arg(java_opts);
         } else {
             let ram_alloc = self.get_java_ram_alloc();
             command
