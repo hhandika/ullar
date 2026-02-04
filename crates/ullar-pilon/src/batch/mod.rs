@@ -1,2 +1,1 @@
 pub mod polish;
-pub mod types;
