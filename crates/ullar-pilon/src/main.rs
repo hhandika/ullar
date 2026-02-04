@@ -32,6 +32,12 @@ struct PolishPhasedBamsArgs {
     #[arg(
         short,
         long,
+        help = "Path to the reference directory containing genome FASTA files"
+    )]
+    reference_dir: String,
+    #[arg(
+        short,
+        long,
         help = "Path to the output directory for polished genomes"
     )]
     output_path: String,
@@ -50,6 +56,7 @@ fn batch_polish_phased_bams(args: PolishPhasedBamsArgs) -> Result<(), Box<dyn st
     polisher
         .input_dir(&args.dir)
         .output_path(&args.output_path)
+        .reference_dir(&args.reference_dir)
         .recursive(args.recursive)
         .optional_params(args.optional_params);
     if let Some(java_opts) = args.java_options {

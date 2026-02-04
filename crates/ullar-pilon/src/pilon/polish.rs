@@ -100,18 +100,14 @@ impl PilonGenomePolishing {
         } else {
             cmd.arg(format!("-Xmx{}", self.get_java_ram_alloc()));
         };
-        cmd.arg("-jar").arg(&self.executable);
-        match self.format {
-            PilonInputFormat::Bam => {
-                cmd.arg("--bam").arg(&self.input_path);
-            }
-            PilonInputFormat::PhasedBam => {
-                cmd.arg("--bam").arg(&self.input_path);
-            }
-            PilonInputFormat::Fasta => {
-                cmd.arg("--genome").arg(&self.input_path);
-            }
-        }
+        cmd.arg("-jar")
+            .arg(&self.executable)
+            .arg("--bam")
+            .arg(&self.input_path)
+            .arg("--genome")
+            .arg(&self.reference_path)
+            .arg("--output")
+            .arg(&self.output_path);
 
         // Kmer size
         if let Some(kmer) = self.kmer_size {

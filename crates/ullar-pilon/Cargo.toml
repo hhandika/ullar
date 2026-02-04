@@ -8,6 +8,7 @@ clap = { version = "4.5.57", features = ["cargo", "derive"] }
 colored = "3.1.1"
 log = "0.4.29"
 log4rs = "1.4.0"
+segul = "0.23.2"
 ullar-bam = { version = "0.1.0", path = "../ullar-bam" }
 ullar-logger = { version = "0.1.0", path = "../ullar-logger" }
 ullar-sys = { version = "0.1.0", path = "../ullar-sys" }

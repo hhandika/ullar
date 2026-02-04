@@ -1,11 +1,13 @@
 use std::{
+    collections::HashMap,
     fs,
     path::{Path, PathBuf},
 };
 
+use segul::helper::{finder::SeqFileFinder, types::InputFmt};
 use ullar_bam::{
     finder::files::BamFileFinder,
-    types::{BamFormat, PhasedAllele, PhasedBam},
+    types::{BamFormat, BwaPhasedAllele, PhasedBam},
 };
 
 use crate::pilon::{polish::PilonGenomePolishing, types::PilonInputFormat};
@@ -13,6 +15,7 @@ use colored::Colorize;
 
 pub struct BatchGenomePolishing {
     pub input_dir: PathBuf,
+    pub reference_dir: PathBuf,
     pub format: PilonInputFormat,
     pub output_path: PathBuf,
     pub recursive: bool,
@@ -21,12 +24,14 @@ pub struct BatchGenomePolishing {
     pub kmer_size: Option<u32>,
     pub optional_params: Vec<String>,
     pub override_options: Option<String>,
+    reference_format: InputFmt,
 }
 
 impl BatchGenomePolishing {
     pub fn new(exe: Option<&str>) -> Self {
         BatchGenomePolishing {
             input_dir: PathBuf::new(),
+            reference_dir: PathBuf::new(),
             format: PilonInputFormat::default(),
             output_path: PathBuf::new(),
             recursive: false,
@@ -35,12 +40,18 @@ impl BatchGenomePolishing {
             kmer_size: None,
             optional_params: Vec::new(),
             override_options: None,
+            reference_format: InputFmt::Auto,
         }
     }
 
     pub fn input_dir<P: AsRef<std::path::Path>>(&mut self, p: P) -> &mut Self {
         self.input_dir = p.as_ref().to_path_buf();
 
+        self
+    }
+
+    pub fn reference_dir<P: AsRef<std::path::Path>>(&mut self, p: P) -> &mut Self {
+        self.reference_dir = p.as_ref().to_path_buf();
         self
     }
 
@@ -88,6 +99,8 @@ impl BatchGenomePolishing {
 
         let input_counts = input_files.len();
         log::info!("Found {} BAM files for polishing.", input_counts);
+        let references = self.find_references();
+        log::info!("Found {} reference files.", references.len());
         let mut processed_counts = 0;
         for file in input_files {
             let phased_data = self.get_phase_data(&file)?;
@@ -95,8 +108,19 @@ impl BatchGenomePolishing {
             log::info!("{}", msg.blue());
             let output_dir = self.get_output_dir_phased(&phased_data.allele);
             fs::create_dir_all(&output_dir)?;
-            let output_path = self.get_output_path(&phased_data.sample_name);
-            match self.execute(&file, &output_path) {
+            let output_path = self.get_output_path(&output_dir, &phased_data);
+            let reference_path = match references.get(&phased_data.sample_name) {
+                Some(path) => path,
+                None => {
+                    log::warn!(
+                        "No reference found for sample {}. Skipping polishing.",
+                        phased_data.sample_name
+                    );
+                    continue;
+                }
+            };
+            let cleaned_reference_path = self.sanitize_reference_path(reference_path);
+            match self.execute(&file, &cleaned_reference_path, &output_path) {
                 Ok(_) => {
                     log::info!(
                         "Polishing completed for {}. Output saved to {}",
@@ -121,11 +145,13 @@ impl BatchGenomePolishing {
     fn execute(
         &self,
         input_path: &Path,
+        ref_path: &Path,
         output_path: &Path,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut pilon_polisher = PilonGenomePolishing::new(Some(&self.executable));
         pilon_polisher
             .input_path(input_path)
+            .reference_path(ref_path)
             .output_path(output_path)
             .optional_params(self.optional_params.clone());
         if let Some(java_opts) = &self.java_options {
@@ -149,6 +175,32 @@ impl BatchGenomePolishing {
         }
     }
 
+    fn sanitize_reference_path(&self, path: &Path) -> PathBuf {
+        if path.extension() != Some(std::ffi::OsStr::new("fasta")) {
+            let new_path = path.to_path_buf().with_extension("fasta");
+            self.rename_reference_path(path, &new_path)
+                .unwrap_or_else(|e| {
+                    log::error!(
+                        "Error renaming reference file {}: {}",
+                        path.display(),
+                        e.to_string()
+                    )
+                });
+            new_path
+        } else {
+            path.to_path_buf()
+        }
+    }
+
+    fn rename_reference_path(
+        &self,
+        from: &Path,
+        to: &Path,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        fs::rename(from, to)?;
+        Ok(())
+    }
+
     fn find_bam_files(&self) -> Vec<PathBuf> {
         let finder = BamFileFinder::new(&self.input_dir, self.recursive, BamFormat::Bam);
         match finder.find() {
@@ -160,7 +212,7 @@ impl BatchGenomePolishing {
         }
     }
 
-    fn get_output_dir_phased(&self, allele: &PhasedAllele) -> PathBuf {
+    fn get_output_dir_phased(&self, allele: &BwaPhasedAllele) -> PathBuf {
         self.output_path.join(allele.to_string())
     }
 
@@ -168,7 +220,44 @@ impl BatchGenomePolishing {
     //     self.output_path.join(sample_name)
     // }
 
-    fn get_output_path(&self, file_name: &str) -> PathBuf {
-        self.output_path.join(file_name).with_extension("fasta")
+    fn get_output_path(&self, output_dir: &Path, phase_data: &PhasedBam) -> PathBuf {
+        output_dir
+            .join(&phase_data.sample_name)
+            .with_extension(phase_data.allele.to_short_string())
+    }
+
+    // fn match_bams_to_references(
+    //     &self,
+    //     bam_files: &[PathBuf],
+    //     references: &[(String, PathBuf)],
+    // ) -> Vec<(PathBuf, PathBuf)> {
+    //     let mut matched_pairs = Vec::new();
+
+    //     for bam_path in bam_files {
+    //         if let Some(phased_bam) = self.get_phase_data(bam_path).ok() {
+    //             for (ref_name, ref_path) in references {
+    //                 if phased_bam.sample_name == *ref_name {
+    //                     matched_pairs.push((bam_path.clone(), ref_path.clone()));
+    //                     break;
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     matched_pairs
+    // }
+
+    fn find_references(&self) -> HashMap<String, PathBuf> {
+        let ref_paths = SeqFileFinder::new(&self.reference_dir).find(&self.reference_format);
+        ref_paths
+            .iter()
+            .filter_map(|p| {
+                if let Some(file_stem) = p.file_stem().and_then(|s| s.to_str()) {
+                    Some((file_stem.to_string(), p.to_path_buf()))
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 }

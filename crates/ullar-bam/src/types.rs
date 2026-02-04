@@ -3,7 +3,7 @@ use std::{fmt::Display, str::FromStr};
 use regex::Regex;
 
 const PHASED_BAM_SAMPLE_NAME_PATTERN: &str =
-    r"^(?P<sample_name>.+?)\.(?P<allele>\d+)\.(?P<extension>bam)$";
+    r"^(?P<sample_name>.+?)\.(?P<allele>\d+|chimera)\.(?P<extension>bam)$";
 
 #[derive(Debug, Clone, PartialEq, Copy, Eq, Default)]
 pub enum BamFormat {
@@ -75,44 +75,74 @@ impl BamFormat {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub enum PhasedAllele {
+pub enum BwaPhasedAllele {
+    Allele0,
     Allele1,
-    Allele2,
     Chimeric,
     #[default]
     Unknown,
 }
 
-impl FromStr for PhasedAllele {
+impl FromStr for BwaPhasedAllele {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "allele_1" => Ok(PhasedAllele::Allele1),
-            "allele1" => Ok(PhasedAllele::Allele1),
-            "allele_2" => Ok(PhasedAllele::Allele2),
-            "allele2" => Ok(PhasedAllele::Allele2),
-            "chimeric" => Ok(PhasedAllele::Chimeric),
-            "chimera" => Ok(PhasedAllele::Chimeric),
-            _ => Ok(PhasedAllele::Unknown),
+        match s.parse::<usize>() {
+            Ok(0) => Ok(BwaPhasedAllele::Allele0),
+            Ok(1) => Ok(BwaPhasedAllele::Allele1),
+            _ => {
+                if s.to_lowercase() == "chimera" {
+                    Ok(BwaPhasedAllele::Chimeric)
+                } else {
+                    Ok(BwaPhasedAllele::Unknown)
+                }
+            }
         }
     }
 }
 
-impl Display for PhasedAllele {
+impl Display for BwaPhasedAllele {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            PhasedAllele::Allele1 => write!(f, "allele_1"),
-            PhasedAllele::Allele2 => write!(f, "allele_2"),
-            PhasedAllele::Chimeric => write!(f, "chimeric"),
-            PhasedAllele::Unknown => write!(f, "unknown"),
+            BwaPhasedAllele::Allele0 => write!(f, "0"),
+            BwaPhasedAllele::Allele1 => write!(f, "1"),
+            BwaPhasedAllele::Chimeric => write!(f, "chimera"),
+            BwaPhasedAllele::Unknown => write!(f, "unknown"),
+        }
+    }
+}
+
+impl BwaPhasedAllele {
+    pub fn to_short_string(&self) -> &str {
+        match self {
+            BwaPhasedAllele::Allele0 => "0",
+            BwaPhasedAllele::Allele1 => "1",
+            BwaPhasedAllele::Chimeric => "chimera",
+            BwaPhasedAllele::Unknown => "unknown",
+        }
+    }
+
+    pub fn from_usize(value: usize) -> Self {
+        match value {
+            0 => BwaPhasedAllele::Allele0,
+            1 => BwaPhasedAllele::Allele1,
+            _ => BwaPhasedAllele::Unknown,
+        }
+    }
+
+    pub fn to_string(&self) -> String {
+        match self {
+            BwaPhasedAllele::Allele0 => "allele_0".to_string(),
+            BwaPhasedAllele::Allele1 => "allele_1".to_string(),
+            BwaPhasedAllele::Chimeric => "chimera".to_string(),
+            BwaPhasedAllele::Unknown => "unknown".to_string(),
         }
     }
 }
 
 pub struct PhasedBam {
     pub sample_name: String,
-    pub allele: PhasedAllele,
+    pub allele: BwaPhasedAllele,
     pub extension: String,
 }
 
@@ -120,7 +150,7 @@ impl Default for PhasedBam {
     fn default() -> Self {
         PhasedBam {
             sample_name: "unknown".to_string(),
-            allele: PhasedAllele::Unknown,
+            allele: BwaPhasedAllele::Unknown,
             extension: "bam".to_string(),
         }
     }
@@ -130,7 +160,7 @@ impl PhasedBam {
     pub fn new(sample_name: &str, allele: &str, extension: &str) -> Self {
         PhasedBam {
             sample_name: sample_name.to_string(),
-            allele: allele.parse().unwrap_or_default(),
+            allele: BwaPhasedAllele::from_str(allele).unwrap_or(BwaPhasedAllele::Unknown),
             extension: extension.to_string(),
         }
     }
@@ -138,7 +168,7 @@ impl PhasedBam {
     pub fn from_path<P: AsRef<std::path::Path>>(
         path: P,
     ) -> Result<Option<Self>, Box<dyn std::error::Error>> {
-        let re = Regex::new(PHASED_BAM_SAMPLE_NAME_PATTERN).unwrap();
+        let re = Regex::new(PHASED_BAM_SAMPLE_NAME_PATTERN)?;
 
         let file_name = path
             .as_ref()
@@ -150,9 +180,11 @@ impl PhasedBam {
 
         match caps {
             Some(capture) => {
-                let sample_name = capture.name("sample").map_or("unknown", |m| m.as_str());
+                let sample_name = capture
+                    .name("sample_name")
+                    .map_or("unknown", |m| m.as_str());
                 let allele = capture.name("allele").map_or("unknown", |m| m.as_str());
-                let extension = capture.name("ext").map_or("bam", |m| m.as_str());
+                let extension = capture.name("extension").map_or("bam", |m| m.as_str());
 
                 Ok(Some(PhasedBam::new(sample_name, allele, extension)))
             }
@@ -182,5 +214,13 @@ mod tests {
         assert_eq!(BamFormat::from_path("sample.bam"), Some(BamFormat::Bam));
         assert_eq!(BamFormat::from_path("sample.bai"), Some(BamFormat::Bai));
         assert_eq!(BamFormat::from_path("sample.txt"), None);
+    }
+
+    #[test]
+    fn test_phased_bam_from_path() {
+        let phased_bam = PhasedBam::from_path("sample1.1.bam").unwrap().unwrap();
+        assert_eq!(phased_bam.sample_name, "sample1");
+        assert_eq!(phased_bam.allele, BwaPhasedAllele::Allele1);
+        assert_eq!(phased_bam.extension, "bam");
     }
 }
