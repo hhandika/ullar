@@ -93,8 +93,6 @@ struct Align {
 struct BatchAlign {
     #[arg(short, long, help = "Path to the directory containing reads")]
     dir: String,
-    #[arg(short, long, help = "Path to the reference file")]
-    reference: String,
     #[arg(long, help = "Recursively search for reads in subdirectories")]
     recursive: bool,
     #[arg(short, long, help = "Number of threads to use", default_value_t = 4)]
@@ -173,7 +171,7 @@ fn run_align(args: Align) {
 
 fn run_batch_align(args: BatchAlign) {
     let batch = BatchBwaAlignSingleRef::new(&args.dir)
-        .reference(&args.reference)
+        .reference(&args.common.reference)
         .output(&args.common.output)
         .recursive(args.recursive)
         .threads(args.threads)
