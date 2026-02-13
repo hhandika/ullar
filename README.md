@@ -190,7 +190,7 @@ ullar-sambamba markdup -d /mapped_reads_dir --recursive --autorun
 
 # Step 4: Variant calling using BCFtools
 # Require ullar-bcftools and BCFtools installation: https://github.com/samtools/bcftools
-ullar-bcftools batch -d /marked_duplicates_bam_dir --reference /path/to/reference_genome.fasta --threads 8 --recursive
+ullar-bcftools call -d /marked_duplicates_bam_dir --reference /path/to/reference_genome.fasta --ploidy 2
 ```
 
 GATK variant calling is under development. Only the variant calling step is completed.
