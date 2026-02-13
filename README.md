@@ -6,9 +6,9 @@
 
 ULLAR is a lightweight, efficient, and scalable pipeline developed to minimize learning curve and required bioinformatic knowledge for phylogenomic and population genetic data analyses. We defined efficiency as efficient in both using computational resources and user time.
 
-For starter, ULLAR is designed as a single executable binary to avoid potential runtime dependency conflicts with genomic applications it depends on. We eliminate the need to prepare configuration files and scripts. The app also automatically infers optimal resource allocation based on the data and available resources, but provides flexibility for users to override the default settings. See the [Motivation](#motivation) section for more details of our design goals.
+For starter, ULLAR is a single executable. This approach avoids potential runtime dependency conflicts with the genomic applications it relies on. We eliminate the need to prepare configuration files and scripts. The app also automatically infers optimal resource allocation based on the data and available resources, but provides flexibility for users to override the default settings. See the [Motivation](#motivation) section for more details of our design goals.
 
-In addition to Linux and macOS, the typical supported operating systems for bioinformatics, ULLAR runs natively on Windows whenever possible.
+In addition to Linux and macOS, the most commonly supported operating systems for bioinformatics, ULLAR runs natively on Windows whenever possible.
 
 ## Name Origin
 
@@ -16,21 +16,21 @@ ULLAR stands for an Ultrafast, scaLable, Accessible, and Reproducible pipeline f
 
 ## Motivation
 
-The initial motivation to develop ULLAR is to design a pipeline to support teaching phylogenomics in two days workshops. As we work on the pipeline, our goals and motivations expanded. How can we design a simple-to-use pipeline that is also efficient and scalable? We identified several problems with existing pipelines that we want to address:
+ULLAR is initially developed to support teaching phylogenomics in two-day workshops. As the development progressed, our goals and motivations expanded: how can we design a simple-to-use pipeline that is also efficient and scalable? We identified several issues in existing pipelines that we aim to address:
 
-1. Inefficient and difficult to debug due to additional layers of abstraction and runtime dependencies, such as [SnakeMake](https://snakemake.readthedocs.io/en/stable/), [NextFlow](https://www.nextflow.io/), Python runtime, and dozens of other runtime dependencies.
-2. Requires users to prepare config files, which can be tedious for those with limited knowledge of Shell scripting and end up doing it manually instead.
-3. Sequence samples from non-model organisms often are not of ideal quality. An extra quality check and manual inspection at each step of the workflow is usually required to ensure optimal, accurate results. So, fully automatic pipeline often is not the right solution. How can we design a pipeline that make it easy for users to inspect intermediate results and tweak parameters at each step of the workflow if necessary?
-4. Some HPC Clusters offer users limited privileges. It could take three months just to convince the HPC admin to allow a pipeline submitting >1000 [SLURM](https://slurm.schedmd.com/) jobs.
-5. Forced users to install all the dependencies. For instance, a user having different pipelines for different genomic analyses, could end up with multiple [SPAdes](http://cab.spbu.ru/software/spades/) installed on the same computer. Why can't we just use the same SPAdes installation for all pipelines that require it? How can we manage all these dependencies efficiently, while ensuring the reproducibility of the analyses?
-6. Native Windows support is largely absent from existing genomic pipelines, even though several analysis components run on Windows (e.g., [IQ-TREE](https://iqtree.github.io/) for phylogenetic inference and [SEGUL](https://www.segul.app/) for data cleaning, summarization, and wrangling). How can we provide native support for Windows users for those parts of the workflow?
-7. Concurrent and parallel processing is difficult to get it right. Some pipelines require users to specify the number of threads for each step manually. However, some steps are I/O bound, while others are CPU bound. How can we optimize resource allocation automatically based on the data, type of analyses, and available resources?
+1. Inefficient and difficult to debug due to additional layers of abstraction and runtime dependencies, such as [SnakeMake](https://snakemake.readthedocs.io/en/stable/)/[NextFlow](https://www.nextflow.io/), Python/Java runtime, and dozens of additional runtime dependencies.
+2. Requires users to prepare config files, which can be tedious for those with limited Shell-scripting experience and can lead to error-prone manual editing.
+3. Sequence data from non-model organisms are often not ideal. An extra quality check and manual inspection at each step of the workflow is usually required to ensure optimal, accurate results. So, fully automatic pipeline often is not the right solution. How can we design a pipeline that make it easy for users to inspect intermediate results and tweak parameters at each step of the workflow if necessary?
+4. Some HPC Clusters offer users limited privileges. Designing pipelines that does not require root access and can be installed in user space is crucial for accessibility.
+5. Forced users to install all the dependencies. For instance, a user having different pipelines for different genomic analyses, could end up with multiple [SPAdes](http://cab.spbu.ru/software/spades/) installed on the same computer. How can we avoid duplicate installations of the same software and potential runtime dependency conflicts?
+6. Native Windows support is largely absent from existing genomic pipelines, even though several key tools run on Windows (e.g., [IQ-TREE](https://iqtree.github.io/) for phylogenetic inference and [SEGUL](https://www.segul.app/) for data cleaning, summarization, and wrangling). How can we provide native support for Windows users for those parts of the workflow?
+7. Concurrency and parallization are easy to get wrong. Some pipelines require users to specify the number of threads for each step manually. However, some steps are I/O bound, while others are CPU bound. How can we optimize resource allocation automatically based on the data, type of analyses, and available resources?
 
 ULLAR is our baby step toward our long-term goals to ensure phylogenomic analyses are efficient and accessible to as many evolutionary biologists as possible, regardless of their technical skills and support.
 
 ## Development Status
 
-ULLAR is currently under development. We have completed the core components of the pipeline. However, you should expect command changes in the future release as we continue to refine the tool. If you use ULLAR in a publication, we recommend you specify the exact version of the app. For manual compilation, we also recommend that you state the commit hash number. For example, `ULLAR v0.3.0 (commit: f18ac98)`.
+ULLAR is currently under development. We have completed the core components of the pipeline. However, you should expect command changes in the future release as we continue to refine the tool. If you use ULLAR in a publication, we recommend you specify the exact version of the app. For manual compilation, we also recommend that you state the commit hash number. For example, `ULLAR v0.3.0 (commit: f18ac98)`. See the [Feature & Dependencies](#features--dependencies) section to see the current project progress and the dependencies that are currently supported.
 
 ## Try ULLAR
 
@@ -101,19 +101,33 @@ If you need more detailed guidelines, SEGUL provides comprehensive instructions 
 
 ### Features & Dependencies
 
-| Feature            | Dependencies                                       |
-| ------------------ | -------------------------------------------------- |
-| Raw read cleaning  | [Fastp](https://github.com/OpenGene/fastp)         |
-| De novo assembly   | [SPAdes](http://cab.spbu.ru/software/spades/)      |
-| Reference mapping  | [LASTZ](https://github.com/lastz/lastz)            |
-| Sequence alignment | [MAFFT](https://mafft.cbrc.jp/alignment/software/) |
-| ML phylogeny       | [IQ-TREE](http://www.iqtree.org/)                  |
-| MSC phylogeny      | [ASTER](https://github.com/chaoszhang/ASTER)       |
-| Data cleaning      | [SEGUL](https://www.segul.app/)                    |
-| Summary statistics | [SEGUL](https://www.segul.app/)                    |
+#### Phylogenomics
+
+| Feature            | Dependencies                                       | Status |
+| ------------------ | -------------------------------------------------- | ------ |
+| Raw read cleaning  | [Fastp](https://github.com/OpenGene/fastp)         | ☑️     |
+| De novo assembly   | [SPAdes](http://cab.spbu.ru/software/spades/)      | ☑️     |
+| Reference mapping  | [LASTZ](https://github.com/lastz/lastz)            | ☑️     |
+| Sequence alignment | [MAFFT](https://mafft.cbrc.jp/alignment/software/) | ☑️     |
+| ML phylogeny       | [IQ-TREE](http://www.iqtree.org/)                  | ☑️     |
+| MSC phylogeny      | [ASTER](https://github.com/chaoszhang/ASTER)       | ☑️     |
+| Data cleaning      | [SEGUL](https://www.segul.app/)                    | ⏱️     |
+| Summary statistics | [SEGUL](https://www.segul.app/)                    | ⏱️     |
 
 > NOTE: Summary statistics and other data cleaning features are under development, but you can install SEGUL separately.
 > Check out [SEGUL documentation](https://www.segul.app/)
+
+### Population Genomics
+
+| Feature           | Dependencies                                                                                         | Status |
+| ----------------- | ---------------------------------------------------------------------------------------------------- | ------ |
+| Raw read cleaning | [Fastp](https://github.com/OpenGene/fastp)                                                           | ☑️     |
+| Read mapping      | [BWA](https://github.com/lh3/bwa)                                                                    | ☑️     |
+| Mark duplicates   | [Sambamba](https://github.com/biod/sambamba)                                                         | ☑️     |
+| Variant calling   | [GATK](https://gatk.broadinstitute.org/hc/en-us) or [BCFtools](https://github.com/samtools/bcftools) | ☑️     |
+| DB import         | [GATK](https://gatk.broadinstitute.org/hc/en-us)                                                     | ⏱️     |
+| Joint genotyping  | [GATK](https://gatk.broadinstitute.org/hc/en-us)                                                     | ⏱️     |
+| Variant filtering | [GATK](https://gatk.broadinstitute.org/hc/en-us)                                                     | ⏱️     |
 
 You can check if you have the dependencies installed by running the following commands:
 
