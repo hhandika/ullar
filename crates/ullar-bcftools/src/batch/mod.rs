@@ -25,7 +25,7 @@ impl BatchVariantCalling {
             input_dir: input_dir.as_ref().to_path_buf(),
             reference_path: PathBuf::new(),
             output_dir: PathBuf::new(),
-            prefix: "variants".to_string(),
+            prefix: DEFAULT_OUTPUT_PREFIX.to_string(),
             recursive: false,
             format: BamFormat::Bam,
         }
