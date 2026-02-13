@@ -188,22 +188,29 @@ ullar-bwa batch -d /cleaned_read_dir --reference /path/to/reference_genome.fasta
 # Require sambamba installation: https://github.com/biod/sambamba
 ullar-sambamba markdup -d /mapped_reads_dir --recursive --autorun
 
+# Step 4: Variant calling using BCFtools
+# Require ullar-bcftools and BCFtools installation: https://github.com/samtools/bcftools
+ullar-bcftools batch -d /marked_duplicates_bam_dir --reference /path/to/reference_genome.fasta --threads 8 --recursive
+```
+
+GATK variant calling is under development. Only the variant calling step is completed.
+
+```bash
 # Step 4: Variant calling
 # Require ullar-gatk and GATK installation
 ullar-gatk variant -d /marked_duplicates_bam_dir --reference /path/to/reference
 
-# Step 5: DB import
+# Step 5: DB import (under development)
 ullar-gatk db -d /variant_calling_dir --reference /path/to/reference
 
-# Step 6: Joint genotyping
+# Step 6: Joint genotyping (under development)
 ullar-gatk joint -d /db_import_dir --reference /path/to/reference
 
-# Step 7: Variant filtering
+# Step 7: Variant filtering (under development)
 ullar-gatk filter -d /joint_genotyping_dir --reference /path/to/reference
-
-# Step 8: Population genomic analyses
-# Under development
 ```
+
+### Detailed Usage
 
 A quick way to clean reads:
 

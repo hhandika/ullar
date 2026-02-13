@@ -1,6 +1,6 @@
 use std::{
     path::{Path, PathBuf},
-    process::{ChildStdout, Command, Stdio},
+    process::{Child, ChildStdout, Command, Stdio},
 };
 
 /// Default options for bcftools mpileup
@@ -9,6 +9,7 @@ use std::{
 /// to bcftools call for variant calling.
 /// This is more efficient than writing to a file.
 const DEFAULT_CMD_OPTIONS: &[&str] = &["-Ou"];
+const BCFTOOLS_CALL_LOG_FILE: &str = "bcftools_mpileup.log";
 
 pub struct BcftoolsMpileup {
     /// Path to the list of BAM files, one per line.
@@ -51,27 +52,33 @@ impl BcftoolsMpileup {
     }
 
     /// Run bcftools mpileup and return stdout
-    pub fn align_piped(&self) -> Result<ChildStdout, Box<dyn std::error::Error>> {
+    pub fn align_piped(&self) -> Result<(Child, ChildStdout), Box<dyn std::error::Error>> {
         let mut cmd = Command::new(&self.executable);
         cmd.arg("mpileup")
             .arg("-f")
             .arg(&self.reference)
             .arg("-b")
             .arg(&self.bam_list)
-            .args(&self.optional_params)
-            .stdout(Stdio::piped());
+            .stdout(Stdio::piped())
+            .stderr(Stdio::inherit());
 
         if self.optional_params.is_empty() {
             self.get_default_cmd(&mut cmd);
         } else {
             cmd.args(&self.optional_params);
         }
-        let child = cmd.spawn()?;
-        if let Some(stdout) = child.stdout {
-            Ok(stdout)
-        } else {
-            Err("Failed to capture stdout".into())
-        }
+
+        ullar_logger::commands::log_commands(&cmd, "Bcftools mpileup");
+        ullar_logger::commands::get_file_cmd_logger(
+            Path::new(BCFTOOLS_CALL_LOG_FILE),
+            &cmd,
+            "Bcftools mpileup",
+        )?;
+
+        let mut child = cmd.spawn()?;
+        let stdout = child.stdout.take().ok_or("Failed to capture stdout")?;
+
+        Ok((child, stdout))
     }
 
     pub fn get_default_cmd(&self, cmd: &mut Command) {

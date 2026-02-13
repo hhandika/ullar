@@ -1,7 +1,8 @@
 use colored::Colorize;
 use std::{
+    fs,
     path::{Path, PathBuf},
-    process::ChildStdout,
+    process::{Child, ChildStdout},
 };
 use ullar_bam::{finder::files::BamFileFinder, types::BamFormat};
 
@@ -17,6 +18,7 @@ pub struct BatchVariantCalling {
     pub output_dir: PathBuf,
     /// File name prefix
     pub prefix: String,
+    pub ploidy: Option<u32>,
 }
 
 impl BatchVariantCalling {
@@ -27,6 +29,7 @@ impl BatchVariantCalling {
             output_dir: PathBuf::new(),
             prefix: DEFAULT_OUTPUT_PREFIX.to_string(),
             recursive: false,
+            ploidy: None,
             format: BamFormat::Bam,
         }
     }
@@ -48,6 +51,11 @@ impl BatchVariantCalling {
 
     pub fn format(&mut self, format: BamFormat) -> &mut Self {
         self.format = format;
+        self
+    }
+
+    pub fn ploidy(&mut self, ploidy: u32) -> &mut Self {
+        self.ploidy = Some(ploidy);
         self
     }
 
@@ -88,7 +96,8 @@ impl BatchVariantCalling {
             .green()
             .bold()
         );
-        let output_bam_list_path = self.input_dir.join("bam_list.txt");
+        fs::create_dir_all(&self.output_dir)?;
+        let output_bam_list_path = self.output_dir.join("bam_list.txt");
         if let Err(e) = self.write_bam_list(&bam_files, &output_bam_list_path) {
             log::error!("{}", format!("Error writing BAM list file: {}", e).red());
             return Err(e);
@@ -102,26 +111,34 @@ impl BatchVariantCalling {
             )
             .green()
         );
-        let output = self.run_mpileup(&output_bam_list_path);
-        match output {
-            Ok(stdout) => {
+        let (mut mpileup_child, mpileup_stdout) = self.run_mpileup(&output_bam_list_path)?;
+
+        match self.call_variant(mpileup_stdout) {
+            Ok(_) => {
+                // Wait for mpileup to complete
+                mpileup_child.wait()?;
                 log::info!(
                     "{}",
                     "Variant calling completed successfully.".green().bold()
                 );
-                self.call_variant(stdout)
+                Ok(())
             }
             Err(e) => {
+                // Kill the mpileup process if call fails
+                let _ = mpileup_child.kill();
                 log::error!(
                     "{}",
                     format!("Error during variant calling: {}", e).red().bold()
                 );
-                return Err(e);
+                Err(e)
             }
         }
     }
 
-    fn run_mpileup(&self, bam_list_path: &Path) -> Result<ChildStdout, Box<dyn std::error::Error>> {
+    fn run_mpileup(
+        &self,
+        bam_list_path: &Path,
+    ) -> Result<(Child, ChildStdout), Box<dyn std::error::Error>> {
         let mut mpileup = BcftoolsMpileup::new(None);
         mpileup
             .bam_list(bam_list_path)
@@ -139,6 +156,9 @@ impl BatchVariantCalling {
                 .bold()
         );
         let mut call = BcftoolsCall::new(None);
+        if let Some(ploidy) = self.ploidy {
+            call.ploidy(ploidy);
+        }
         call.output_path(self.get_final_output_path());
         call.from_stdout(mpileup_stdout)
     }

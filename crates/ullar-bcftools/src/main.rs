@@ -40,6 +40,8 @@ struct VariantCall {
         default_value = "variants"
     )]
     prefix: String,
+    #[arg(long, help = "Ploidy level for variant calling (default: 2)")]
+    ploidy: Option<u32>,
 }
 
 fn run_variant_call(args: VariantCall) -> Result<(), Box<dyn std::error::Error>> {
