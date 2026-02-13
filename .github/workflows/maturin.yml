@@ -8,7 +8,7 @@ name: maturin
 on:
   push:
     branches:
-      - main
+      - release
     tags:
       - "*"
   pull_request:
