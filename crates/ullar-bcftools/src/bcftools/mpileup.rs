@@ -14,7 +14,7 @@ const BCFTOOLS_CALL_LOG_FILE: &str = "bcftools_mpileup.log";
 pub struct BcftoolsMpileup {
     /// Path to the list of BAM files, one per line.
     ///
-    /// ```
+    /// ```text ignore
     /// sample1.bam
     /// sample2.bam
     /// sample3.bam
