@@ -13,6 +13,9 @@ pub const IQTREE2_EXE: &str = "iqtree2.exe";
 #[cfg(not(target_os = "windows"))]
 pub const IQTREE2_EXE: &str = "iqtree2";
 
+#[cfg(not(target_os = "windows"))]
+pub const IQTREE3_EXE: &str = "iqtree3";
+
 #[cfg(target_os = "windows")]
 pub const IQTREE_EXE: &str = "iqtree.exe";
 
@@ -21,6 +24,7 @@ pub const IQTREE_EXE: &str = "iqtree";
 
 pub const IQTREE_NAME: &str = "IQ-TREE";
 pub const IQTREE2_NAME: &str = "IQ-TREE2";
+pub const IQTREE3_NAME: &str = "IQ-TREE3";
 
 pub const DEFAULT_IQTREE_MODEL: &str = "GTR+I+G";
 pub const DEFAULT_IQTREE_THREADS: &str = "4";
@@ -36,8 +40,11 @@ impl IqtreeMetadata {
     pub fn new() -> Self {
         let version_1 = version!(IQTREE_EXE);
         let version_2 = version!(IQTREE2_EXE);
-        let both_versions = version_1.is_some() && version_2.is_some();
-        let version = if version_2.is_some() {
+        let version_3 = version!(IQTREE3_EXE);
+        let both_versions = version_1.is_some() && version_2.is_some() && version_3.is_some();
+        let version = if version_3.is_some() {
+            version_3
+        } else if version_2.is_some() {
             version_2
         } else {
             version_1
@@ -83,7 +90,7 @@ impl IqtreeMetadata {
 
     fn get_executable(&self, version: &str) -> String {
         if self.both_versions {
-            IQTREE2_EXE.to_string()
+            IQTREE3_EXE.to_string()
         } else {
             self.get_available_executable(version)
         }

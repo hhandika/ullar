@@ -339,12 +339,18 @@ impl<'a> TreeEstimation<'a> {
         }
 
         let iqtree_version = iqtree.expect("IQ-TREE dependency not found").version;
-        let required_v2 = config
+        let required_min_v2 = config
             .input
             .analyses
             .iter()
             .any(|f| *f == TreeInferenceMethod::GeneSiteConcordance);
-        if required_v2 && !iqtree_version.starts_with("2") {
+        // We capture the major version to check if it's v2 or higher, since GSC requires v2
+        let major_version = iqtree_version
+            .split('.')
+            .next()
+            .unwrap_or(&iqtree_version)
+            .trim_start_matches('v');
+        if required_min_v2 && major_version.parse::<u32>().unwrap_or(0) < 2 {
             let error = format!(
                 "{} IQ-TREE v2 is required for GSC analysis. \
                 Please install IQ-TREE v2 and regenerate the config file.",
