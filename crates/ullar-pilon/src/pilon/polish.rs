@@ -10,7 +10,7 @@ static DEFAULT_CMD_OPTIONS: &[&str] = &[
     "snps,indels",
     "--vcf",
     "--minqual",
-    "20",
+    "10",
     "--mindepth",
     "5",
 ];
