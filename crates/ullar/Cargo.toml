@@ -41,6 +41,7 @@ size = "0.4.1"
 sysinfo = "0.30.12"
 toml = "0.8.20"
 walkdir = "2.5.0"
+ullar-logger = { version = "0.1.0", path = "../ullar-logger" }
 
 [target.'cfg(not(windows))'.dependencies]
 minimap2 = { version = "0.1.30", features = ["static"] }

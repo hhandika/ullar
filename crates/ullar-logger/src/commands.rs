@@ -9,7 +9,7 @@ use std::{
 use colored::Colorize;
 
 pub fn log_commands(cmd: &Command, app_name: &str) {
-    let msg = format!("\n{} command:", app_name);
+    let msg = format!("\n\n{} command:", app_name);
     log::info!("{}", msg.bold());
     let command_str = format!("{:?}", cmd).replace("\"", "");
     log::info!("{}\n", command_str.italic());

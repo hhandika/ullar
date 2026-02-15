@@ -19,7 +19,7 @@ use segul::{
 
 use crate::{
     core::deps::{
-        iqtree::{IqTreeParams, IQTREE2_EXE, IQTREE_EXE},
+        iqtree::{IqTreeParams, IQTREE3_EXE, IQTREE_EXE},
         DepMetadata,
     },
     helper::common,
@@ -349,6 +349,8 @@ impl<'a> IqTree<'a> {
             parse_override_args!(out, opt_args);
         }
 
+        ullar_logger::commands::log_commands(&out, "IQ-TREE Species Tree Inference");
+
         out.output().expect("Failed to run IQ-TREE")
     }
 
@@ -374,6 +376,7 @@ impl<'a> IqTree<'a> {
         if let Some(opt_args) = &self.configs.optional_args {
             parse_override_args!(out, opt_args);
         }
+        ullar_logger::commands::log_commands(&out, "IQ-TREE Gene Tree Inference");
 
         out.output().expect("Failed to run IQ-TREE")
     }
@@ -387,7 +390,7 @@ impl<'a> IqTree<'a> {
             .arg(&iqtree_result.gene_trees)
             .arg("--prefix")
             .arg(output_path);
-
+        ullar_logger::commands::log_commands(&out, "IQ-TREE Gene Concordance Factor");
         out.output()
             .expect("Failed to run site concordance analyses.")
     }
@@ -407,6 +410,7 @@ impl<'a> IqTree<'a> {
         } else {
             out.arg("-blfix").arg("--scfl").arg("1000");
         }
+        ullar_logger::commands::log_commands(&out, "IQ-TREE Site Concordance Factor");
         out.output()
             .expect("Failed to run site concordance analyses.")
     }
@@ -421,7 +425,7 @@ impl<'a> IqTree<'a> {
     fn get_any_executable(&self) -> String {
         match &self.metadata.executable {
             Some(e) => e.to_string(),
-            None => IQTREE2_EXE.to_string(),
+            None => IQTREE3_EXE.to_string(),
         }
     }
 
