@@ -87,14 +87,18 @@ cd ullar
 
 ##### Build and install ULLAR
 
+ULLAR code is modular and organized into separate packages for different features. To install the main ULLAR package, clone the repository to your local machine and run the following command in your terminal application:
+
 ```bash
-cargo install --path . --package ullar
+cd crates/ullar
+cargo install --path .
 ```
 
-ULLAR is designed to be modular and to install other packages within ULLAR, such as `ullar-bwa`, you can run:
+To install other packages within ULLAR, such as `ullar-bwa`, you can run:
 
 ```bash
-cargo install --path . --package ullar-bwa
+cd crates/ullar-bwa
+cargo install --path .
 ```
 
 If you need more detailed guidelines, SEGUL provides comprehensive instructions for installing Rust-based software in [the installation guide](https://www.segul.app/docs/installation/install_source).
