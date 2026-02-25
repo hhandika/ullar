@@ -10,6 +10,9 @@ use crate::{cli::commands::tree::IqTreeSettingArgs, types::trees::IQTreePartitio
 #[cfg(target_os = "windows")]
 pub const IQTREE2_EXE: &str = "iqtree2.exe";
 
+#[cfg(target_os = "windows")]
+pub const IQTREE3_EXE: &str = "iqtree3.exe";
+
 #[cfg(not(target_os = "windows"))]
 pub const IQTREE2_EXE: &str = "iqtree2";
 
