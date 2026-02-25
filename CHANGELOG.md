@@ -3,6 +3,7 @@
 ## Upcoming Release
 
 - Add support for read mapping using `minimap2`.
+- Add support for tree inference using `iqtree3`.
 
 ## v0.4.1
 
