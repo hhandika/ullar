@@ -398,3 +398,7 @@ For example:
 ```bash
 ullar tree init -d /path/to/aligned_sequences_dir --specify-analyses ml-genes msc --specify-msc-methods astral-pro --autorun
 ```
+
+## Acknowledgements
+
+We would like to thank the developers of the dependencies that ULLAR relies on, such as Fastp, SPAdes, LASTZ, MAFFT, IQ-TREE, ASTRAL, and SEGUL. We also want to thank the open-source community for their contributions to the development of libraries and tools that we use in ULLAR. The following people provide valuable feedback and suggestions during the development of ULLAR: Diego J. Elias, Austin S. Chipps, Giovani Hernández-Canchola, Spenser J. Babb-Biernacki, Sheila Rodríguez Machado, and Veronika Chalupová.Funding for this project was provided by the National Science Foundation ([DEB-1754393](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1754393)) and the Alfred L. Gardner and Mark S. Hafner Mammalogy Fund. Several features of ULLAR are inspired by [Phyluce](https://phyluce.readthedocs.io/en/latest/), [FrogCap](https://github.com/chutter/FrogCap-Sequence-Capture), [snpArcher](https://snparcher.readthedocs.io/en/latest/), and [HybPiper](https://github.com/mossmatters/HybPiper).
